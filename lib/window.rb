@@ -3,8 +3,7 @@ class W3DHub
     def setup
       self.caption = "W3D Hub Launcher"
 
-      # push_state(W3DHub::States::Boot)
-      push_state(W3DHub::States::Interface)
+      push_state(W3DHub::States::Boot)
     end
   end
 end
