@@ -4,6 +4,8 @@ class W3DHub
       def setup
         window.show_cursor = true
 
+        @main_thread_queue = []
+
         theme({
           TextBlock: {
             text_border: false,
@@ -119,6 +121,14 @@ class W3DHub
         populate_game_page(W3DHub::Game.games.first)
       end
 
+      def update
+        super
+
+        while(block = @main_thread_queue.shift)
+          block&.call
+        end
+      end
+
       def populate_game_page(game)
         @focused_game = game
 
@@ -169,7 +179,7 @@ class W3DHub
         unless @game_news[game.slot]
           Thread.new do
             fetch_game_news(game)
-            populate_game_news(game)
+            @main_thread_queue << proc { populate_game_news(game) }
           end
 
           @game_news_container.clear do
@@ -204,7 +214,7 @@ class W3DHub
               flow(width: 0.5, height: 128, margin: 4) do
                 # background 0x88_000000
 
-                image "#{GAME_ROOT_PATH}/media/icons/ia.png", width: 0.4
+                image game.icon, width: 0.4
 
                 stack(width: 0.6, height: 1.0) do
                   stack(width: 1.0, height: 112) do
