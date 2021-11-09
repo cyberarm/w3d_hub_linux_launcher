@@ -11,7 +11,7 @@ class W3DHub
           stack(width: 1.0, height: 0.925) do
           end
 
-          @progressbar = progress height: 0.025, width: 1.0
+          @progressbar = progress height: 0.025, width: 1.0, fraction_background: 0xff_00acff, border_thickness: 0
 
           flow(width: 1.0, height: 0.05, padding_left: 16, padding_right: 16, padding_bottom: 8, padding_top: 8) do
             caption "Checking for updates...", width: 0.5

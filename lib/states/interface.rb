@@ -4,6 +4,8 @@ class W3DHub
       def setup
         window.show_cursor = true
 
+        @focused_game = W3DHub::Game.games.first
+
         @main_thread_queue = []
 
         theme({
@@ -97,19 +99,7 @@ class W3DHub
             # background 0xff_44aa00
 
             # Games List
-            stack(width: 0.15, height: 1.0) do
-              background 0xff_121920
-
-              W3DHub::Game.games.each do |game|
-                stack(width: 1.0, border_thickness_left: 4, border_color_left: 0xff_000000) do
-                  background game.background_color
-
-                  image game.icon, height: 48
-                  inscription game.name
-                end.subscribe(:clicked_left_mouse_button) do |e|
-                  populate_game_page(game)
-                end
-              end
+            @games_list_container = stack(width: 0.15, height: 1.0) do
             end
 
             # Game Menu
@@ -119,6 +109,7 @@ class W3DHub
         end
 
         populate_game_page(W3DHub::Game.games.first)
+        populate_games_list
       end
 
       def update
@@ -126,6 +117,26 @@ class W3DHub
 
         while(block = @main_thread_queue.shift)
           block&.call
+        end
+      end
+
+      def populate_games_list
+        @games_list_container.clear do
+          background 0xff_121920
+
+          W3DHub::Game.games.each do |game|
+            selected = game == @focused_game
+
+            stack(width: 1.0, border_thickness_left: 4, border_color_left: selected ? 0xff_00acff : 0x00_000000) do
+              background game.background_color if selected
+
+              image game.icon, height: 48
+              inscription game.name
+            end.subscribe(:clicked_left_mouse_button) do |e|
+              populate_game_page(game)
+              populate_games_list
+            end
+          end
         end
       end
 

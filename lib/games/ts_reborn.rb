@@ -7,9 +7,9 @@ class W3DHub
         set_news_feed "https://w3dhub.com/forum/forum/97-tiberian-sun-reborn.xml"
         set_background_color 0xff_497331
 
-        menu_item(nil, "Game Settings")
-        menu_item(nil, "Repair Installation")
-        menu_item(nil, "Uninstall")
+        menu_item("#{GAME_ROOT_PATH}/media/ui_icons/gear.png", "Game Settings")
+        menu_item("#{GAME_ROOT_PATH}/media/ui_icons/wrench.png", "Repair Installation")
+        menu_item("#{GAME_ROOT_PATH}/media/ui_icons/trashCan.png", "Uninstall")
 
         menu_item(nil, "Install Folder")
         menu_item(nil, "User Data Folder")

@@ -7,7 +7,7 @@ class W3DHub
         set_news_feed "https://w3dhub.com/forum/forum/231-command-and-conquer-renegade.xml"
         set_background_color 0xff_b03f25
 
-        menu_item(nil, "Game Settings")
+        menu_item("#{GAME_ROOT_PATH}/media/ui_icons/gear.png", "Game Settings")
 
         menu_item(nil, "Install Folder")
         menu_item(nil, "View Screenshots")
