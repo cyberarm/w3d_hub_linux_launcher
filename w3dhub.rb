@@ -6,6 +6,7 @@ require "launchy"
 
 GAME_ROOT_PATH = File.expand_path(".", __dir__)
 EMPTY_IMAGE = Gosu::Image.from_blob(1, 1)
+BLACK_IMAGE = Gosu::Image.from_blob(1, 1, "\x00\x00\x00\xff")
 
 require_relative "lib/window"
 require_relative "lib/states/boot"

@@ -7,7 +7,7 @@ class W3DHub
         @fraction = 0.0
         @w3dhub_logo = get_image("#{GAME_ROOT_PATH}/media/icons/w3dhub.png")
 
-        stack(width: 1.0, height: 1.0) do
+        stack(width: 1.0, height: 1.0, border_thickness: 1, border_color: 0xff_aaaaaa) do
           stack(width: 1.0, height: 0.925) do
           end
 
