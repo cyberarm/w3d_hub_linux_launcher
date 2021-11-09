@@ -435,6 +435,8 @@ class W3DHub
       end
 
       def populate_game_news(game)
+        return unless @focused_game == game
+
         if (feed = @game_news[game.slot])
           @game_news_container.clear do
             feed.items.sort_by { |i| i.pubDate }.reverse[0..9].each do |item|
@@ -464,7 +466,52 @@ class W3DHub
 
       def populate_server_info(server)
         @game_server_info_container.clear do
-          title "TODO"
+          stack(width: 1.0, height: 1.0, padding: 8) do
+            stack(width: 1.0, height: 0.2) do
+              tagline "[W3D Hub] GAME SERVER"
+              button "Join Server"
+            end
+
+            flow(width: 1.0, height: 0.05) do
+              stack(width: 0.5, height: 1.0) do
+                para "<b>GDI</b>", width: 1.0, text_align: :center
+              end
+
+              stack(width: 0.5, height: 1.0) do
+                para "<b>Nod</b>", width: 1.0, text_align: :center
+              end
+            end
+
+            flow(width: 1.0, height: 0.75) do
+              stack(width: 0.5, height: 1.0, scroll: true) do
+                15.times do |i|
+                  flow(width: 1.0, height: 18) do
+                    stack(width: 0.6, height: 1.0) do
+                      inscription "Player Name #{i}", text_size: 14
+                    end
+
+                    stack(width: 0.4, height: 1.0) do
+                      inscription "#{rand(1000..100000)}", text_size: 14, width: 1.0, text_align: :right
+                    end
+                  end
+                end
+              end
+
+              stack(width: 0.5, height: 1.0, scroll: true, border_thickness_left: 2, border_color_left: 0xff_000000) do
+                45.times do |i|
+                  flow(width: 1.0, height: 18) do
+                    stack(width: 0.6, height: 1.0) do
+                      inscription "Player Name #{i}", text_size: 14
+                    end
+
+                    stack(width: 0.4, height: 1.0) do
+                      inscription "#{rand(1000..100000)}", text_size: 14, width: 1.0, text_align: :right
+                    end
+                  end
+                end
+              end
+            end
+          end
         end
       end
     end

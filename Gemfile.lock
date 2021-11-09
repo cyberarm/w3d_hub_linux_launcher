@@ -17,6 +17,8 @@ GEM
       addressable (~> 2.7)
     nokogiri (1.11.7-x64-mingw32)
       racc (~> 1.4)
+    nokogiri (1.11.7-x86_64-linux)
+      racc (~> 1.4)
     nokogumbo (2.0.5)
       nokogiri (~> 1.8, >= 1.8.4)
     public_suffix (4.0.6)
@@ -31,6 +33,7 @@ GEM
 
 PLATFORMS
   x64-mingw32
+  x86_64-linux
 
 DEPENDENCIES
   cyberarm_engine

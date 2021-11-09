@@ -24,7 +24,7 @@ class W3DHub
         @@games << i
       end
 
-      @@games.sort! { |g| g.slot }
+      @@games.sort_by! { |g| g.slot }
     end
 
     def self.games
