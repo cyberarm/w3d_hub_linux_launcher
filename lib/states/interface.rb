@@ -10,6 +10,10 @@ class W3DHub
         @main_thread_queue = []
 
         theme({
+          ToolTip: {
+            background: 0xff_222222,
+            text_size: 18
+          },
           TextBlock: {
             text_border: false,
             text_shadow: true,
@@ -57,8 +61,13 @@ class W3DHub
                 # background 0xff_8855ff
 
                 stack(width: 0.75, height: 1.0) do
-                  title "<b>W3D Hub Launcher</b>"
-                  caption "Version 0.14.0.0", margin_left: 32
+                  title "<b>W3D Hub Launcher</b>", height: 0.5
+                  flow(width: 1.0, height: 0.5) do
+                    button get_image("#{GAME_ROOT_PATH}/media/ui_icons/gear.png"), tip: "W3D Hub Launcher Settings", image_height: 1.0, padding_left: 4, padding_top: 4, padding_right: 4, padding_bottom: 4, margin_left: 32 do
+                      page(:settings)
+                    end
+                    inscription "Version 0.14.0.0", margin_left: 16
+                  end
                 end
 
                 @account_container = flow(width: 0.25, height: 1.0) do
@@ -71,7 +80,6 @@ class W3DHub
                     flow(width: 1.0) do
                       link("Logout", text_size: 14) { page(:login) }
                       link "Profile", text_size: 14
-                      link("Settings", text_size: 14) { page(:settings) }
                     end
                   end
 
@@ -205,13 +213,13 @@ class W3DHub
             end
 
             flow(width: 1.0, height: 0.9, margin_top: 16) do
-              stack(width: 0.62, height: 1.0, scroll: true) do
+              stack(width: 0.62, height: 1.0) do
                 # Icon
                 # Hostname
                 # Current Map
                 # Players
                 # Ping
-                flow(width: 1.0, height: 48) do
+                flow(width: 1.0, height: 0.05) do
                   stack(width: 0.08) do
                   end
 
@@ -232,32 +240,40 @@ class W3DHub
                   end
                 end
 
-                15.times do |i|
-                  flow(width: 1.0, height: 48) do
-                    background 0xff_333333 if i.odd?
+                stack(width: 1.0, height: 0.95, scroll: true) do
+                  15.times do |i|
+                    server_container = flow(width: 1.0, height: 48, hover: { background: 0xff_555566 }, active: { background: 0xff_555588 }) do
+                      background 0xff_333333 if i.odd?
 
-                    image "#{GAME_ROOT_PATH}/media/icons/ren.png", width: 0.08, padding: 4
+                      image "#{GAME_ROOT_PATH}/media/icons/ren.png", width: 0.08, padding: 4
 
-                    stack(width: 0.45, height: 1.0) do
-                      inscription "<b>[W3DHub] GAME SERVER"
+                      stack(width: 0.45, height: 1.0) do
+                        inscription "<b>[W3DHub] GAME SERVER"
 
-                      flow(width: 1.0, height: 1.0) do
-                        inscription "Release", margin_right: 64, text_size: 14
-                        inscription "North America", text_size: 14
+                        flow(width: 1.0, height: 1.0) do
+                          inscription "Release", margin_right: 64, text_size: 14
+                          inscription "North America", text_size: 14
+                        end
                       end
+
+                      flow(width: 0.30, height: 1.0) do
+                        inscription "C&C_Vile_Facility_D3.mix"
+                      end
+
+                      flow(width: 0.1, height: 1.0) do
+                        inscription "127/127"
+                      end
+
+                      image "#{GAME_ROOT_PATH}/media/ui_icons/signal3.png", width: 0.05, color: 0xff_008000
                     end
 
-                    flow(width: 0.30, height: 1.0) do
-                      inscription "C&C_Vile_Facility_D3.mix"
+                    def server_container.hit_element?(x, y)
+                      self if hit?(x, y)
                     end
 
-                    flow(width: 0.1, height: 1.0) do
-                      inscription "127/127"
+                    server_container.subscribe(:clicked_left_mouse_button) do
+                      populate_server_info(nil)
                     end
-
-                    image "#{GAME_ROOT_PATH}/media/ui_icons/signal3.png", width: 0.05, color: 0xff_008000
-                  end.subscribe(:clicked_left_mouse_button) do
-                    populate_server_info(nil)
                   end
                 end
               end
