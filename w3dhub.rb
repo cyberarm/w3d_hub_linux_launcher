@@ -19,6 +19,14 @@ require_relative "lib/games/interim_apex"
 require_relative "lib/games/ra_a_path_beyond"
 require_relative "lib/games/ts_reborn"
 
+require_relative "lib/page"
+require_relative "lib/pages/games"
+require_relative "lib/pages/server_browser"
+require_relative "lib/pages/community"
+require_relative "lib/pages/login"
+require_relative "lib/pages/settings"
+require_relative "lib/pages/download_manager"
+
 W3DHub::Game.load_games
 
 W3DHub::Window.new(width: 980, height: 720, borderless: false).show
