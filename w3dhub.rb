@@ -27,6 +27,9 @@ require_relative "lib/pages/login"
 require_relative "lib/pages/settings"
 require_relative "lib/pages/download_manager"
 
+require_relative "lib/renegade_server"
+require_relative "lib/renegade_player"
+
 W3DHub::Game.load_games
 
 W3DHub::Window.new(width: 980, height: 720, borderless: false).show
