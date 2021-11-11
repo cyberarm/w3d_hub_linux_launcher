@@ -13,8 +13,11 @@ class W3DHub
 
         theme({
           ToolTip: {
-            background: 0xff_222222,
-            text_size: 18
+            background: 0xff_dedede,
+            color: 0xaa_000000,
+            text_size: 18,
+            text_border: false,
+            text_shadow: false,
           },
           TextBlock: {
             text_border: false,

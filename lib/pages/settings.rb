@@ -3,7 +3,7 @@ class W3DHub
     class Settings < Page
       def setup
         body.clear do
-          stack(width: 1.0, height: 1.0, padding: 64) do
+          stack(width: 1.0, height: 1.0, padding: 64, scroll: true) do
             para "<b>Language</b>"
             para "Select the UI language you'd like to use in the W3D Hub Launcher. You should restart the launcher after changing this setting before the ui will update", width: 1.0
             list_box items: ["English", "French", "German"], width: 1.0
