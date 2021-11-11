@@ -35,8 +35,44 @@ class W3DHub
                   # Todo lock whole UI until response or timeout
 
                   # Do network stuff
+
+                  Thread.new do
+                    sleep 0.2
+
+                    main_thread_queue << proc { populate_account_info; page(W3DHub::Pages::Games) }
+                  end
                 end
               end
+            end
+          end
+        end
+      end
+
+      def populate_account_info
+        @host.instance_variable_get(:"@account_container").clear do
+          stack(width: 0.7, height: 1.0) do
+            # background 0xff_222222
+            tagline "<b>#{@username.value}</b>"
+
+            flow(width: 1.0) do
+              link("Logout", text_size: 16) { depopulate_account_info }
+              link "Profile", text_size: 16
+            end
+          end
+
+          image "#{GAME_ROOT_PATH}/media/ui_icons/singleplayer.png", height: 1.0
+        end
+      end
+
+      def depopulate_account_info
+        @host.instance_variable_get(:"@account_container").clear do
+          stack(width: 0.7, height: 1.0) do
+            # background 0xff_222222
+            tagline "<b>Not Logged In</b>", text_wrap: :none
+
+            flow(width: 1.0) do
+              link("Log in", text_size: 16) { page(W3DHub::Pages::Login) }
+              link "Register", text_size: 16
             end
           end
         end

@@ -26,7 +26,9 @@ class W3DHub
           W3DHub::Game.games.each do |game|
             selected = game == @focused_game
 
-            game_button = stack(width: 1.0, border_thickness_left: 4, border_color_left: selected ? 0xff_00acff : 0x00_000000, hover: { background: 0xff_444444 }) do
+            game_button = stack(width: 1.0, border_thickness_left: 4,
+                                border_color_left: selected ? 0xff_00acff : 0x00_000000, hover: { background: 0xff_444444 },
+                                padding_top: 4, padding_bottom: 4) do
               background game.background_color if selected
 
               flow(width: 1.0, height: 48) do
@@ -134,7 +136,7 @@ class W3DHub
               flow(width: 0.5, height: 128, margin: 4) do
                 # background 0x88_000000
 
-                image game.icon, width: 0.4
+                image game.icon, width: 0.4, padding: 4
 
                 stack(width: 0.6, height: 1.0) do
                   stack(width: 1.0, height: 112) do

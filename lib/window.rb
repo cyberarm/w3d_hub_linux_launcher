@@ -5,5 +5,11 @@ class W3DHub
 
       push_state(W3DHub::States::Boot)
     end
+
+    def button_down(id)
+      super
+
+      self.borderless = !self.borderless? if id == Gosu::KB_F7
+    end
   end
 end

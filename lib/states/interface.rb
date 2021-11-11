@@ -20,6 +20,7 @@ class W3DHub
             text_shadow: false,
           },
           TextBlock: {
+            # font: "Inconsolata",
             text_border: false,
             text_shadow: true,
             text_shadow_size: 1,
@@ -68,7 +69,7 @@ class W3DHub
               @app_info_container = flow(width: 1.0, height: 0.65) do
                 # background 0xff_8855ff
 
-                stack(width: 0.75, height: 1.0) do
+                stack(width: 0.6749, height: 1.0) do
                   title "<b>W3D Hub Launcher</b>", height: 0.5
                   flow(width: 1.0, height: 0.5) do
                     button(
@@ -102,19 +103,48 @@ class W3DHub
                 end
 
                 @account_container = flow(width: 0.25, height: 1.0) do
-                  # background 0xff_22ff00
-
                   stack(width: 0.7, height: 1.0) do
                     # background 0xff_222222
-                    tagline "<b>Cyberarm</b>"
+                    tagline "<b>Not Logged In</b>", text_wrap: :none
 
                     flow(width: 1.0) do
-                      link("Logout", text_size: 14) { page(W3DHub::Pages::Login) }
-                      link "Profile", text_size: 14
+                      link("Log in", text_size: 16) { page(W3DHub::Pages::Login) }
+                      link "Register", text_size: 16
                     end
                   end
+                end
 
-                  image BLACK_IMAGE, height: 1.0
+                flow(width: 0.075, height: 1.0) do
+                  button(
+                    get_image("#{GAME_ROOT_PATH}/media/ui_icons/minus.png"),
+                    image_width: 16,
+                    padding_left: 4,
+                    padding_top: 4,
+                    padding_right: 4,
+                    padding_bottom: 4,
+                    margin_left: 4
+                  ) do
+                    # window.minimize
+                  end
+
+                  button(
+                    get_image("#{GAME_ROOT_PATH}/media/ui_icons/cross.png"),
+                    image_width: 16,
+                    padding_left: 4,
+                    padding_top: 4,
+                    padding_right: 4,
+                    padding_bottom: 4,
+                    margin_left: 4,
+                    background: 0xff_800000,
+                    hover: {
+                      background: 0xff_a00000
+                    },
+                    active: {
+                      background: 0xff_600000
+                    }
+                  ) do
+                    window.close
+                  end
                 end
               end
 
