@@ -29,8 +29,11 @@ class W3DHub
             game_button = stack(width: 1.0, border_thickness_left: 4, border_color_left: selected ? 0xff_00acff : 0x00_000000, hover: { background: 0xff_444444 }) do
               background game.background_color if selected
 
-              image game.icon, height: 48
-              inscription game.name
+              flow(width: 1.0, height: 48) do
+                stack(width: 0.3)
+                image game.icon, height: 48
+              end
+              inscription game.name, width: 1.0, text_align: :center
             end
 
             def game_button.hit_element?(x, y)
@@ -106,7 +109,6 @@ class W3DHub
         end
       end
 
-      # FIXME: Do actual gui update on main thread
       def fetch_game_news(game)
         feed_uri = Excon.get(
           game.news_feed,
