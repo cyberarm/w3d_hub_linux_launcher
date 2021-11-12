@@ -196,7 +196,7 @@ class W3DHub
 
             flow(width: 1.0, height: 0.65, scroll: true) do
               stack(width: 0.5) do
-                server.players.select { |ply| ply.team == "GDI" || ply.team == "0" }.each do |player|
+                server.players.select { |ply| ply.team == "GDI" || ply.team == "1" }.each do |player|
                   flow(width: 1.0, height: 18) do
                     stack(width: 0.6, height: 1.0) do
                       inscription player.name, text_size: 14
@@ -210,7 +210,7 @@ class W3DHub
               end
 
               stack(width: 0.5, border_thickness_left: 2, border_color_left: 0xff_000000) do
-                server.players.select { |ply| ply.team == "Nod" || ply.team == "1" }.each do |player|
+                server.players.select { |ply| ply.team == "Nod" || ply.team == "0" }.each do |player|
                   flow(width: 1.0, height: 18) do
                     stack(width: 0.6, height: 1.0) do
                       inscription player.name, text_size: 14
