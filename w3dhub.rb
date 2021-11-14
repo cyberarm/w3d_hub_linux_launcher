@@ -8,9 +8,14 @@ GAME_ROOT_PATH = File.expand_path(".", __dir__)
 EMPTY_IMAGE = Gosu::Image.from_blob(1, 1)
 BLACK_IMAGE = Gosu::Image.from_blob(1, 1, "\x00\x00\x00\xff")
 
+require_relative "lib/version"
 require_relative "lib/window"
 require_relative "lib/states/boot"
 require_relative "lib/states/interface"
+
+require_relative "lib/api"
+require_relative "lib/api/service_status"
+require_relative "lib/api/applications"
 
 require_relative "lib/game"
 require_relative "lib/games/renegade"
