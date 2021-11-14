@@ -172,8 +172,10 @@ class W3DHub
 
                 stack(width: 0.6, height: 1.0) do
                   stack(width: 1.0, height: 112) do
-                    para "<b>#{item.title}</b>"
-                    inscription "#{item.blurb.strip[0..180]}"
+                    link "<b>#{item.title}</b>", text_size: 18 do
+                      Launchy.open(item.uri)
+                    end
+                    inscription item.blurb.gsub(/\n+/, "\n").strip[0..180]
                   end
 
                   flow(width: 1.0) do

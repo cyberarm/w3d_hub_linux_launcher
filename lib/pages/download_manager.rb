@@ -35,12 +35,12 @@ class W3DHub
 
             # Available to download
             stack(width: 1.0, height: 0.8, padding: 8, scroll: true) do
-              [W3DHub::Game.games + W3DHub::Game.games].flatten.each_with_index do |game, i|
+              @host.applications.games.reject { |g| g.id == "ren" }.each_with_index do |game, i|
                 flow(width: 1.0, height: 64, padding: 8) do
                   background 0xff_333333 if i.odd?
 
                   flow(width: 0.7, height: 1.0) do
-                    image game.icon, width: 0.1, margin_right: 8
+                    image "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png", width: 0.1, margin_right: 8
 
                     stack(width: 0.9, height: 1.0) do
                       title game.name
@@ -49,9 +49,21 @@ class W3DHub
                   end
 
                   flow(width: 0.3, height: 1.0) do
-                    list_box items: ["Release", "1.7 Beta"]
+                    version_selector = list_box items: game.channels.map { |c| c.name }, width: 0.499, enabled: game.channels.count > 1
+                    version_selector.subscribe(:changed) do |item|
+                      p item.value
+                    end
 
-                    button "Install"
+                    button "Install", width: 0.5 do
+                      # Download/verify game-channel manifest
+                      # Download broken/missing files
+                      # Unpack
+                      # Configure
+                      # Disable install
+                      # Enable Uninstall
+
+                      get
+                    end
                   end
                 end
               end

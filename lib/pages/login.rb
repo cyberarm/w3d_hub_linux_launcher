@@ -37,11 +37,41 @@ class W3DHub
                   # Do network stuff
 
                   Thread.new do
-                    sleep 0.2
+                    account = Api.user_login(@username.value, @password.value)
 
-                    main_thread_queue << proc { populate_account_info; page(W3DHub::Pages::Games) }
+                    if account
+                      @host.account = account
+
+                      ext = File.basename(account.avatar_uri).split(".").last
+                      path = "#{CACHE_PATH}/#{Digest::SHA2.hexdigest(account.avatar_uri)}.#{ext}"
+
+                      unless File.exist?(path)
+                        response = Excon.get(account.avatar_uri)
+
+                        if response.status == 200
+                          File.open(path, "wb") do |f|
+                            f.write(response.body)
+                          end
+                        end
+                      end
+
+                      main_thread_queue << proc { populate_account_info; page(W3DHub::Pages::Games) }
+                    else
+                      # An error occurred, enable  account entry
+                      # FIXME: Show an error message
+                      # NOTE: Too many incorrect entries causes lock out (Unknown duration)
+                      main_thread_queue << proc do
+                        @username.enabled = true
+                        @password.enabled = true
+                        btn.enabled = true
+
+                        @error_label.value = "Incorrect username or password.\nOr too many failed login attempts."
+                      end
+                    end
                   end
                 end
+
+                @error_label = caption "", width: 1.0, text_align: :center, color: 0xff_800000
               end
             end
           end
@@ -52,15 +82,19 @@ class W3DHub
         @host.instance_variable_get(:"@account_container").clear do
           stack(width: 0.7, height: 1.0) do
             # background 0xff_222222
-            tagline "<b>#{@username.value}</b>"
+            tagline "<b>#{@host.account.username}</b>"
 
             flow(width: 1.0) do
               link("Logout", text_size: 16) { depopulate_account_info }
-              link "Profile", text_size: 16
+              link "Profile", text_size: 16 do
+                Launchy.open("https://secure.w3dhub.com/forum/index.php?showuser=#{@host.account.id}")
+              end
             end
           end
 
-          image "#{GAME_ROOT_PATH}/media/ui_icons/singleplayer.png", height: 1.0
+          ext = File.basename(@host.account.avatar_uri).split(".").last
+          path = "#{CACHE_PATH}/#{Digest::SHA2.hexdigest(@host.account.avatar_uri)}.#{ext}"
+          image path, height: 1.0
         end
       end
 
@@ -72,7 +106,9 @@ class W3DHub
 
             flow(width: 1.0) do
               link("Log in", text_size: 16) { page(W3DHub::Pages::Login) }
-              link "Register", text_size: 16
+              link "Register", text_size: 16 do
+                Launchy.open("https://secure.w3dhub.com/forum/index.php?app=core&module=global&section=register")
+              end
             end
           end
         end

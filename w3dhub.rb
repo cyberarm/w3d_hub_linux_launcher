@@ -20,6 +20,7 @@ require_relative "lib/api/service_status"
 require_relative "lib/api/applications"
 require_relative "lib/api/news"
 require_relative "lib/api/server_list_server"
+require_relative "lib/api/account"
 
 # require_relative "lib/game"
 # require_relative "lib/games/renegade"

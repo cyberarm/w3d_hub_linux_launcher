@@ -2,12 +2,12 @@ class W3DHub
   class States
     class Interface < CyberarmEngine::GuiState
       attr_reader :main_thread_queue
-      attr_accessor :refresh_token, :service_status, :applications
+      attr_accessor :account, :service_status, :applications
 
       def setup
         window.show_cursor = true
 
-        @refresh_token = @options[:refresh_token]
+        @account = @options[:account]
         @service_status = @options[:service_status]
         @applications = @options[:applications]
 
@@ -92,7 +92,6 @@ class W3DHub
 
                     button(
                       get_image("#{GAME_ROOT_PATH}/media/ui_icons/import.png"),
-                      enabled: false,
                       tip: "Download Manager",
                       image_height: 1.0,
                       padding_left: 4,
@@ -115,7 +114,9 @@ class W3DHub
 
                     flow(width: 1.0) do
                       link("Log in", text_size: 16) { page(W3DHub::Pages::Login) }
-                      link "Register", text_size: 16
+                      link "Register", text_size: 16 do
+                        Launchy.open("https://secure.w3dhub.com/forum/index.php?app=core&module=global&section=register")
+                      end
                     end
                   end
                 end
