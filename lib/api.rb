@@ -106,6 +106,7 @@ class W3DHub
     #! === Server List API === !#
 
     SERVER_LIST_ENDPOINT = "https://gsh.w3dhub.com"
+    SERVER_LIST_CONNECTION = Excon.new(SERVER_LIST_ENDPOINT, persistent: true, connect_timeout: 15)
     # Method: GET
     # FORMAT: JSON
 
@@ -116,13 +117,25 @@ class W3DHub
     #   id, game, address, port, region, and status:
     #     name, map, maxplayers, numplayers, started (DateTime), and remaining (RenTime)
     # statusLevel = 2 returns:
-    #   id, game, address, port, region, status:
+    #   id, game, address, port, region and
+    #   ...status:
     #     name, map, maxplayers, numplayers, started (DateTime), and remaining (RenTime)
     #   ...teams[]:
     #     id, name, score, kills, deaths
     #   ...players[]:
     #     nick, team (index of teams array), score, kills, deaths
     def self.server_list(level = 1)
+      response = SERVER_LIST_CONNECTION.get(
+        path: "listings/getAll/v2?statusLevel=#{level}",
+        headers: DEFAULT_HEADERS
+      )
+
+      if response.status == 200
+        data = JSON.parse(response.body, symbolize_names: true)
+        return data.map { |hash| ServerListServer.new(hash) }
+      end
+
+      pp response
     end
 
     # /listings/getStatus/v2/:id?statusLevel=#{0-2}

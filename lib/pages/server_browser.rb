@@ -113,23 +113,23 @@ class W3DHub
             server_container = flow(width: 1.0, height: 48, hover: { background: 0xff_555566 }, active: { background: 0xff_555588 }) do
               background 0xff_333333 if i.odd?
 
-              image game_icon(server.hostname), width: 0.08, padding: 4
+              image game_icon(server.game), width: 0.08, padding: 4
 
               stack(width: 0.45, height: 1.0) do
-                inscription "<b>#{server.hostname}</b>"
+                inscription "<b>#{server&.status&.name}</b>"
 
                 flow(width: 1.0, height: 1.0) do
                   inscription "Release", margin_right: 64, text_size: 14
-                  inscription "#{server.country}", text_size: 14
+                  inscription "#{server.region}", text_size: 14
                 end
               end
 
               flow(width: 0.30, height: 1.0) do
-                inscription "#{server.map_name}"
+                inscription "#{server&.status&.map}"
               end
 
               flow(width: 0.1, height: 1.0) do
-                inscription "#{server.player_count}/#{server.max_players}"
+                inscription "#{server&.status&.player_count}/#{server&.status&.max_players}"
               end
 
               case rand(0..478)
@@ -158,8 +158,8 @@ class W3DHub
           stack(width: 1.0, height: 1.0, padding: 8) do
             stack(width: 1.0, height: 0.3) do
               flow(width: 1.0, height: 0.2) do
-                image game_icon(server.hostname), width: 0.05
-                tagline server.hostname, width: 0.949, text_wrap: :none
+                image game_icon(server.game), width: 0.05
+                tagline server.status.name, width: 0.949, text_wrap: :none
               end
 
               stack(width: 1.0, height: 0.25) do
@@ -168,56 +168,56 @@ class W3DHub
 
               stack(width: 1.0, height: 0.55, margin_top: 16) do
                 flow(width: 1.0, height: 0.33) do
-                  inscription "<b>Game</b>", width: 0.4
-                  inscription "#{game_name(server.hostname)} (branch)", width: 0.6
+                  inscription "<b>Game</b>", width: 0.28, text_wrap: :none
+                  inscription "#{game_name(server.game)} (branch)", width: 0.71, text_wrap: :none
                 end
 
                 flow(width: 1.0, height: 0.33) do
-                  inscription "<b>Map</b>", width: 0.4
-                  inscription server.map_name, width: 0.6
+                  inscription "<b>Map</b>", width: 0.28, text_wrap: :none
+                  inscription server.status.map, width: 0.71, text_wrap: :none
                 end
 
                 flow(width: 1.0, height: 0.33) do
-                  inscription "<b>Max Players</b>", width: 0.4
-                  inscription "#{server.max_players}", width: 0.6
+                  inscription "<b>Max Players</b>", width: 0.28, text_wrap: :none
+                  inscription "#{server.status.max_players}", width: 0.71, text_wrap: :none
                 end
               end
             end
 
             flow(width: 1.0, height: 0.05) do
               stack(width: 0.5, height: 1.0) do
-                para "<b>GDI</b>", width: 1.0, text_align: :center
+                para "<b>#{server.status.teams[0].name}</b>", width: 1.0, text_align: :center
               end
 
               stack(width: 0.5, height: 1.0) do
-                para "<b>Nod</b>", width: 1.0, text_align: :center
+                para "<b>#{server.status.teams[1].name}</b>", width: 1.0, text_align: :center
               end
             end
 
             flow(width: 1.0, height: 0.65, scroll: true) do
               stack(width: 0.5) do
-                server.players.select { |ply| ply.team == "GDI" || ply.team == "1" }.each do |player|
+                server.status.players.select { |ply| ply.team == 0 }.each do |player|
                   flow(width: 1.0, height: 18) do
                     stack(width: 0.6, height: 1.0) do
-                      inscription player.name, text_size: 14
+                      inscription player.nick, text_size: 14, text_wrap: :none
                     end
 
                     stack(width: 0.4, height: 1.0) do
-                      inscription "#{player.score}", text_size: 14, width: 1.0, text_align: :right
+                      inscription "#{player.score}", text_size: 14, width: 1.0, text_align: :right, text_wrap: :none
                     end
                   end
                 end
               end
 
               stack(width: 0.5, border_thickness_left: 2, border_color_left: 0xff_000000) do
-                server.players.select { |ply| ply.team == "Nod" || ply.team == "0" }.each do |player|
+                server.status.players.select { |ply| ply.team == 1 }.each do |player|
                   flow(width: 1.0, height: 18) do
                     stack(width: 0.6, height: 1.0) do
-                      inscription player.name, text_size: 14
+                      inscription player.nick, text_size: 14, text_wrap: :none
                     end
 
                     stack(width: 0.4, height: 1.0) do
-                      inscription "#{player.score}", text_size: 14, width: 1.0, text_align: :right
+                      inscription "#{player.score}", text_size: 14, width: 1.0, text_align: :right, text_wrap: :none
                     end
                   end
                 end
@@ -229,13 +229,12 @@ class W3DHub
 
       def fetch_server_list
         Thread.new do
-          response = Excon.get("https://api.cncnet.org/renegade?timeleft=&_players=1&website=")
-
           begin
-            array = JSON.parse(response.body, symbolize_names: true)
+            list = Api.server_list(2)
 
-            if array.size.positive?
-              process_response(array)
+            if list
+              @@server_list = list.sort_by! { |s| s&.status&.players.size }.reverse
+
 
               main_thread_queue << proc { populate_server_list }
             end
@@ -247,64 +246,19 @@ class W3DHub
         end
       end
 
-      def process_response(array)
-        servers = []
-
-        array.each do |server_data|
-          players = []
-
-          server_data[:players].each do |player_data|
-            players << RenegadePlayer.new(
-              player_data[:name],
-              player_data[:team],
-              player_data[:score],
-              player_data[:kills],
-              player_data[:deaths],
-              player_data[:ping]
-            )
-          end
-
-          servers << RenegadeServer.new(
-            server_data[:country],
-            server_data[:countrycode],
-            server_data[:timeleft],
-            server_data[:ip],
-            Integer(server_data[:hostport]),
-            server_data[:hostname],
-            server_data[:mapname],
-            server_data[:website],
-            Integer(server_data[:numplayers]),
-            Integer(server_data[:maxplayers]),
-            server_data[:password] != "0",
-            players
-          )
-        end
-
-        @@server_list = servers.sort_by! { |s| s.player_count }.reverse
+      def game_icon(game)
+        "#{GAME_ROOT_PATH}/media/icons/#{game.nil? ? 'ren' : game}.png"
       end
 
-      def game_icon(hostname)
-        if hostname.include?("[W3DHub] Interim Apex")
-          "#{GAME_ROOT_PATH}/media/icons/ia.png"
-        elsif hostname.include?("[W3DHub] APB")
-          "#{GAME_ROOT_PATH}/media/icons/apb.png"
-        elsif hostname.include?("[W3DHub] TSR")
-          "#{GAME_ROOT_PATH}/media/icons/tsr.png"
-        elsif hostname.include?("Expansive Civilian Warfare")
-          "#{GAME_ROOT_PATH}/media/icons/ecw.png"
-        else
-          "#{GAME_ROOT_PATH}/media/icons/ren.png"
-        end
-      end
-
-      def game_name(hostname)
-        if hostname.include?("[W3DHub] Interim Apex")
+      def game_name(game)
+        case game
+        when "ia"
           "Interim Apex"
-        elsif hostname.include?("[W3DHub] APB")
+        when "apb"
           "Red Alert: A Path Beyond"
-        elsif hostname.include?("[W3DHub] TSR")
+        when "tsr"
           "Tiberian Sun: Reborn"
-        elsif hostname.include?("Expansive Civilian Warfare")
+        when "ecw"
           "Expansive Civilian Warfare"
         else
           "C&C Renegade"
