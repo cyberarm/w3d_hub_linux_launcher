@@ -28,8 +28,8 @@ class W3DHub
           @studio_id = @data[:"studio-id"]
 
            # TODO: Do processing
-          @channels = @data[:channels]
-          @web_links = @data[:"web-links"]
+          @channels = @data[:channels].map { |channel| Channel.new(channel) }
+          @web_links = @data[:"web-links"]&.map { |link| WebLink.new(link) } || []
           @extended_data = @data[:"extended-data"]
 
           color = @data[:"extended-data"].find { |h| h[:name] == "colour" }[:value].sub("#", "")
@@ -38,6 +38,8 @@ class W3DHub
         end
 
         class Channel
+          attr_reader :id, :name, :user_level, :current_version
+
           def initialize(hash)
             @data = hash
 

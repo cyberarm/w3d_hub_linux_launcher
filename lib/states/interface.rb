@@ -92,6 +92,7 @@ class W3DHub
 
                     button(
                       get_image("#{GAME_ROOT_PATH}/media/ui_icons/import.png"),
+                      enabled: false,
                       tip: "Download Manager",
                       image_height: 1.0,
                       padding_left: 4,

@@ -76,6 +76,17 @@ class W3DHub
     # Client requests news for a specific application/game e.g.: data={"category":"ia"}
     # Response is a JSON hash with a "highlighted" and "news" keys; the "news" on seems to be the desired one
     def self.news(category)
+      response = W3DHUB_API_CONNECTION.post(
+        path: "apis/w3dhub/1/get-news",
+        headers: DEFAULT_HEADERS.merge({"Content-Type": "application/x-www-form-urlencoded"}),
+        body: "data=#{JSON.dump({category: category})}"
+      )
+
+      if response.status == 200
+        News.new(response.body)
+      else
+        false
+      end
     end
 
     # Downloading games

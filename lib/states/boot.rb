@@ -50,28 +50,30 @@ class W3DHub
           )
         end
 
-        send(:"#{@tasks.keys[@task_index]}") if @tasks.dig(@tasks.keys[@task_index], :complete) == false
+        if @tasks.dig(@tasks.keys[@task_index], :started) == false
+          p @tasks.keys[@task_index]
+          @tasks[@tasks.keys[@task_index]][:started] = true
+
+          send(:"#{@tasks.keys[@task_index]}")
+        end
 
         @task_index += 1 if @tasks.dig(@tasks.keys[@task_index], :complete)
       end
 
       def refresh_user_token
-        @tasks[:refresh_user_token][:started] = true
         @tasks[:refresh_user_token][:complete] = true
 
         @refresh_token = nil
       end
 
       def service_status
-        @tasks[:service_status][:started] = true
-
         Thread.new do
           @service_status = Api.service_status
 
-          if service_status
-            if !service_status.authentication? || !service_status.package_download?
+          if @service_status
+            if !@service_status.authentication? || !@service_status.package_download?
               # FIXME: MAIN THREAD!
-              @status_label.value = "Authentication is #{service_status.authentication? ? 'Okay' : 'Down'}. Package Download is #{service_status.package_download? ? 'Okay' : 'Down'}."
+              @status_label.value = "Authentication is #{@service_status.authentication? ? 'Okay' : 'Down'}. Package Download is #{@service_status.package_download? ? 'Okay' : 'Down'}."
             end
 
             @tasks[:service_status][:complete] = true
@@ -85,19 +87,13 @@ class W3DHub
       def applications
         @status_label.value = "Checking for updates..."
 
-        warn "ALREADY STARTED APPLICATIONS!!!" if @tasks[:applications][:started]
-
-        return if @tasks[:applications][:started]
-
-        @tasks[:applications][:started] = true
-
         Thread.new do
           @applications = Api.applications
 
-          if applications
-            pp applications.games.first
-
+          if @applications
             @tasks[:applications][:complete] = true
+          else
+            # FIXME: Failed to retreive!
           end
         end
       end

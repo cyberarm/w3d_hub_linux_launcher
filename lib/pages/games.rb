@@ -3,7 +3,7 @@ class W3DHub
     class Games < Page
       def setup
         @@game_news ||= {}
-        @focused_game ||= W3DHub::Game.games.first
+        @focused_game ||= @host.applications.games.first
 
         body.clear do
           # Games List
@@ -15,7 +15,7 @@ class W3DHub
           end
         end
 
-        populate_game_page(W3DHub::Game.games.first)
+        populate_game_page(@host.applications.games.first)
         populate_games_list
       end
 
@@ -23,17 +23,17 @@ class W3DHub
         @games_list_container.clear do
           background 0xff_121920
 
-          W3DHub::Game.games.each do |game|
+          @host.applications.games.each do |game|
             selected = game == @focused_game
 
             game_button = stack(width: 1.0, border_thickness_left: 4,
                                 border_color_left: selected ? 0xff_00acff : 0x00_000000, hover: { background: 0xff_444444 },
                                 padding_top: 4, padding_bottom: 4) do
-              background game.background_color if selected
+              background game.color if selected
 
               flow(width: 1.0, height: 48) do
                 stack(width: 0.3)
-                image game.icon, height: 48
+                image "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png", height: 48
               end
               inscription game.name, width: 1.0, text_align: :center
             end
@@ -54,27 +54,39 @@ class W3DHub
         @focused_game = game
 
         @game_page_container.clear do
-          background game.background_color
+          background game.color
 
           # Release channel
           flow(width: 1.0, height: 0.03) do
             # background 0xff_444411
 
-            inscription "Release"
+            game.channels.each do |channel|
+              button "#{channel.name}", text_size: 14, padding_top: 2, padding_bottom: 2, padding_left: 4, padding_right: 4
+            end
           end
 
           # Game Stuff
           flow(width: 1.0, height: 0.89) do
             # background 0xff_9999ff
 
-            # Gane options
+            # Game options
             stack(width: 0.25, height: 1.0, padding: 8) do
               # background 0xff_550055
 
-              game.menu_items.each do |item|
+              # TODO: Show links for managing game install
+              # game.menu_items.each do |item|
+              #   flow(width: 1.0, height: 22, margin_bottom: 8) do
+              #     image item.image, width: 0.11
+              #     link item.label, text_size: 18
+              #   end
+              # end
+
+              game.web_links.each do |item|
                 flow(width: 1.0, height: 22, margin_bottom: 8) do
-                  image item.image, width: 0.11
-                  link item.label, text_size: 18
+                  image EMPTY_IMAGE, width: 0.11
+                  link item.name, text_size: 18 do
+                    Launchy.open(item.uri)
+                  end
                 end
               end
             end
@@ -89,15 +101,20 @@ class W3DHub
           flow(width: 1.0, height: 0.08) do
             # background 0xff_551100
 
-            game.play_items.each do |item|
-              button "<b>#{item.label}</b>", margin_left: 24 do
-                item.block&.call(game)
-              end
-            end
+            # TODO: Determine if game is installed or not and show apporpiante options ["Play Now" and "Single Player", "Install" and "Import"]
+            # game.play_items.each do |item|
+            #   button "<b>#{item.label}</b>", margin_left: 24 do
+            #     item.block&.call(game)
+            #   end
+            # end
+            button "<b>Install</b>", margin_left: 24
+            button "<b>Import</b>", margin_left: 24
+            button "<b>Play Now</b>", margin_left: 24
+            button "<b>Single Player</b>", margin_left: 24
           end
         end
 
-        unless @@game_news[game.slot]
+        unless @@game_news[game.id]
           Thread.new do
             fetch_game_news(game)
             main_thread_queue << proc { populate_game_news(game) }
@@ -112,42 +129,57 @@ class W3DHub
       end
 
       def fetch_game_news(game)
-        feed_uri = Excon.get(
-          game.news_feed,
-          headers: {
-            "User-Agent" => "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0",
-            "Accept" => "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-            "Accept-Encoding" => "deflate",
-            "Accept-Language" => "en-US,en;q=0.5",
-            "Host" => "w3dhub.com",
-            "DNT" => "1"
-          }
-        )
+        news = Api.news(game.id)
 
-        @@game_news[game.slot] = RSS::Parser.parse(feed_uri.body) if feed_uri.status == 200
+        if news
+          news.items[0..9].each do |item|
+            # Cache Image
+            ext = File.basename(item.image).split(".").last
+            path = "#{CACHE_PATH}/#{Digest::SHA2.hexdigest(item.image)}.#{ext}"
+
+            next if File.exist?(path)
+
+            response = Excon.get(item.image)
+
+            if response.status == 200
+              File.open(path, "wb") do |f|
+                f.write(response.body)
+              end
+            end
+          end
+
+          @@game_news[game.id] = news
+        end
       end
 
       def populate_game_news(game)
         return unless @focused_game == game
 
-        if (feed = @@game_news[game.slot])
+        if (feed = @@game_news[game.id])
           @game_news_container.clear do
-            feed.items.sort_by { |i| i.pubDate }.reverse[0..9].each do |item|
+            feed.items.sort_by { |i| i.timestamp }.reverse[0..9].each do |item|
               flow(width: 0.5, height: 128, margin: 4) do
                 # background 0x88_000000
 
-                image game.icon, width: 0.4, padding: 4
+                ext = File.basename(item.image).split(".").last
+                path = "#{CACHE_PATH}/#{Digest::SHA2.hexdigest(item.image)}.#{ext}"
+
+                if File.exist?(path)
+                  image path, width: 0.4, padding: 4
+                else
+                  image BLACK_IMAGE, width: 0.4, padding: 4
+                end
 
                 stack(width: 0.6, height: 1.0) do
                   stack(width: 1.0, height: 112) do
                     para "<b>#{item.title}</b>"
-                    inscription "#{Sanitize.fragment(item.description[0...180]).strip}"
+                    inscription "#{item.blurb.strip[0..180]}"
                   end
 
                   flow(width: 1.0) do
-                    inscription item.pubDate.strftime("%Y-%m-%d"), width: 0.5
+                    inscription item.timestamp.strftime("%Y-%m-%d"), width: 0.5
                     link "Read More", width: 0.5, text_align: :right, text_size: 14 do
-                      Launchy.open(item.link)
+                      Launchy.open(item.uri)
                     end
                   end
                 end
