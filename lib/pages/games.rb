@@ -61,7 +61,7 @@ class W3DHub
             # background 0xff_444411
 
             game.channels.each do |channel|
-              button "#{channel.name}", text_size: 14, padding_top: 2, padding_bottom: 2, padding_left: 4, padding_right: 4
+              button "#{channel.name}", text_size: 14, padding_top: 2, padding_bottom: 2, padding_left: 4, padding_right: 4, margin: 0, margin_right: 4
             end
           end
 
@@ -81,9 +81,30 @@ class W3DHub
               #   end
               # end
 
+              if window.application_manager.installed?(game.id)
+                Hash.new.tap { |hash|
+                  hash["Game Settings"] = { icon: "gear", block: proc { window.application_manager.settings(game.id) } }
+                  if game.id != "ren"
+                    hash["Repair Installation"] = { icon: "wrench", block: proc { window.application_manager.repair(game.id) } }
+                    hash["Uninstall"] = { icon: "trashCan", block: proc { window.application_manager.uninstall(game.id) } }
+                  end
+                  hash["Install Folder"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, :installation) } }
+                  hash["User Data Folder"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, :user_data) } }
+                  hash["View Screenshots"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, :screenshots) } }
+                }.each do |key, hash|
+                  flow(width: 1.0, height: 22, margin_bottom: 8) do
+                    image "#{GAME_ROOT_PATH}/media/ui_icons/#{hash[:icon]}.png", width: 0.11 if hash[:icon]
+                    image EMPTY_IMAGE, width: 0.11 unless hash[:icon]
+                    link key, text_size: 18 do
+                      hash[:block]&.call
+                    end
+                  end
+                end
+              end
+
               game.web_links.each do |item|
                 flow(width: 1.0, height: 22, margin_bottom: 8) do
-                  image EMPTY_IMAGE, width: 0.11
+                  image "#{GAME_ROOT_PATH}/media/ui_icons/share1.png", width: 0.11
                   link item.name, text_size: 18 do
                     Launchy.open(item.uri)
                   end
@@ -107,10 +128,20 @@ class W3DHub
             #     item.block&.call(game)
             #   end
             # end
-            button "<b>Install</b>", margin_left: 24
-            button "<b>Import</b>", margin_left: 24
-            button "<b>Play Now</b>", margin_left: 24
-            button "<b>Single Player</b>", margin_left: 24
+            if window.application_manager.installed?(game.id)
+              button "<b>Play Now</b>", margin_left: 24
+              button "<b>Single Player</b>", margin_left: 24
+            else
+              unless game.id == "ren"
+                button "<b>Install</b>", margin_left: 24 do
+                  window.application_manager.install(game.id)
+                end
+              end
+
+              button "<b>Import</b>", margin_left: 24 do
+                window.application_manager.import(game.id, "?")
+              end
+            end
           end
         end
 
@@ -133,20 +164,6 @@ class W3DHub
 
         if news
           news.items[0..9].each do |item|
-            # Cache Image
-            # ext = File.basename(item.image).split(".").last
-            # path = "#{CACHE_PATH}/#{Digest::SHA2.hexdigest(item.image)}.#{ext}"
-
-            # next if File.exist?(path)
-
-            # response = Excon.get(item.image)
-
-            # if response.status == 200
-            #   File.open(path, "wb") do |f|
-            #     f.write(response.body)
-            #   end
-            # end
-
             Cache.fetch(item.image)
           end
 

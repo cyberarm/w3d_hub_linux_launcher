@@ -163,7 +163,7 @@ class W3DHub
               end
 
               stack(width: 1.0, height: 0.25) do
-                button "<b>Join Server</b>"
+                button "<b>Join Server</b>", enabled: window.application_manager.installed?(server.game)
               end
 
               stack(width: 1.0, height: 0.55, margin_top: 16) do

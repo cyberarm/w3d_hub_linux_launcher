@@ -16,6 +16,7 @@ require_relative "lib/version"
 require_relative "lib/window"
 require_relative "lib/cache"
 require_relative "lib/settings"
+require_relative "lib/application_manager"
 require_relative "lib/states/boot"
 require_relative "lib/states/interface"
 
@@ -26,14 +27,6 @@ require_relative "lib/api/news"
 require_relative "lib/api/server_list_server"
 require_relative "lib/api/account"
 
-# require_relative "lib/game"
-# require_relative "lib/games/renegade"
-# require_relative "lib/games/expansive_civilian_warfare"
-# require_relative "lib/games/interim_apex"
-# require_relative "lib/games/ra_a_path_beyond"
-# require_relative "lib/games/ts_reborn"
-# W3DHub::Game.load_games
-
 require_relative "lib/page"
 require_relative "lib/pages/games"
 require_relative "lib/pages/server_browser"
@@ -41,8 +34,5 @@ require_relative "lib/pages/community"
 require_relative "lib/pages/login"
 require_relative "lib/pages/settings"
 require_relative "lib/pages/download_manager"
-
-# require_relative "lib/renegade_server"
-# require_relative "lib/renegade_player"
 
 W3DHub::Window.new(width: 980, height: 720, borderless: false).show

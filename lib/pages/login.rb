@@ -87,9 +87,7 @@ class W3DHub
             end
           end
 
-          ext = File.basename(@host.account.avatar_uri).split(".").last
-          path = "#{CACHE_PATH}/#{Digest::SHA2.hexdigest(@host.account.avatar_uri)}.#{ext}"
-          image path, height: 1.0
+          image Cache.path(@host.account.avatar_uri), height: 1.0
         end
       end
 

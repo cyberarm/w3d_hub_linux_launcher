@@ -110,7 +110,7 @@ class W3DHub
                       page(W3DHub::Pages::DownloadManager)
                     end
 
-                    inscription "Version 0.14.0.0", margin_left: 16
+                    inscription "Version #{W3DHub::VERSION}", margin_left: 16
                   end
                 end
 
