@@ -24,7 +24,32 @@ class W3DHub
     #
     # On a failed login the service responds with:
     # {"error":"login-failed"}
-    def self.user_refresh_token(refresh_token)
+    def self.refresh_user_login(refresh_token)
+      response = W3DHUB_API_CONNECTION.post(
+        path: "apis/launcher/1/user-login",
+        headers: DEFAULT_HEADERS.merge({"Content-Type": "application/x-www-form-urlencoded"}),
+        body: "data=#{JSON.dump({refreshToken: refresh_token})}"
+      )
+
+      if response.status == 200
+        user_data = JSON.parse(response.body, symbolize_names: true)
+
+        return false if user_data[:error]
+
+        user_details = W3DHUB_API_CONNECTION.post(
+          path: "apis/w3dhub/1/get-user-details",
+          headers: DEFAULT_HEADERS.merge({"Content-Type": "application/x-www-form-urlencoded"}),
+          body: "data=#{JSON.dump({ id: user_data[:userid] })}"
+        )
+
+        if user_details.status == 200
+          user_details_data = JSON.parse(user_details.body, symbolize_names: true)
+        end
+
+        return Account.new(user_data, user_details_data)
+      else
+        false
+      end
     end
 
     # See #user_refresh_token

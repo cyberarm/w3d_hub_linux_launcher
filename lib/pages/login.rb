@@ -41,24 +41,14 @@ class W3DHub
 
                     if account
                       @host.account = account
+                      window.settings[:account][:refresh_token] = account.refresh_token
+                      window.settings.save_settings
 
-                      ext = File.basename(account.avatar_uri).split(".").last
-                      path = "#{CACHE_PATH}/#{Digest::SHA2.hexdigest(account.avatar_uri)}.#{ext}"
-
-                      unless File.exist?(path)
-                        response = Excon.get(account.avatar_uri)
-
-                        if response.status == 200
-                          File.open(path, "wb") do |f|
-                            f.write(response.body)
-                          end
-                        end
-                      end
+                      Cache.fetch(account.avatar_uri)
 
                       main_thread_queue << proc { populate_account_info; page(W3DHub::Pages::Games) }
                     else
                       # An error occurred, enable  account entry
-                      # FIXME: Show an error message
                       # NOTE: Too many incorrect entries causes lock out (Unknown duration)
                       main_thread_queue << proc do
                         @username.enabled = true
@@ -75,6 +65,11 @@ class W3DHub
               end
             end
           end
+        end
+
+        if @host.account
+          populate_account_info
+          page(W3DHub::Pages::Games)
         end
       end
 
@@ -99,6 +94,9 @@ class W3DHub
       end
 
       def depopulate_account_info
+        window.settings[:account][:refresh_token] = nil
+        window.settings.save_settings
+
         @host.instance_variable_get(:"@account_container").clear do
           stack(width: 0.7, height: 1.0) do
             # background 0xff_222222

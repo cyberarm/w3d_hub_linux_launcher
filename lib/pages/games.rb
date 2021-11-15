@@ -134,18 +134,20 @@ class W3DHub
         if news
           news.items[0..9].each do |item|
             # Cache Image
-            ext = File.basename(item.image).split(".").last
-            path = "#{CACHE_PATH}/#{Digest::SHA2.hexdigest(item.image)}.#{ext}"
+            # ext = File.basename(item.image).split(".").last
+            # path = "#{CACHE_PATH}/#{Digest::SHA2.hexdigest(item.image)}.#{ext}"
 
-            next if File.exist?(path)
+            # next if File.exist?(path)
 
-            response = Excon.get(item.image)
+            # response = Excon.get(item.image)
 
-            if response.status == 200
-              File.open(path, "wb") do |f|
-                f.write(response.body)
-              end
-            end
+            # if response.status == 200
+            #   File.open(path, "wb") do |f|
+            #     f.write(response.body)
+            #   end
+            # end
+
+            Cache.fetch(item.image)
           end
 
           @@game_news[game.id] = news
@@ -161,8 +163,7 @@ class W3DHub
               flow(width: 0.5, height: 128, margin: 4) do
                 # background 0x88_000000
 
-                ext = File.basename(item.image).split(".").last
-                path = "#{CACHE_PATH}/#{Digest::SHA2.hexdigest(item.image)}.#{ext}"
+                path = Cache.path(item.image)
 
                 if File.exist?(path)
                   image path, width: 0.4, padding: 4

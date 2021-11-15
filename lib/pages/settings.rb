@@ -14,7 +14,7 @@ class W3DHub
                 para "<b>App Install Folder</b>", width: 0.249
 
                 stack(width: 0.75, height: 1.0) do
-                  edit_line "C:\\Program Files (x86)\\W3D Hub", width: 1.0
+                  edit_line window.settings[:app_install_dir], width: 1.0
                   inscription "The folder into which new games and apps will be installed by the launcher"
                 end
               end
@@ -23,7 +23,7 @@ class W3DHub
                 para "<b>Package Cache Folder</b>", width: 0.249
 
                 stack(width: 0.75, height: 1.0) do
-                  edit_line "C:\\Program Data\\W3D Hub\\Launcher\\package-cache", width: 1.0
+                  edit_line window.settings[:package_cache_dir], width: 1.0
                   inscription "A folder which will be used to cache downloaded packages used to install games and apps"
                 end
               end
@@ -33,7 +33,9 @@ class W3DHub
             check_box "Enable Automatic Error Reporting", text_size: 16
             inscription "If this is enabled the launcher will automatically report errors to the development team, along with basic information about your machine, such as operating system.", width: 1.0
 
-            button "Save", margin_top: 32
+            button "Save", margin_top: 32 do
+              window.settings.save_settings
+            end
           end
         end
       end

@@ -59,6 +59,13 @@ class W3DHub
             active: {
               background: 0xff_add5ec
             }
+          },
+          ToggleButton: {
+            padding_left: 8,
+            padding_right: 8,
+            width: 18,
+            image_width: 18,
+            checkmark_image: "#{GAME_ROOT_PATH}/media/ui_icons/checkmark.png"
           }
         })
 
@@ -185,7 +192,11 @@ class W3DHub
           end
         end
 
-        page(W3DHub::Pages::Games)
+        if @account
+          page(W3DHub::Pages::Login)
+        else
+          page(W3DHub::Pages::Games)
+        end
       end
 
       def draw

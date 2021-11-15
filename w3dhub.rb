@@ -6,12 +6,16 @@ require "launchy"
 class W3DHub
   GAME_ROOT_PATH = File.expand_path(".", __dir__)
   CACHE_PATH = "#{GAME_ROOT_PATH}/data/cache"
+  SETTINGS_FILE_PATH = "#{GAME_ROOT_PATH}/data/settings.json"
+
   EMPTY_IMAGE = Gosu::Image.from_blob(1, 1)
   BLACK_IMAGE = Gosu::Image.from_blob(1, 1, "\x00\x00\x00\xff")
 end
 
 require_relative "lib/version"
 require_relative "lib/window"
+require_relative "lib/cache"
+require_relative "lib/settings"
 require_relative "lib/states/boot"
 require_relative "lib/states/interface"
 
@@ -38,7 +42,7 @@ require_relative "lib/pages/login"
 require_relative "lib/pages/settings"
 require_relative "lib/pages/download_manager"
 
-require_relative "lib/renegade_server"
-require_relative "lib/renegade_player"
+# require_relative "lib/renegade_server"
+# require_relative "lib/renegade_player"
 
 W3DHub::Window.new(width: 980, height: 720, borderless: false).show

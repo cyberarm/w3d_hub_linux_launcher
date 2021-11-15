@@ -1,7 +1,13 @@
 class W3DHub
   class Window < CyberarmEngine::Window
+    attr_reader :settings
+
     def setup
-      self.caption = "W3D Hub Launcher"
+      self.caption = "#{W3DHub::NAME}"
+
+      @settings = Settings.new
+
+      @settings.save_settings
 
       push_state(W3DHub::States::Boot)
     end
