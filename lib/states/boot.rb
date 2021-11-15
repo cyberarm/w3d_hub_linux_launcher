@@ -42,16 +42,14 @@ class W3DHub
         @progressbar.value = @fraction
 
         if @progressbar.value >= 1.0 && @task_index == @tasks.size
-          push_state(
-            States::Interface,
-            account: @account,
-            service_status: @service_status,
-            applications: @applications
-          )
+          window.account = @account
+          window.service_status = @service_status
+          window.applications = @applications
+
+          push_state(States::Interface)
         end
 
         if @tasks.dig(@tasks.keys[@task_index], :started) == false
-          p @tasks.keys[@task_index]
           @tasks[@tasks.keys[@task_index]][:started] = true
 
           send(:"#{@tasks.keys[@task_index]}")

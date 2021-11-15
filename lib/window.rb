@@ -1,6 +1,7 @@
 class W3DHub
   class Window < CyberarmEngine::Window
     attr_reader :settings, :application_manager
+    attr_accessor :account, :service_status, :applications
 
     def setup
       self.caption = "#{W3DHub::NAME}"

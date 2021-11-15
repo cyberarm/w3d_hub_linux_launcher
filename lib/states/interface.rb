@@ -2,7 +2,6 @@ class W3DHub
   class States
     class Interface < CyberarmEngine::GuiState
       attr_reader :main_thread_queue
-      attr_accessor :account, :service_status, :applications
 
       def setup
         window.show_cursor = true

@@ -1,4 +1,11 @@
-require "cyberarm_engine"
+begin
+  require_relative "../cyberarm_engine/lib/cyberarm_engine"
+rescue LoadError => e
+  puts "Failed to load local cyberarm_engine:"
+  pp e
+
+  require "cyberarm_engine"
+end
 require "digest"
 require "zlib"
 require "launchy"
@@ -17,6 +24,11 @@ require_relative "lib/window"
 require_relative "lib/cache"
 require_relative "lib/settings"
 require_relative "lib/application_manager"
+require_relative "lib/application_manager/task"
+require_relative "lib/application_manager/tasks/installer"
+require_relative "lib/application_manager/tasks/uninstaller"
+require_relative "lib/application_manager/tasks/repairer"
+require_relative "lib/application_manager/tasks/importer"
 require_relative "lib/states/boot"
 require_relative "lib/states/interface"
 

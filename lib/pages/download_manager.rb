@@ -35,7 +35,7 @@ class W3DHub
 
             # Available to download
             stack(width: 1.0, height: 0.8, padding: 8, scroll: true) do
-              @host.applications.games.reject { |g| g.id == "ren" }.each_with_index do |game, i|
+              window.applications.games.reject { |g| g.id == "ren" }.each_with_index do |game, i|
                 flow(width: 1.0, height: 64, padding: 8) do
                   background 0xff_333333 if i.odd?
 

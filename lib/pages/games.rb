@@ -3,7 +3,7 @@ class W3DHub
     class Games < Page
       def setup
         @@game_news ||= {}
-        @focused_game ||= @host.applications.games.first
+        @focused_game ||= window.applications.games.first
 
         body.clear do
           # Games List
@@ -15,7 +15,7 @@ class W3DHub
           end
         end
 
-        populate_game_page(@host.applications.games.first)
+        populate_game_page(window.applications.games.first, window.applications.games.first.channels.first)
         populate_games_list
       end
 
@@ -23,7 +23,7 @@ class W3DHub
         @games_list_container.clear do
           background 0xff_121920
 
-          @host.applications.games.each do |game|
+          window.applications.games.each do |game|
             selected = game == @focused_game
 
             game_button = stack(width: 1.0, border_thickness_left: 4,
@@ -43,14 +43,14 @@ class W3DHub
             end
 
             game_button.subscribe(:clicked_left_mouse_button) do |e|
-              populate_game_page(game)
+              populate_game_page(game, game.channels.first)
               populate_games_list
             end
           end
         end
       end
 
-      def populate_game_page(game)
+      def populate_game_page(game, channel)
         @focused_game = game
 
         @game_page_container.clear do
@@ -60,8 +60,11 @@ class W3DHub
           flow(width: 1.0, height: 0.03) do
             # background 0xff_444411
 
-            game.channels.each do |channel|
-              button "#{channel.name}", text_size: 14, padding_top: 2, padding_bottom: 2, padding_left: 4, padding_right: 4, margin: 0, margin_right: 4
+            puts "Generating..."
+
+            inscription "Channel"
+            list_box items: game.channels.map { |c| c.name }, selected: channel, enabled: game.channels.count > 1, width: 128, padding_left: 4, padding_top: 2, padding_right: 4, padding_bottom: 2, text_size: 16 do |value|
+              populate_game_page(game, game.channels.find{ |c| c.name == value })
             end
           end
 
@@ -81,16 +84,16 @@ class W3DHub
               #   end
               # end
 
-              if window.application_manager.installed?(game.id)
+              if window.application_manager.installed?(game.id, channel.name)
                 Hash.new.tap { |hash|
-                  hash["Game Settings"] = { icon: "gear", block: proc { window.application_manager.settings(game.id) } }
+                  hash["Game Settings"] = { icon: "gear", block: proc { window.application_manager.settings(game.id, channel.name) } }
                   if game.id != "ren"
-                    hash["Repair Installation"] = { icon: "wrench", block: proc { window.application_manager.repair(game.id) } }
-                    hash["Uninstall"] = { icon: "trashCan", block: proc { window.application_manager.uninstall(game.id) } }
+                    hash["Repair Installation"] = { icon: "wrench", block: proc { window.application_manager.repair(game.id, channel.name) } }
+                    hash["Uninstall"] = { icon: "trashCan", block: proc { window.application_manager.uninstall(game.id, channel.name) } }
                   end
-                  hash["Install Folder"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, :installation) } }
-                  hash["User Data Folder"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, :user_data) } }
-                  hash["View Screenshots"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, :screenshots) } }
+                  hash["Install Folder"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, channel.name, :installation) } }
+                  hash["User Data Folder"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, channel.name, :user_data) } }
+                  hash["View Screenshots"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, channel.name, :screenshots) } }
                 }.each do |key, hash|
                   flow(width: 1.0, height: 22, margin_bottom: 8) do
                     image "#{GAME_ROOT_PATH}/media/ui_icons/#{hash[:icon]}.png", width: 0.11 if hash[:icon]
@@ -128,18 +131,18 @@ class W3DHub
             #     item.block&.call(game)
             #   end
             # end
-            if window.application_manager.installed?(game.id)
+            if window.application_manager.installed?(game.id, channel.id)
               button "<b>Play Now</b>", margin_left: 24
               button "<b>Single Player</b>", margin_left: 24
             else
               unless game.id == "ren"
                 button "<b>Install</b>", margin_left: 24 do
-                  window.application_manager.install(game.id)
+                  window.application_manager.install(game.id, channel.name)
                 end
               end
 
               button "<b>Import</b>", margin_left: 24 do
-                window.application_manager.import(game.id, "?")
+                window.application_manager.import(game.id, channel.name, "?")
               end
             end
           end
