@@ -51,11 +51,12 @@ class W3DHub
         file.write(chunk)
 
         block.call(chunk, remaining_bytes, total_bytes)
-        # puts "Remaining: #{remaining_bytes.to_f / total_bytes}%"
+        puts "    Remaining: #{((remaining_bytes.to_f / total_bytes) * 100.0).round}% (#{W3DHub::format_size(total_bytes - remaining_bytes)} / #{W3DHub::format_size(total_bytes)})"
       end
 
-      response = socket.post(
-        path: "apis/launcher/1/get-package",
+      # Create a new connection due to some weirdness somewhere in Excon
+      response = Excon.post(
+        "#{Api::ENDPOINT}/apis/launcher/1/get-package",
         headers: Api::DEFAULT_HEADERS.merge({"Content-Type": "application/x-www-form-urlencoded"}),
         body: "data=#{JSON.dump({ category: category, subcategory: subcategory, name: name, version: version })}",
         response_block: streamer

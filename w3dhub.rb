@@ -10,6 +10,7 @@ require "fileutils"
 require "digest"
 require "rexml"
 require "zlib"
+
 require "launchy"
 
 class W3DHub
@@ -22,6 +23,7 @@ class W3DHub
 end
 
 require_relative "lib/version"
+require_relative "lib/common"
 require_relative "lib/window"
 require_relative "lib/cache"
 require_relative "lib/settings"
