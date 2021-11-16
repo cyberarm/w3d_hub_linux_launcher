@@ -60,10 +60,10 @@ class W3DHub
           flow(width: 1.0, height: 0.03) do
             # background 0xff_444411
 
-            puts "Generating..."
-
             inscription "Channel"
-            list_box items: game.channels.map { |c| c.name }, selected: channel, enabled: game.channels.count > 1, width: 128, padding_left: 4, padding_top: 2, padding_right: 4, padding_bottom: 2, text_size: 16 do |value|
+            list_box(items: game.channels.map { |c| c.name }, choose: channel.name, enabled: game.channels.count > 1,
+                     margin_top: 0, margin_bottom: 0,
+                     width: 128, padding_left: 1, padding_top: 1, padding_right: 1, padding_bottom: 1, text_size: 14) do |value|
               populate_game_page(game, game.channels.find{ |c| c.name == value })
             end
           end

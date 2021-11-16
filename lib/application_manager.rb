@@ -19,7 +19,10 @@ class W3DHub
       # unpack packages
       # install dependencies (e.g. visual C runtime)
 
-      @tasks.push(Installer.new(app_id, channel))
+      installer = Installer.new(app_id, channel)
+
+      @tasks.push(installer)
+      installer.start
     end
 
     def import(app_id, channel, path)

@@ -19,11 +19,5 @@ class W3DHub
 
       super if @application_manager.idle?
     end
-
-    def button_down(id)
-      super
-
-      self.borderless = !self.borderless? if id == Gosu::KB_F7
-    end
   end
 end

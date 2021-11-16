@@ -40,7 +40,7 @@ class W3DHub
                     account = Api.user_login(@username.value, @password.value)
 
                     if account
-                      @host.account = account
+                      window.account = account
                       window.settings[:account][:refresh_token] = account.refresh_token
                       window.settings.save_settings
 
@@ -67,7 +67,7 @@ class W3DHub
           end
         end
 
-        if @host.account
+        if window.account
           populate_account_info
           page(W3DHub::Pages::Games)
         end
@@ -77,17 +77,17 @@ class W3DHub
         @host.instance_variable_get(:"@account_container").clear do
           stack(width: 0.7, height: 1.0) do
             # background 0xff_222222
-            tagline "<b>#{@host.account.username}</b>"
+            tagline "<b>#{window.account.username}</b>"
 
             flow(width: 1.0) do
               link("Logout", text_size: 16) { depopulate_account_info }
               link "Profile", text_size: 16 do
-                Launchy.open("https://secure.w3dhub.com/forum/index.php?showuser=#{@host.account.id}")
+                Launchy.open("https://secure.w3dhub.com/forum/index.php?showuser=#{window.account.id}")
               end
             end
           end
 
-          image Cache.path(@host.account.avatar_uri), height: 1.0
+          image Cache.path(window.account.avatar_uri), height: 1.0
         end
       end
 

@@ -1,19 +1,32 @@
 class W3DHub
   class ApplicationManager
     class Installer < Task
-      def setup
-        add_step("Fetching manifests...", :fetch_manifests)
-        add_step("Building package list...", :build_package_list)
+      def execute_task
+        manifests = fetch_manifests
+        return false if failed?
 
-        add_step("Downloading packages...", :fetch_packages)
-        add_step("Verifying packages...", :verify_packages)
-        add_step("Unpacking packages...", :unpack_packages)
+        packages = build_package_list(manifests)
+        return false if failed?
 
-        add_step("Crushing grapes...", :create_wine_prefix)
+        fetch_packages(packages)
+        return false if failed?
 
-        add_step("Installing dependencies...", :install_dependencies)
+        verify_packages(packages)
+        return false if failed?
 
-        add_step("Completed.", :mark_application_installed)
+        unpack_packages(packages)
+        return false if failed?
+
+        create_wine_prefix
+        return false if failed?
+
+        install_dependencies(packages)
+        return false if failed?
+
+        mark_application_installed
+        return false if failed?
+
+        true
       end
     end
   end

@@ -61,8 +61,6 @@ class W3DHub
                       # Configure
                       # Disable install
                       # Enable Uninstall
-
-                      get
                     end
                   end
                 end

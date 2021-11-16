@@ -10,8 +10,6 @@ class W3DHub
         @release_channel = release_channel
 
         @task_state = :not_started # :not_started, :running, :paused, :halted, :complete, :failed
-        @task_steps = []
-        @task_step_index = 0
 
         @application = window.applications.games.find { |g| g.id == app_id }
         @channel = @application.channels.find { |c| c.name == release_channel }
@@ -31,20 +29,13 @@ class W3DHub
         @task_state = :running
 
         Thread.new do
-          @task_steps.each_with_index do |step, i|
-            break if @task_state == :halted
-
-            @task_step_index = i
-
-            success = step.start
-
-            failure!(step) unless success
-            break unless success
-          end
+          execute_task
 
           @task_state = :complete unless @task_state == :failed
         end
       end
+
+      def execute_task; end
 
       # Suspend operation, if possible
       def pause
@@ -76,69 +67,66 @@ class W3DHub
         @task_failure_reason || ""
       end
 
-      def failure!(step)
+      def fail!(reason = "")
         @task_state = :failed
-        @task_failure_reason = "Failed to complete: \"#{step.name}\" due to an error: #{step.error}"
+        @task_failure_reason = "Failed: #{reason}"
       end
 
       def run_on_main_thread(block)
         window.main_thread_queue << block
       end
 
-      def add_step(name, method, *args)
-        @task_steps << Step.new(name, method, args)
-      end
-
       def fetch_manifests
-        # Do stuff
+        manifests = []
 
-        package_fetch("games", app_id, "manifest.xml", @channel.version)
+        if fetch_manifest("games", app_id, "manifest.xml", @channel.current_version)
+          manifest = load_manifest("games", app_id, "manifest.xml", @channel.current_version)
+          manifests << manifest
+
+          until(manifest.full?)
+            fetch_manifest("games", app_id, "manifest.xml", manifest.base_version)
+            manifest = load_manifest("games", app_id, "manifest.xml", manifest.base_version)
+            manifests << manifest
+          end
+        end
+
+        manifests
       end
 
-      def package_fetch(category, subcategory, package, version)
+      def fetch_manifest(category, subcategory, name, version)
+        # Check for and integrity of local manifest
+        if File.exist?(Cache.package_path(category, subcategory, name, version))
+          package = Api.package_details([{ category: category, subcategory: subcategory, name: name, version: version }])
+          verified = verify_package(package, category, subcategory, name, version)
+
+          # download manifest if not valid
+          package_fetch(category, subcategory, name, version) unless verified
+          true if verified
+        else
+          # download manifest if not cached
+          package_fetch(category, subcategory, name, version)
+        end
       end
 
-      class Step
-        attr_reader :name
+      def package_fetch(category, subcategory, name, version)
+        Api.package(category, subcategory, name, version) do |chunk, remaining_bytes, total_bytes|
+          # Store progress somewhere
+        end
+      end
 
-        def initialize(name, method, args)
-          @name = name
-          @method = method
-          @args = args
-
-          @step_state = :not_started # :not_started, :running, :paused, :halted, :complete, :failed
-          @success = false
+      def verify_package(package, category, subcategory, name, version)
+        digest = Digest::SHA256.new
+        File.open(Cache.package_path(category, subcategory, name, version)) do |f|
+          while (chunk = f.read(1_000_000))
+            digest.update(chunk)
+          end
         end
 
-        def start
-          # do work
-          # ensure that a boolean value is returned
-        ensure
-          @success
-        end
+        digest.hexdigest.upcase == package.checksum.upcase
+      end
 
-        def pause
-        end
-
-        def stop
-        end
-
-        def status
-          nil
-        end
-
-        def progress
-          0.0
-        end
-
-        def total_work
-          1.0
-        end
-
-        # data to pass on to next step(s)
-        def result
-          nil
-        end
+      def load_manifest(category, subcategory, name, version)
+        Manifest.new(category, subcategory, name, version)
       end
     end
   end

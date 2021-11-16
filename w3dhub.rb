@@ -6,7 +6,9 @@ rescue LoadError => e
 
   require "cyberarm_engine"
 end
+require "fileutils"
 require "digest"
+require "rexml"
 require "zlib"
 require "launchy"
 
@@ -24,6 +26,7 @@ require_relative "lib/window"
 require_relative "lib/cache"
 require_relative "lib/settings"
 require_relative "lib/application_manager"
+require_relative "lib/application_manager/manifest"
 require_relative "lib/application_manager/task"
 require_relative "lib/application_manager/tasks/installer"
 require_relative "lib/application_manager/tasks/uninstaller"
@@ -38,6 +41,7 @@ require_relative "lib/api/applications"
 require_relative "lib/api/news"
 require_relative "lib/api/server_list_server"
 require_relative "lib/api/account"
+require_relative "lib/api/package"
 
 require_relative "lib/page"
 require_relative "lib/pages/games"

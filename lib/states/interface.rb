@@ -80,36 +80,45 @@ class W3DHub
               @app_info_container = flow(width: 1.0, height: 0.65) do
                 # background 0xff_8855ff
 
-                stack(width: 0.6749, height: 1.0) do
+                stack(width: 0.75, height: 1.0) do
                   title "<b>W3D Hub Launcher</b>", height: 0.5
                   flow(width: 1.0, height: 0.5) do
-                    button(
-                      get_image("#{GAME_ROOT_PATH}/media/ui_icons/gear.png"),
-                      tip: "W3D Hub Launcher Settings",
-                      image_height: 1.0,
-                      padding_left: 4,
-                      padding_top: 4,
-                      padding_right: 4,
-                      padding_bottom: 4,
-                      margin_left: 32
-                    ) do
-                      page(W3DHub::Pages::Settings)
+                    flow(width: 0.18, height: 1.0) do
+                      button(
+                        get_image("#{GAME_ROOT_PATH}/media/ui_icons/gear.png"),
+                        tip: "W3D Hub Launcher Settings",
+                        image_height: 1.0,
+                        padding_left: 4,
+                        padding_top: 4,
+                        padding_right: 4,
+                        padding_bottom: 4,
+                        margin_left: 32
+                      ) do
+                        page(W3DHub::Pages::Settings)
+                      end
+
+                      button(
+                        get_image("#{GAME_ROOT_PATH}/media/ui_icons/import.png"),
+                        tip: "Download Manager",
+                        image_height: 1.0,
+                        padding_left: 4,
+                        padding_top: 4,
+                        padding_right: 4,
+                        padding_bottom: 4,
+                        margin_left: 4
+                      ) do
+                        page(W3DHub::Pages::DownloadManager)
+                      end
                     end
 
-                    button(
-                      get_image("#{GAME_ROOT_PATH}/media/ui_icons/import.png"),
-                      tip: "Download Manager",
-                      image_height: 1.0,
-                      padding_left: 4,
-                      padding_top: 4,
-                      padding_right: 4,
-                      padding_bottom: 4,
-                      margin_left: 4
-                    ) do
-                      page(W3DHub::Pages::DownloadManager)
-                    end
+                    stack(width: 0.77, height: 1.0, margin_left: 16) do
+                      flow(width: 1.0, height: 0.65) do
+                        inscription "Downloading Expansive Civilian Warfare...", width: 0.7, text_wrap: :none
+                        inscription "460.2 MB / 254.5 GB", width: 0.3, text_align: :right, text_wrap: :none
+                      end
 
-                    inscription "Version #{W3DHub::VERSION}", margin_left: 16
+                      progress fraction: 0.4, height: 2, width: 1.0, fraction_background: 0xff_00acff, border_thickness: 0
+                    end
                   end
                 end
 
@@ -124,39 +133,6 @@ class W3DHub
                         Launchy.open("https://secure.w3dhub.com/forum/index.php?app=core&module=global&section=register")
                       end
                     end
-                  end
-                end
-
-                flow(width: 0.075, height: 1.0) do
-                  button(
-                    get_image("#{GAME_ROOT_PATH}/media/ui_icons/minus.png"),
-                    image_width: 16,
-                    padding_left: 4,
-                    padding_top: 4,
-                    padding_right: 4,
-                    padding_bottom: 4,
-                    margin_left: 4
-                  ) do
-                    # window.minimize
-                  end
-
-                  button(
-                    get_image("#{GAME_ROOT_PATH}/media/ui_icons/cross.png"),
-                    image_width: 16,
-                    padding_left: 4,
-                    padding_top: 4,
-                    padding_right: 4,
-                    padding_bottom: 4,
-                    margin_left: 4,
-                    background: 0xff_800000,
-                    hover: {
-                      background: 0xff_a00000
-                    },
-                    active: {
-                      background: 0xff_600000
-                    }
-                  ) do
-                    window.close
                   end
                 end
               end
@@ -191,7 +167,7 @@ class W3DHub
           end
         end
 
-        if @account
+        if window.account
           page(W3DHub::Pages::Login)
         else
           page(W3DHub::Pages::Games)

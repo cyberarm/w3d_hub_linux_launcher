@@ -143,14 +143,28 @@ class W3DHub
 
     # /apis/launcher/1/get-package-details
     # client requests package details: data={"packages":[{"category":"games","name":"apb.ico","subcategory":"apb","version":""}]}
-    def self.package_details()
+    def self.package_details(packages)
+      response = W3DHUB_API_CONNECTION.post(
+        path: "apis/launcher/1/get-package-details",
+        headers: DEFAULT_HEADERS.merge({"Content-Type": "application/x-www-form-urlencoded"}),
+        body: "data=#{JSON.dump({ packages: packages })}"
+      )
+
+      if response.status == 200
+        hash = JSON.parse(response.body, symbolize_names: true)
+        packages = hash[:packages].map { |pkg| Package.new(pkg) }
+        packages.first if packages.size == 1
+      else
+        false
+      end
     end
 
     # /apis/launcher/1/get-package
     # client requests package: data={"category":"games","name":"ECW_Asteroids.zip","subcategory":"ecw","version":"1.0.0.0"}
     #
-    # server responds with download bytes
-    def self.package(category, name, subcategory, version, &block)
+    # server responds with download bytes, probably supports chunked download and resume
+    def self.package(category, subcategory, name, version, &block)
+      Cache.fetch_package(W3DHUB_API_CONNECTION, category, subcategory, name, version, block)
     end
 
     #! === Server List API === !#
