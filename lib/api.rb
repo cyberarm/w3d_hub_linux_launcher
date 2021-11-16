@@ -153,7 +153,8 @@ class W3DHub
       if response.status == 200
         hash = JSON.parse(response.body, symbolize_names: true)
         packages = hash[:packages].map { |pkg| Package.new(pkg) }
-        packages.first if packages.size == 1
+        return packages.first if packages.size == 1
+        return packages
       else
         false
       end

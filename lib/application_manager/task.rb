@@ -95,9 +95,56 @@ class W3DHub
       end
 
       def build_package_list(manifests)
+        packages = []
+
+        manifests.reverse.each do |manifest|
+          puts "#{manifest.game}-#{manifest.type}: #{manifest.version} (#{manifest.base_version})"
+
+          manifest.files.each do |file|
+            next if file.removed? # No package data
+
+            next if packages.detect do |pkg|
+              pkg.category == "games" &&
+              pkg.subcategory == @app_id &&
+              pkg.name == file.package &&
+              pkg.version == manifest.version
+            end
+
+            packages.push(Api::Package.new(
+                { category: "games", subcategory: @app_id, name: file.package, version: manifest.version }
+              )
+            )
+          end
+
+          # TODO: Dependencies
+        end
+
+        packages
       end
 
       def fetch_packages(packages)
+        hashes = packages.map do |pkg|
+          {
+            category: pkg.category,
+            subcategory: pkg.subcategory,
+            name: "#{pkg.name}.zip",
+            version: pkg.version
+          }
+        end
+
+        package_details = Api.package_details(hashes)
+
+        if package_details
+          package_details.each do |pkg|
+            unless verify_package(pkg, pkg.category, pkg.subcategory, pkg.name, pkg.version)
+              package_fetch(pkg.category, pkg.subcategory, pkg.name, pkg.version)
+            end
+          end
+        else
+          puts "FAILED!"
+          pp package_details
+        end
+
       end
 
       def verify_packages(packages)
@@ -132,15 +179,29 @@ class W3DHub
       end
 
       def package_fetch(category, subcategory, name, version)
+        puts "Downloading: #{category}:#{subcategory}:#{name}-#{version}"
+
         Api.package(category, subcategory, name, version) do |chunk, remaining_bytes, total_bytes|
           # Store progress somewhere
+          # Kernel.puts "#{name}-#{version}: #{(remaining_bytes.to_f / total_bytes).round}%"
         end
       end
 
       def verify_package(package, category, subcategory, name, version)
+        puts "Verifying: #{category}:#{subcategory}:#{name}-#{version}"
+
         digest = Digest::SHA256.new
-        File.open(Cache.package_path(category, subcategory, name, version)) do |f|
-          while (chunk = f.read(1_000_000))
+        path = Cache.package_path(category, subcategory, name, version)
+
+        return false unless File.exists?(path)
+
+        file_size = File.size(path)
+        puts "    File size: #{file_size}"
+        chunk_size = 128_000_000 if file_size >= 32_000_000
+        chunk_size ||= 32_000_000
+
+        File.open(path) do |f|
+          while (chunk = f.read(32_000_000))
             digest.update(chunk)
           end
         end

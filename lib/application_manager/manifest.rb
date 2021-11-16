@@ -36,13 +36,13 @@ class W3DHub
 
       def parse_dependencies
         @document.root.elements.each("//Dependency") do |element|
-          @files.push(Dependency.new(element))
+          @dependencies.push(Dependency.new(element))
         end
       end
 
-      # TODO: Support patches? Are they still a thing>
+      # TODO: Support patches
       class ManifestFile
-        attr_reader :name, :checksum, :package, :removed_since
+        attr_reader :name, :checksum, :package, :removed_since, :from
 
         def initialize(xml)
           @data = xml
@@ -51,10 +51,21 @@ class W3DHub
           @checksum = @data["checksum"]
           @package = @data["package"]
           @removed_since = @data["removedsince"]
+
+          xml.elements.each("Patch") do |patch|
+            @patch = true
+
+            @from = patch["from"]
+            @package = patch["package"]
+          end
         end
 
         def removed?
           @removed_since
+        end
+
+        def patch?
+          @patch
         end
       end
 
