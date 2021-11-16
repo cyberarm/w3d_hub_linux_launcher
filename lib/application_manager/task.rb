@@ -29,8 +29,9 @@ class W3DHub
         @task_state = :running
 
         Thread.new do
-          execute_task
+          status = execute_task
 
+          @task_state = :failed unless status
           @task_state = :complete unless @task_state == :failed
         end
       end
@@ -91,6 +92,28 @@ class W3DHub
         end
 
         manifests
+      end
+
+      def build_package_list(manifests)
+      end
+
+      def fetch_packages(packages)
+      end
+
+      def verify_packages(packages)
+      end
+
+      def unpack_packages(packages)
+      end
+
+      def create_wine_prefix
+      end
+
+      def install_dependencies(packages)
+      end
+
+      def mark_application_installed
+        puts "#{@app_id} has been installed."
       end
 
       def fetch_manifest(category, subcategory, name, version)

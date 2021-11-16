@@ -86,12 +86,12 @@ class W3DHub
 
     # No application tasks are being done
     def idle?
-      @tasks.empty?
+      !busy?
     end
 
     # Whether some operation is in progress
     def busy?
-      !idle?
+      @tasks.any? { |t| t.state == :running }
     end
   end
 end
