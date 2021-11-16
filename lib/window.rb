@@ -19,5 +19,15 @@ class W3DHub
 
       super if @application_manager.idle?
     end
+
+    def main_thread_queue
+      if current_state.is_a?(W3DHub::States::Interface)
+        current_state.main_thread_queue
+      else
+        warn "Task will not be run for:"
+        warn caller
+        []
+      end
+    end
   end
 end

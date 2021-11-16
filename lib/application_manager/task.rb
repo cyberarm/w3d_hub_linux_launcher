@@ -77,6 +77,27 @@ class W3DHub
         window.main_thread_queue << block
       end
 
+      def update_application_taskbar(message, status, progress)
+        run_on_main_thread(
+          proc do
+            window.current_state.show_application_taskbar
+            window.current_state.update_application_taskbar(message, status, progress)
+          end
+        )
+      end
+
+      def hide_application_taskbar
+        run_on_main_thread(
+          proc do
+            window.current_state.hide_application_taskbar
+          end
+        )
+      end
+
+      ###############
+      # Tasks/Steps #
+      ###############
+
       def fetch_manifests
         manifests = []
 
@@ -135,9 +156,26 @@ class W3DHub
         package_details = Api.package_details(hashes)
 
         if package_details
+          download_queue = []
+
           package_details.each do |pkg|
             unless verify_package(pkg, pkg.category, pkg.subcategory, pkg.name, pkg.version)
-              package_fetch(pkg.category, pkg.subcategory, pkg.name, pkg.version)
+              download_queue << pkg
+            end
+          end
+
+          total_bytes_to_download = download_queue.sum { |pkg| pkg.size }
+          bytes_downloaded = 0
+
+          download_queue.each do |pkg|
+            package_fetch(pkg.category, pkg.subcategory, pkg.name, pkg.version) do |chunk, remaining_bytes, total_bytes|
+              bytes_downloaded += chunk.to_s.length
+
+              update_application_taskbar(
+                "Downloading #{@application.name}...",
+                "#{W3DHub.format_size(bytes_downloaded)} / #{W3DHub.format_size(total_bytes_to_download)}",
+                bytes_downloaded.to_f / total_bytes_to_download
+              )
             end
           end
         else
@@ -163,7 +201,11 @@ class W3DHub
         puts "#{@app_id} has been installed."
       end
 
-      def fetch_manifest(category, subcategory, name, version)
+      #############
+      # Functions #
+      #############
+
+      def fetch_manifest(category, subcategory, name, version, &block)
         # Check for and integrity of local manifest
         if File.exist?(Cache.package_path(category, subcategory, name, version))
           package = Api.package_details([{ category: category, subcategory: subcategory, name: name, version: version }])
@@ -178,16 +220,18 @@ class W3DHub
         end
       end
 
-      def package_fetch(category, subcategory, name, version)
+      def package_fetch(category, subcategory, name, version, &block)
         puts "Downloading: #{category}:#{subcategory}:#{name}-#{version}"
 
         Api.package(category, subcategory, name, version) do |chunk, remaining_bytes, total_bytes|
           # Store progress somewhere
           # Kernel.puts "#{name}-#{version}: #{(remaining_bytes.to_f / total_bytes).round}%"
+
+          block&.call(chunk, remaining_bytes, total_bytes)
         end
       end
 
-      def verify_package(package, category, subcategory, name, version)
+      def verify_package(package, category, subcategory, name, version, &block)
         puts "Verifying: #{category}:#{subcategory}:#{name}-#{version}"
 
         digest = Digest::SHA256.new

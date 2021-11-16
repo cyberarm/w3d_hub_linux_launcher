@@ -144,8 +144,8 @@ class W3DHub
     # /apis/launcher/1/get-package-details
     # client requests package details: data={"packages":[{"category":"games","name":"apb.ico","subcategory":"apb","version":""}]}
     def self.package_details(packages)
-      response = W3DHUB_API_CONNECTION.post(
-        path: "apis/launcher/1/get-package-details",
+      response = Excon.post(
+        "#{ENDPOINT}/apis/launcher/1/get-package-details",
         headers: DEFAULT_HEADERS.merge({"Content-Type": "application/x-www-form-urlencoded"}),
         body: "data=#{JSON.dump({ packages: packages })}"
       )

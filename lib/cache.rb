@@ -57,8 +57,9 @@ class W3DHub
       # Create a new connection due to some weirdness somewhere in Excon
       response = Excon.post(
         "#{Api::ENDPOINT}/apis/launcher/1/get-package",
-        headers: Api::DEFAULT_HEADERS.merge({"Content-Type": "application/x-www-form-urlencoded"}),
+        headers: Api::DEFAULT_HEADERS.merge({ "Content-Type": "application/x-www-form-urlencoded" }),
         body: "data=#{JSON.dump({ category: category, subcategory: subcategory, name: name, version: version })}",
+        chunk_size: 4_000_000,
         response_block: streamer
       )
 

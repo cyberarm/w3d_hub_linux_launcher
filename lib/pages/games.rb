@@ -141,7 +141,7 @@ class W3DHub
                 end
               end
 
-              button "<b>Import</b>", margin_left: 24 do
+              button "<b>Import</b>", margin_left: 24, enabled: false do
                 window.application_manager.import(game.id, channel.name, "?")
               end
             end

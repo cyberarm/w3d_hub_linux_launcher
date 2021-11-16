@@ -65,6 +65,10 @@ class W3DHub
             width: 18,
             image_width: 18,
             checkmark_image: "#{GAME_ROOT_PATH}/media/ui_icons/checkmark.png"
+          },
+          Progress: {
+            fraction_background: 0xff_00acff,
+            border_thickness: 0
           }
         })
 
@@ -111,13 +115,13 @@ class W3DHub
                       end
                     end
 
-                    stack(width: 0.77, height: 1.0, margin_left: 16) do
+                    @application_taskbar_container = stack(width: 0.77, height: 1.0, margin_left: 16) do
                       flow(width: 1.0, height: 0.65) do
-                        inscription "Downloading Expansive Civilian Warfare...", width: 0.7, text_wrap: :none
-                        inscription "460.2 MB / 254.5 GB", width: 0.3, text_align: :right, text_wrap: :none
+                        @application_taskbar_label = inscription "Downloading Expansive Civilian Warfare...", width: 0.65, text_wrap: :none
+                        @application_taskbar_status_label = inscription "460.2 MB / 254.5 GB", width: 0.35, text_align: :right, text_wrap: :none
                       end
 
-                      progress fraction: 0.4, height: 2, width: 1.0, fraction_background: 0xff_00acff, border_thickness: 0
+                      @application_taskbar_progressbar = progress fraction: 0.4, height: 2, width: 1.0
                     end
                   end
                 end
@@ -172,6 +176,8 @@ class W3DHub
         else
           page(W3DHub::Pages::Games)
         end
+
+        hide_application_taskbar
       end
 
       def draw
@@ -219,6 +225,20 @@ class W3DHub
         @page.options = options
         @page.setup
         @page.focus
+      end
+
+      def show_application_taskbar
+        @application_taskbar_container.show
+      end
+
+      def hide_application_taskbar
+        @application_taskbar_container.hide
+      end
+
+      def update_application_taskbar(message, status, progress)
+        @application_taskbar_label.value = message
+        @application_taskbar_status_label.value = status
+        @application_taskbar_progressbar.value = progress.clamp(0.0, 1.0)
       end
     end
   end

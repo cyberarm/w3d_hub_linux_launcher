@@ -27,42 +27,18 @@ class W3DHub
               end
             end
 
-            # UPDATES
-            stack(width: 1.0, height: 0.1) do
-              background 0x44_000000
-              inscription "Something something updates...", width: 1.0, text_align: :center, margin_top: 18
-            end
-
-            # Available to download
-            stack(width: 1.0, height: 0.8, padding: 8, scroll: true) do
+            # Operations
+            stack(width: 1.0, height: 0.9, padding: 8, scroll: true) do
               window.applications.games.reject { |g| g.id == "ren" }.each_with_index do |game, i|
-                flow(width: 1.0, height: 64, padding: 8) do
+                stack(width: 1.0, height: 24, padding: 8) do
                   background 0xff_333333 if i.odd?
 
-                  flow(width: 0.7, height: 1.0) do
-                    image "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png", width: 0.1, margin_right: 8
-
-                    stack(width: 0.9, height: 1.0) do
-                      title game.name
-                      inscription "This is a brief description of the game", width: 1.0
-                    end
+                  flow(width: 1.0, height: 22) do
+                    inscription game.name, width: 0.7, text_wrap: :none
+                    inscription "Pending...", width: 0.3, text_align: :right, text_wrap: :none
                   end
 
-                  flow(width: 0.3, height: 1.0) do
-                    version_selector = list_box items: game.channels.map { |c| c.name }, width: 0.499, enabled: game.channels.count > 1
-                    version_selector.subscribe(:changed) do |item|
-                      p item.value
-                    end
-
-                    button "Install", width: 0.5 do
-                      # Download/verify game-channel manifest
-                      # Download broken/missing files
-                      # Unpack
-                      # Configure
-                      # Disable install
-                      # Enable Uninstall
-                    end
-                  end
+                  progress fraction: rand(0.25..0.8), height: 2, width: 1.0
                 end
               end
             end
