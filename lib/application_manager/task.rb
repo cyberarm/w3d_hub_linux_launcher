@@ -3,7 +3,8 @@ class W3DHub
     class Task
       include CyberarmEngine::Common
 
-      attr_reader :app_id, :release_channel
+      attr_reader :app_id, :release_channel, :application, :channel,
+                  :total_bytes_to_download, :bytes_downloaded, :packages_to_download
 
       def initialize(app_id, release_channel)
         @app_id = app_id
@@ -13,6 +14,10 @@ class W3DHub
 
         @application = window.applications.games.find { |g| g.id == app_id }
         @channel = @application.channels.find { |c| c.name == release_channel }
+
+        @packages_to_download = []
+        @total_bytes_to_download = -1
+        @bytes_downloaded = -1
 
         setup
       end
@@ -25,6 +30,9 @@ class W3DHub
       end
 
       # Start task, inside its own thread
+      # FIXME: Ruby 3 has parallelism now: Use a Ractor to do work on a seperate core to
+      #        prevent the UI for locking up while doing computation heavy work, i.e building
+      #        list of packages to download
       def start
         @task_state = :running
 
@@ -82,6 +90,14 @@ class W3DHub
           proc do
             window.current_state.show_application_taskbar
             window.current_state.update_application_taskbar(message, status, progress)
+          end
+        )
+      end
+
+      def update_download_manager_task(checksum, message, status, progress)
+        run_on_main_thread(
+          proc do
+            window.current_state.update_download_manager_task(checksum, message, status, progress)
           end
         )
       end
@@ -156,25 +172,35 @@ class W3DHub
         package_details = Api.package_details(hashes)
 
         if package_details
-          download_queue = []
+          @packages_to_download = []
 
           package_details.each do |pkg|
             unless verify_package(pkg, pkg.category, pkg.subcategory, pkg.name, pkg.version)
-              download_queue << pkg
+              @packages_to_download << pkg
             end
           end
 
-          total_bytes_to_download = download_queue.sum { |pkg| pkg.size }
-          bytes_downloaded = 0
+          @total_bytes_to_download = @packages_to_download.sum { |pkg| pkg.size }
+          @bytes_downloaded = 0
 
-          download_queue.each do |pkg|
+          @packages_to_download.each do |pkg|
+            package_bytes_downloaded = 0
+
             package_fetch(pkg.category, pkg.subcategory, pkg.name, pkg.version) do |chunk, remaining_bytes, total_bytes|
-              bytes_downloaded += chunk.to_s.length
+              @bytes_downloaded += chunk.to_s.length
+              package_bytes_downloaded += chunk.to_s.length
 
               update_application_taskbar(
                 "Downloading #{@application.name}...",
-                "#{W3DHub.format_size(bytes_downloaded)} / #{W3DHub.format_size(total_bytes_to_download)}",
-                bytes_downloaded.to_f / total_bytes_to_download
+                "#{W3DHub.format_size(@bytes_downloaded)} / #{W3DHub.format_size(@total_bytes_to_download)}",
+                @bytes_downloaded.to_f / @total_bytes_to_download
+              )
+
+              update_download_manager_task(
+                pkg.checksum,
+                pkg.name,
+                "#{W3DHub.format_size(package_bytes_downloaded)} / #{W3DHub.format_size(total_bytes)}",
+                package_bytes_downloaded.to_f / total_bytes
               )
             end
           end

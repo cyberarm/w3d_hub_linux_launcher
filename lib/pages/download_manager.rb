@@ -1,9 +1,14 @@
 class W3DHub
   class Pages
     class DownloadManager < Page
+      attr_reader :download_package_info
+
       def setup
+        @download_package_info ||= {}
+
         body.clear do
           stack(width: 1.0, height: 1.0) do
+            # TODO: Show correct application details here
             flow(width: 1.0, height: 0.1, padding: 8) do
               background 0xff_252550
               flow(width: 0.70, height: 1.0) do
@@ -28,17 +33,22 @@ class W3DHub
             end
 
             # Operations
-            stack(width: 1.0, height: 0.9, padding: 8, scroll: true) do
-              window.applications.games.reject { |g| g.id == "ren" }.each_with_index do |game, i|
+            @downloads_container = stack(width: 1.0, height: 0.9, padding: 8, scroll: true) do
+              # TODO: Show actual list of downloads
+              task = window.application_manager.current_task
+
+              pp task
+
+              task&.packages_to_download&.each_with_index do |pkg, i|
                 stack(width: 1.0, height: 24, padding: 8) do
                   background 0xff_333333 if i.odd?
 
                   flow(width: 1.0, height: 22) do
-                    inscription game.name, width: 0.7, text_wrap: :none
-                    inscription "Pending...", width: 0.3, text_align: :right, text_wrap: :none
+                    @download_package_info["#{pkg.checksum}_name"] = inscription pkg.name, width: 0.7, text_wrap: :none, tag: "#{pkg.checksum}_name"
+                    @download_package_info["#{pkg.checksum}_status"] = inscription "Pending...", width: 0.3, text_align: :right, text_wrap: :none, tag: "#{pkg.checksum}_status"
                   end
 
-                  progress fraction: rand(0.25..0.8), height: 2, width: 1.0
+                  @download_package_info["#{pkg.checksum}_progress"] = progress fraction: rand(0.25..0.8), height: 2, width: 1.0, tag: "#{pkg.checksum}_progress"
                 end
               end
             end

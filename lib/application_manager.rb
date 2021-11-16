@@ -93,5 +93,9 @@ class W3DHub
     def busy?
       @tasks.any? { |t| t.state == :running }
     end
+
+    def current_task
+      @tasks.find { |t| t.state == :running }
+    end
   end
 end

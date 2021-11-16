@@ -240,6 +240,26 @@ class W3DHub
         @application_taskbar_status_label.value = status
         @application_taskbar_progressbar.value = progress.clamp(0.0, 1.0)
       end
+
+      # def update_download_manager_state(application, channel)
+      # end
+
+      def update_download_manager_list
+      end
+
+      def update_download_manager_task(checksum, name, status, progress)
+        return unless @page.is_a?(Pages::DownloadManager)
+
+        download_package_info = @page.download_package_info
+
+        name_ = download_package_info["#{checksum}_name"]
+        status_ = download_package_info["#{checksum}_status"]
+        progress_ = download_package_info["#{checksum}_progress"]
+
+        name_.value = name if name
+        status_.value = status if status
+        progress_.value = progress if progress
+      end
     end
   end
 end
