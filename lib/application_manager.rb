@@ -22,7 +22,6 @@ class W3DHub
       installer = Installer.new(app_id, channel)
 
       @tasks.push(installer)
-      # installer.start
     end
 
     def import(app_id, channel, path)
@@ -81,7 +80,7 @@ class W3DHub
     end
 
     def installing?(app_id, channel)
-      @tasks.find { |t| t.is_a?(Installer) && t.app_id == app_id }
+      @tasks.find { |t| t.is_a?(Installer) && t.app_id == app_id && t.release_channel == channel }
     end
 
     # No application tasks are being done
@@ -91,11 +90,27 @@ class W3DHub
 
     # Whether some operation is in progress
     def busy?
-      @tasks.any? { |t| t.state == :running }
+      current_task
     end
 
     def current_task
-      @tasks.first#find { |t| t.state == :running }
+      @tasks.find { |t| [:running, :paused].include?(t.state) }
+    end
+
+    def start_next_available_task
+      return unless idle?
+
+      task = @tasks.find { |t| t.state == :not_started }
+      task&.start
+    end
+
+    def task?(type, app_id, channel)
+      @tasks.find do |t|
+        t.type == type &&
+        t.app_id == app_id &&
+        t.release_channel == channel &&
+        [ :not_started, :running, :paused ].include?(t.state)
+      end
     end
   end
 end

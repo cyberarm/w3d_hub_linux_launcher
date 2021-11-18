@@ -4,7 +4,8 @@ class W3DHub
       include CyberarmEngine::Common
 
       attr_reader :app_id, :release_channel, :application, :channel,
-                  :total_bytes_to_download, :bytes_downloaded, :packages_to_download
+                  :total_bytes_to_download, :bytes_downloaded, :packages_to_download,
+                  :manifests
 
       def initialize(app_id, release_channel)
         @app_id = app_id
@@ -19,10 +20,16 @@ class W3DHub
         @total_bytes_to_download = -1
         @bytes_downloaded = -1
 
+        @manifests = []
+
         setup
       end
 
       def setup
+      end
+
+      def type
+        raise NotImplementedError
       end
 
       def state
@@ -41,6 +48,9 @@ class W3DHub
 
           @task_state = :failed unless status
           @task_state = :complete unless @task_state == :failed
+
+          hide_application_taskbar if @task_state == :failed
+          send_message_dialog(:failure, "Task #{type.inspect} failed for #{@application.name}", @task_failure_reason) if @task_state == :failed
         end
       end
 
@@ -85,6 +95,14 @@ class W3DHub
         window.main_thread_queue << block
       end
 
+      def send_message_dialog(type, title, message)
+        run_on_main_thread(
+          proc do
+            window.push_state(W3DHub::States::MessageDialog, type: type, title: title, message: message)
+          end
+        )
+      end
+
       def update_application_taskbar(message, status, progress)
         run_on_main_thread(
           proc do
@@ -115,11 +133,9 @@ class W3DHub
       ###############
 
       def fetch_manifests
-        manifests = []
-
         if fetch_manifest("games", app_id, "manifest.xml", @channel.current_version)
           manifest = load_manifest("games", app_id, "manifest.xml", @channel.current_version)
-          manifests << manifest
+          @manifests << manifest
 
           until(manifest.full?)
             fetch_manifest("games", app_id, "manifest.xml", manifest.base_version)
@@ -128,7 +144,7 @@ class W3DHub
           end
         end
 
-        manifests
+        @manifests
       end
 
       def build_package_list(manifests)
@@ -139,6 +155,11 @@ class W3DHub
 
           manifest.files.each do |file|
             next if file.removed? # No package data
+
+            if file.patch?
+              fail!("#{@application.name} requires patches. Patching is not yet supported.")
+              break
+            end
 
             next if packages.detect do |pkg|
               pkg.category == "games" &&
@@ -235,8 +256,9 @@ class W3DHub
 
       def fetch_manifest(category, subcategory, name, version, &block)
         # Check for and integrity of local manifest
+        package = Api.package_details([{ category: category, subcategory: subcategory, name: name, version: version }])
+
         if File.exist?(Cache.package_path(category, subcategory, name, version))
-          package = Api.package_details([{ category: category, subcategory: subcategory, name: name, version: version }])
           verified = verify_package(package)
 
           # download manifest if not valid

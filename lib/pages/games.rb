@@ -137,7 +137,8 @@ class W3DHub
               button "<b>Single Player</b>", margin_left: 24
             else
               unless game.id == "ren"
-                button "<b>Install</b>", margin_left: 24 do
+                button "<b>Install</b>", margin_left: 24, enabled: !window.application_manager.task?(:installer, game.id, channel.name) do |button|
+                  button.enabled = false
                   window.application_manager.install(game.id, channel.name)
                 end
               end

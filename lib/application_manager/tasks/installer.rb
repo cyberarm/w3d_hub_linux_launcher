@@ -1,6 +1,10 @@
 class W3DHub
   class ApplicationManager
     class Installer < Task
+      def type
+        :installer
+      end
+
       def execute_task
         update_application_taskbar("Downloading #{@application.name}...", "Fetching manifests...", 0.0)
         manifests = fetch_manifests

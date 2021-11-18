@@ -23,6 +23,7 @@ class W3DHub
 end
 
 require_relative "lib/version"
+require_relative "lib/theme"
 require_relative "lib/common"
 require_relative "lib/window"
 require_relative "lib/cache"
@@ -36,6 +37,7 @@ require_relative "lib/application_manager/tasks/repairer"
 require_relative "lib/application_manager/tasks/importer"
 require_relative "lib/states/boot"
 require_relative "lib/states/interface"
+require_relative "lib/states/message_dialog"
 
 require_relative "lib/api"
 require_relative "lib/api/service_status"

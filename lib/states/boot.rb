@@ -2,6 +2,8 @@ class W3DHub
   class States
     class Boot < CyberarmEngine::GuiState
       def setup
+        theme(W3DHub::THEME)
+
         background 0xff_252525
 
         @fraction = 0.0
@@ -18,7 +20,7 @@ class W3DHub
           stack(width: 1.0, height: 0.925) do
           end
 
-          @progressbar = progress height: 0.025, width: 1.0, fraction_background: 0xff_00acff, border_thickness: 0
+          @progressbar = progress height: 0.025, width: 1.0
 
           flow(width: 1.0, height: 0.05, padding_left: 16, padding_right: 16, padding_bottom: 8, padding_top: 8) do
             @status_label = caption "Starting #{NAME}...", width: 0.5

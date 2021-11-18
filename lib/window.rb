@@ -14,6 +14,13 @@ class W3DHub
       push_state(W3DHub::States::Boot)
     end
 
+    def update
+      super
+
+      @application_manager.start_next_available_task if @application_manager.idle?
+      current_state.update_application_manager_status if current_state.is_a?(States::Interface)
+    end
+
     def close
       @settings.save_settings
 
