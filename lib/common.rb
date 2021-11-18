@@ -13,6 +13,6 @@ class W3DHub
   end
 
   def self.format_size_number(i)
-    format("%0.1f", i)
+    format("%0.2f", i)
   end
 end

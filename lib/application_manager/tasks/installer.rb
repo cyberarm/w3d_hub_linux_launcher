@@ -6,7 +6,7 @@ class W3DHub
         manifests = fetch_manifests
         return false if failed?
 
-        # update_application_taskbar("Downloading #{@application.name}...", "Building package list...", 0.0)
+        update_application_taskbar("Downloading #{@application.name}...", "Building package list...", 0.0)
         packages = build_package_list(manifests)
         return false if failed?
 

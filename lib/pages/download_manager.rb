@@ -5,19 +5,26 @@ class W3DHub
 
       def setup
         @download_package_info ||= {}
+        @task = window.application_manager.current_task
+
+        return unless @task
 
         body.clear do
           stack(width: 1.0, height: 1.0) do
             # TODO: Show correct application details here
             flow(width: 1.0, height: 0.1, padding: 8) do
-              background 0xff_252550
+              background @task.application.color
+
               flow(width: 0.70, height: 1.0) do
-                image "#{GAME_ROOT_PATH}/media/icons/apb.png", height: 1.0
+                image "#{GAME_ROOT_PATH}/media/icons/#{@task.app_id}.png", height: 1.0
+
                 stack(margin_left: 8) do
-                  tagline "Red Alert: A Path Beyond"
-                  inscription "Version: 0.3.23 (release)"
+                  $bug_1 = tagline "#{@task.application.name}"
+                  $bug_2 = inscription "Version: #{@task.channel.current_version} (#{@task.channel.id})"
                 end
               end
+
+              puts "OKAY"
 
               flow(width: 0.30, height: 1.0) do
                 stack(width: 0.499, height: 1.0) do
@@ -35,11 +42,8 @@ class W3DHub
             # Operations
             @downloads_container = stack(width: 1.0, height: 0.9, padding: 8, scroll: true) do
               # TODO: Show actual list of downloads
-              task = window.application_manager.current_task
 
-              pp task
-
-              task&.packages_to_download&.each_with_index do |pkg, i|
+              @task&.packages_to_download&.each_with_index do |pkg, i|
                 stack(width: 1.0, height: 24, padding: 8) do
                   background 0xff_333333 if i.odd?
 
@@ -48,7 +52,7 @@ class W3DHub
                     @download_package_info["#{pkg.checksum}_status"] = inscription "Pending...", width: 0.3, text_align: :right, text_wrap: :none, tag: "#{pkg.checksum}_status"
                   end
 
-                  @download_package_info["#{pkg.checksum}_progress"] = progress fraction: rand(0.25..0.8), height: 2, width: 1.0, tag: "#{pkg.checksum}_progress"
+                  @download_package_info["#{pkg.checksum}_progress"] = progress fraction: 0.0, height: 2, width: 1.0, tag: "#{pkg.checksum}_progress"
                 end
               end
             end

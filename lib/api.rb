@@ -164,8 +164,8 @@ class W3DHub
     # client requests package: data={"category":"games","name":"ECW_Asteroids.zip","subcategory":"ecw","version":"1.0.0.0"}
     #
     # server responds with download bytes, probably supports chunked download and resume
-    def self.package(category, subcategory, name, version, &block)
-      Cache.fetch_package(W3DHUB_API_CONNECTION, category, subcategory, name, version, block)
+    def self.package(package, &block)
+      Cache.fetch_package(package, block)
     end
 
     #! === Server List API === !#

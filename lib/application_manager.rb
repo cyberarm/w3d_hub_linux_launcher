@@ -22,7 +22,7 @@ class W3DHub
       installer = Installer.new(app_id, channel)
 
       @tasks.push(installer)
-      installer.start
+      # installer.start
     end
 
     def import(app_id, channel, path)
@@ -95,7 +95,7 @@ class W3DHub
     end
 
     def current_task
-      @tasks.find { |t| t.state == :running }
+      @tasks.first#find { |t| t.state == :running }
     end
   end
 end

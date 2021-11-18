@@ -40,12 +40,20 @@ class W3DHub
     end
 
     # Download a W3D Hub package
-    def self.fetch_package(socket, category, subcategory, name, version, block)
-      path = package_path(category, subcategory, name, version)
+    def self.fetch_package(package, block)
+      path = package_path(package.category, package.subcategory, package.name, package.version)
+      headers = { "Content-Type": "application/x-www-form-urlencoded" }
+      start_from_bytes = package.custom_partially_valid_at_bytes
+
+      puts "    Start from bytes: #{start_from_bytes}"
 
       create_directories(path)
 
       file = File.open(path, "wb")
+      if (start_from_bytes > 0)
+        headers["Range"] = "bytes=#{start_from_bytes}-#{package.size}"
+        file.seek(start_from_bytes)
+      end
 
       streamer = lambda do |chunk, remaining_bytes, total_bytes|
         file.write(chunk)
@@ -57,15 +65,15 @@ class W3DHub
       # Create a new connection due to some weirdness somewhere in Excon
       response = Excon.post(
         "#{Api::ENDPOINT}/apis/launcher/1/get-package",
-        headers: Api::DEFAULT_HEADERS.merge({ "Content-Type": "application/x-www-form-urlencoded" }),
-        body: "data=#{JSON.dump({ category: category, subcategory: subcategory, name: name, version: version })}",
+        headers: Api::DEFAULT_HEADERS.merge(headers),
+        body: "data=#{JSON.dump({ category: package.category, subcategory: package.subcategory, name: package.name, version: package.version })}",
         chunk_size: 4_000_000,
         response_block: streamer
       )
 
       file.close
 
-      response.status == 200
+      response.status == 200 || response.status == 206
     end
   end
 end
