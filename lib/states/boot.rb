@@ -22,7 +22,7 @@ class W3DHub
 
           flow(width: 1.0, height: 0.05, padding_left: 16, padding_right: 16, padding_bottom: 8, padding_top: 8) do
             @status_label = caption "Starting #{NAME}...", width: 0.5
-            inscription "W3D Hub Launcher #{W3DHub::VERSION}", width: 0.5, text_align: :right
+            inscription "#{NAME} #{W3DHub::VERSION}", width: 0.5, text_align: :right
           end
         end
       end

@@ -2,7 +2,7 @@ class W3DHub
   class Pages
     class Games < Page
       def setup
-        @@game_news ||= {}
+        @game_news ||= {}
         @focused_game ||= window.applications.games.first
 
         body.clear do
@@ -15,7 +15,7 @@ class W3DHub
           end
         end
 
-        populate_game_page(window.applications.games.first, window.applications.games.first.channels.first)
+        populate_game_page(@focused_game, @focused_game.channels.first)
         populate_games_list
       end
 
@@ -27,7 +27,8 @@ class W3DHub
             selected = game == @focused_game
 
             game_button = stack(width: 1.0, border_thickness_left: 4,
-                                border_color_left: selected ? 0xff_00acff : 0x00_000000, hover: { background: 0xff_444444 },
+                                border_color_left: selected ? 0xff_00acff : 0x00_000000,
+                                hover: { background: selected ? game.color : 0xff_444444 },
                                 padding_top: 4, padding_bottom: 4) do
               background game.color if selected
 
@@ -61,10 +62,10 @@ class W3DHub
             # background 0xff_444411
 
             inscription "Channel"
-            list_box(items: game.channels.map { |c| c.name }, choose: channel.name, enabled: game.channels.count > 1,
-                     margin_top: 0, margin_bottom: 0,
-                     width: 128, padding_left: 1, padding_top: 1, padding_right: 1, padding_bottom: 1, text_size: 14) do |value|
-              populate_game_page(game, game.channels.find{ |c| c.name == value })
+            list_box(items: game.channels.map(&:name), choose: channel.name, enabled: game.channels.count > 1,
+                     margin_top: 0, margin_bottom: 0, width: 128,
+                     padding_left: 1, padding_top: 1, padding_right: 1, padding_bottom: 1, text_size: 14) do |value|
+              populate_game_page(game, game.channels.find { |c| c.name == value })
             end
           end
 
@@ -148,7 +149,9 @@ class W3DHub
           end
         end
 
-        unless @@game_news[game.id]
+        if @game_news[game.id]
+          populate_game_news(game)
+        else
           Thread.new do
             fetch_game_news(game)
             main_thread_queue << proc { populate_game_news(game) }
@@ -157,8 +160,6 @@ class W3DHub
           @game_news_container.clear do
             title "Fetching News...", padding: 8
           end
-        else
-          populate_game_news(game)
         end
       end
 
@@ -170,14 +171,14 @@ class W3DHub
             Cache.fetch(item.image)
           end
 
-          @@game_news[game.id] = news
+          @game_news[game.id] = news
         end
       end
 
       def populate_game_news(game)
         return unless @focused_game == game
 
-        if (feed = @@game_news[game.id])
+        if (feed = @game_news[game.id])
           @game_news_container.clear do
             feed.items.sort_by { |i| i.timestamp }.reverse[0..9].each do |item|
               flow(width: 0.5, height: 128, margin: 4) do
