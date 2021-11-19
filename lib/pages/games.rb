@@ -43,7 +43,7 @@ class W3DHub
               self if hit?(x, y)
             end
 
-            game_button.subscribe(:clicked_left_mouse_button) do |e|
+            game_button.subscribe(:clicked_left_mouse_button) do
               populate_game_page(game, game.channels.first)
               populate_games_list
             end
@@ -85,16 +85,16 @@ class W3DHub
               #   end
               # end
 
-              if window.application_manager.installed?(game.id, channel.name)
+              if window.application_manager.installed?(game.id, channel.id)
                 Hash.new.tap { |hash|
-                  hash["Game Settings"] = { icon: "gear", block: proc { window.application_manager.settings(game.id, channel.name) } }
+                  hash["Game Settings"] = { icon: "gear", block: proc { window.application_manager.settings(game.id, channel.id) } }
                   if game.id != "ren"
-                    hash["Repair Installation"] = { icon: "wrench", block: proc { window.application_manager.repair(game.id, channel.name) } }
-                    hash["Uninstall"] = { icon: "trashCan", block: proc { window.application_manager.uninstall(game.id, channel.name) } }
+                    hash["Repair Installation"] = { icon: "wrench", block: proc { window.application_manager.repair(game.id, channel.id) } }
+                    hash["Uninstall"] = { icon: "trashCan", block: proc { window.application_manager.uninstall(game.id, channel.id) } }
                   end
-                  hash["Install Folder"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, channel.name, :installation) } }
-                  hash["User Data Folder"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, channel.name, :user_data) } }
-                  hash["View Screenshots"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, channel.name, :screenshots) } }
+                  hash["Install Folder"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, channel.id, :installation) } }
+                  hash["User Data Folder"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, channel.id, :user_data) } }
+                  hash["View Screenshots"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, channel.id, :screenshots) } }
                 }.each do |key, hash|
                   flow(width: 1.0, height: 22, margin_bottom: 8) do
                     image "#{GAME_ROOT_PATH}/media/ui_icons/#{hash[:icon]}.png", width: 0.11 if hash[:icon]
@@ -126,25 +126,24 @@ class W3DHub
           flow(width: 1.0, height: 0.08) do
             # background 0xff_551100
 
-            # TODO: Determine if game is installed or not and show apporpiante options ["Play Now" and "Single Player", "Install" and "Import"]
-            # game.play_items.each do |item|
-            #   button "<b>#{item.label}</b>", margin_left: 24 do
-            #     item.block&.call(game)
-            #   end
-            # end
             if window.application_manager.installed?(game.id, channel.id)
-              button "<b>Play Now</b>", margin_left: 24
-              button "<b>Single Player</b>", margin_left: 24
+              button "<b>Play Now</b>", margin_left: 24 do
+                window.application_manager.run(game.id, channel.id)
+              end
+
+              button "<b>Single Player</b>", margin_left: 24 do
+                window.application_manager.run(game.id, channel.id)
+              end
             else
               unless game.id == "ren"
-                button "<b>Install</b>", margin_left: 24, enabled: !window.application_manager.task?(:installer, game.id, channel.name) do |button|
+                button "<b>Install</b>", margin_left: 24, enabled: !window.application_manager.task?(:installer, game.id, channel.id) do |button|
                   button.enabled = false
-                  window.application_manager.install(game.id, channel.name)
+                  window.application_manager.install(game.id, channel.id)
                 end
               end
 
               button "<b>Import</b>", margin_left: 24, enabled: false do
-                window.application_manager.import(game.id, channel.name, "?")
+                window.application_manager.import(game.id, channel.id, "?")
               end
             end
           end

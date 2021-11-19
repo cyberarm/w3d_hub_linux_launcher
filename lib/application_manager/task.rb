@@ -5,7 +5,7 @@ class W3DHub
 
       attr_reader :app_id, :release_channel, :application, :channel,
                   :total_bytes_to_download, :bytes_downloaded, :packages_to_download,
-                  :manifests
+                  :manifests, :packages, :files, :wine_prefix
 
       def initialize(app_id, release_channel)
         @app_id = app_id
@@ -14,13 +14,17 @@ class W3DHub
         @task_state = :not_started # :not_started, :running, :paused, :halted, :complete, :failed
 
         @application = window.applications.games.find { |g| g.id == app_id }
-        @channel = @application.channels.find { |c| c.name == release_channel }
+        @channel = @application.channels.find { |c| c.id == release_channel }
 
         @packages_to_download = []
         @total_bytes_to_download = -1
         @bytes_downloaded = -1
 
         @manifests = []
+        @files = {}
+        @packages = []
+
+        @wine_prefix = nil
 
         setup
       end
@@ -88,7 +92,19 @@ class W3DHub
 
       def fail!(reason = "")
         @task_state = :failed
-        @task_failure_reason = "Failed: #{reason}"
+        @task_failure_reason = reason.to_s
+      end
+
+      # Quick checks before network and computational work starts
+      def fail_fast
+        # tar present?
+        tar_present = system("tar --help")
+        fail!("FAIL FAST: `tar --help` command failed, tar is not installed. Will be unable to unpack packages.") unless tar_present
+
+        if W3DHub.unix?
+          wine_present = system("which #{window.settings[:wine_command]}")
+          fail!("FAIL FAST: `which wine` command failed, wine is not installed. Will be unable to create prefixes or launch games.") unless wine_prefix
+        end
       end
 
       def run_on_main_thread(block)
@@ -154,6 +170,8 @@ class W3DHub
           puts "#{manifest.game}-#{manifest.type}: #{manifest.version} (#{manifest.base_version})"
 
           manifest.files.each do |file|
+            @files["#{file.name}:#{manifest.version}"] = file
+
             next if file.removed? # No package data
 
             if file.patch?
@@ -193,14 +211,13 @@ class W3DHub
         package_details = Api.package_details(hashes)
 
         if package_details
+          @packages = [package_details].flatten
           @packages_to_download = []
 
           update_application_taskbar("Downloading #{@application.name}...", "Verifying local packages...", 0.0)
 
           package_details.each do |pkg|
-            unless verify_package(pkg)
-              @packages_to_download << pkg
-            end
+            @packages_to_download << pkg unless verify_package(pkg)
           end
 
           @total_bytes_to_download = @packages_to_download.sum { |pkg| pkg.size - pkg.custom_partially_valid_at_bytes }
@@ -238,16 +255,60 @@ class W3DHub
       end
 
       def unpack_packages(packages)
+        path = Cache.install_path(@application, @channel)
+        puts "Unpacking packages in '#{path}'..."
+        Cache.create_directories(path)
+
+        packages.each do |package|
+          puts "    #{package.name}:#{package.version}"
+          package_path = Cache.package_path(package.category, package.subcategory, "#{package.name}.zip", package.version)
+
+          puts "      Running tar command: #{"tar -xf #{package_path} -C #{path}"}"
+          status = system("tar -xf #{package_path} -C #{path}")
+          if status
+          else
+            puts "COMMAND FAILED!"
+          end
+        end
       end
 
       def create_wine_prefix
+        if W3DHub.unix?
+          # TODO: create a wine prefix if configured
+        end
       end
 
       def install_dependencies(packages)
       end
 
       def mark_application_installed
+        window.application_manager.installed!(self)
+
         puts "#{@app_id} has been installed."
+      end
+
+      def verify_files(_)
+        # TODO: Check extracted game files or just re-extract everything?
+
+        # Zip.on_exists_proc = true # Overwrite existing files
+        # zip_file = Zip::InputStream.new(File.open(package_path))
+        # while (entry = zip_file.get_next_entry)
+
+        #   extract_path = "#{path}/#{entry.name}"
+        #   manifest_file = @files["#{entry.name}:#{package.version}"]
+
+        #   if manifest_file.removed?
+        #     puts "      !skipped: #{extract_path}"
+        #   else
+        #     target_file_exits = File.exist?(extract_path)
+        #     next if target_file_exits # && Digest::SHA256.new.hexdigest(File.read(extract_path)) == manifest_file.checksum
+
+        #     puts "      #{path}/#{extract_path}"
+        #     Cache.create_directories(extract_path) unless target_file_exits
+
+        #     entry.extract(extract_path)
+        #   end
+        # end
       end
 
       #############
@@ -287,7 +348,7 @@ class W3DHub
         digest = Digest::SHA256.new
         path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
 
-        return false unless File.exists?(path)
+        return false unless File.exist?(path)
 
         file_size = File.size(path)
         puts "    File size: #{file_size}"
@@ -300,7 +361,7 @@ class W3DHub
             read_length = chunk_size
             read_length = file_size - chunk_start if chunk_start + chunk_size > file_size
 
-            break if file_size - chunk_start < 0
+            break if (file_size - chunk_start).negative?
 
             f.seek(chunk_start)
 

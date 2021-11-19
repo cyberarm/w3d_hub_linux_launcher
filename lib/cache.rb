@@ -27,8 +27,8 @@ class W3DHub
       end
     end
 
-    def self.create_directories(path)
-      target_directory = File.dirname(path)
+    def self.create_directories(path, is_directory = false)
+      target_directory = is_directory ? path : File.dirname(path)
 
       FileUtils.mkdir_p(target_directory) unless Dir.exist?(target_directory)
     end
@@ -37,6 +37,12 @@ class W3DHub
       package_cache_dir = $window.settings[:package_cache_dir]
 
       "#{package_cache_dir}/#{category}/#{subcategory}/#{version}/#{name}.package"
+    end
+
+    def self.install_path(application, channel)
+      app_install_dir = $window.settings[:app_install_dir]
+
+      "#{app_install_dir}/#{application.category}/#{application.id}/#{channel.id}"
     end
 
     # Download a W3D Hub package

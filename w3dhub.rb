@@ -9,9 +9,9 @@ end
 require "fileutils"
 require "digest"
 require "rexml"
-require "zlib"
 
 require "launchy"
+require "zip"
 
 class W3DHub
   GAME_ROOT_PATH = File.expand_path(".", __dir__)

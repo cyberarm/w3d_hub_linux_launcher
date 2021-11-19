@@ -1,5 +1,7 @@
 class W3DHub
   class ApplicationManager
+    include CyberarmEngine::Common
+
     def initialize
       @tasks = [] # :installer, :importer, :repairer, :uninstaller
     end
@@ -75,8 +77,33 @@ class W3DHub
       end
     end
 
+    def run(app_id, channel, *args)
+      if (app_data = installed?(app_id, channel))
+        Process.spawn(app_data[:install_path], *args)
+      end
+    end
+
+    def installed!(task)
+      # install_dir
+      # installed_version
+      # installPath # game executable
+      # wine_prefix # optional
+
+      install_directory = Cache.install_path(task.application, task.channel)
+      application_data = {
+        install_directory: install_directory,
+        installed_version: task.channel.current_version,
+        install_path: "#{install_directory}/game.exe",
+        wine_prefix: task.wine_prefix
+      }
+
+      window.settings[:games] ||= {}
+      window.settings[:games,][:"#{task.app_id}_#{task.release_channel}"] = application_data
+      window.settings.save_settings
+    end
+
     def installed?(app_id, channel)
-      false
+      window.settings[:games, :"#{app_id}_#{channel}"]
     end
 
     def installing?(app_id, channel)

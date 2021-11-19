@@ -6,6 +6,9 @@ class W3DHub
       end
 
       def execute_task
+        fail_fast
+        return false if failed?
+
         update_application_taskbar("Downloading #{@application.name}...", "Fetching manifests...", 0.0)
         manifests = fetch_manifests
         return false if failed?
@@ -33,7 +36,6 @@ class W3DHub
         sleep 1
 
         update_application_taskbar("Installing #{@application.name}...", "Installing dependencies...", 0.0)
-
         install_dependencies(packages)
         return false if failed?
         sleep 1
