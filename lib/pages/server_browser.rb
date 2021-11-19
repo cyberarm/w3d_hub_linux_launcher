@@ -47,9 +47,18 @@ class W3DHub
               end
 
               flow(width: 0.249, height: 1.0) do
-                inscription "Nickname:"
-                inscription "Cyberarm"
-                image "#{GAME_ROOT_PATH}/media/ui_icons/wrench.png", height: 16
+                inscription "Nickname:", width: 0.32
+                @nickname_label = inscription "#{window.settings[:server_list_username]}", width: 0.6
+                image "#{GAME_ROOT_PATH}/media/ui_icons/wrench.png", height: 16, hover: { color: 0xaa_ffffff }, tip: "Set nickname" do
+                  # Prompt for player name
+                  prompt_for_nickname(
+                    accept_callback: proc do |entry|
+                      @nickname_label.value = entry
+                      window.settings[:server_list_username] = entry
+                      window.settings.save_settings
+                    end
+                  )
+                end
               end
             end
 
@@ -180,7 +189,33 @@ class W3DHub
               end
 
               stack(width: 1.0, height: 0.25) do
-                button "<b>Join Server</b>", enabled: window.application_manager.installed?(server.game, window.applications.games.find { |g| g.id == server.game }.channels.first)
+                game_installed = window.application_manager.installed?(server.game, window.applications.games.find { |g| g.id == server.game }.channels.first.id)
+
+                button "<b>Join Server</b>", enabled: !game_installed.nil? do
+                  # Check for nickname
+                  #   prompt for nickname
+                  # !abort unless nickname set
+                  # Launch game
+                  if window.settings[:server_list_username].to_s.length.zero?
+                    prompt_for_nickname(
+                      accept_callback: proc do |entry|
+                        @nickname_label.value = entry
+                        window.settings[:server_list_username] = entry
+                        window.settings.save_settings
+
+                        window.application_manager.join_server(
+                          server.game,
+                          window.applications.games.find { |g| g.id == server.game }.channels.first.id, server
+                        )
+                      end
+                    )
+                  else
+                    window.application_manager.join_server(
+                      server.game,
+                      window.applications.games.find { |g| g.id == server.game }.channels.first.id, server
+                    )
+                  end
+                end
               end
 
               stack(width: 1.0, height: 0.55, margin_top: 16) do
@@ -280,6 +315,18 @@ class W3DHub
         else
           "C&C Renegade"
         end
+      end
+
+      def prompt_for_nickname(accept_callback: nil, cancel_callback: nil)
+        push_state(
+          W3DHub::States::PromptDialog,
+          title: "Set Nickname",
+          message: "Set a nickname that will be used when joining a server:",
+          prefill: window.settings[:server_list_username],
+          accept_callback: accept_callback,
+          cancel_callback: cancel_callback,
+          valid_callback: proc { |entry| entry.length.positive? }
+        )
       end
     end
   end

@@ -8,7 +8,7 @@ class W3DHub
         wine_command: "wine",
         create_wine_prefixes: true,
         allow_diagnostic_reports: false,
-        server_list_username: nil,
+        server_list_username: "",
         account: {},
         applications: {},
         games: {}
@@ -51,6 +51,10 @@ class W3DHub
 
     def [](*args)
       @settings.dig(*args)
+    end
+
+    def []=(key, value)
+      @settings[key] = value
     end
 
     def load_settings

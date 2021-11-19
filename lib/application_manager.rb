@@ -83,6 +83,17 @@ class W3DHub
       end
     end
 
+    def join_server(app_id, channel, server, password = nil)
+      if installed?(app_id, channel) && window.settings[:server_list_username].to_s.length.positive?
+        run(
+          app_id, channel,
+          "+connect #{server.address}:#{server.port}",
+          "+netplayername \"#{window.settings[:server_list_username]}\"",
+          password ? "+password \"#{password}\"" : ""
+        )
+      end
+    end
+
     def installed!(task)
       # install_dir
       # installed_version

@@ -38,6 +38,7 @@ require_relative "lib/application_manager/tasks/importer"
 require_relative "lib/states/boot"
 require_relative "lib/states/interface"
 require_relative "lib/states/message_dialog"
+require_relative "lib/states/prompt_dialog"
 
 require_relative "lib/api"
 require_relative "lib/api/service_status"
