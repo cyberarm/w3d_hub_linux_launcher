@@ -39,7 +39,16 @@ class W3DHub
     def settings(app_id, channel)
       puts "Settings Request: #{app_id}-#{channel}"
 
-      # open wwconfig
+      # open wwconfig.exe or config.exe for ecw
+
+      if (app_data = installed?(app_id, channel))
+        config_exe = app_id == "ecw" ? "config.exe" : "wwconfig.exe"
+        exe = "#{app_data[:install_directory]}/#{config_exe}"
+
+        if File.exist?(exe)
+          Process.spawn("\"#{exe}\"")
+        end
+      end
     end
 
     def repair(app_id, channel)
@@ -79,7 +88,7 @@ class W3DHub
 
     def run(app_id, channel, *args)
       if (app_data = installed?(app_id, channel))
-        Process.spawn(app_data[:install_path], *args)
+        Process.spawn("\"#{app_data[:install_path]}\"", *args)
       end
     end
 
@@ -91,6 +100,65 @@ class W3DHub
           "+netplayername \"#{window.settings[:server_list_username]}\"",
           password ? "+password \"#{password}\"" : ""
         )
+      end
+    end
+
+    def auto_import
+      return unless W3DHub.windows?
+
+      # Renegade
+      auto_import_win32_registry("ren", "release", 'SOFTWARE\Westwood\Renegade')
+
+      # Red Alert: A Path Beyond
+      auto_import_win32_registry("apb", "release")
+
+      # Expansive Civilian Warfare
+      auto_import_win32_registry("ecw", "release")
+
+      # Interim Apex
+      auto_import_win32_registry("ia", "release")
+
+      # Tiberian Sun: Reborn
+      auto_import_win32_registry("tsr", "release")
+    end
+
+    def auto_import_win32_registry(app_id, channel_id, registry_path = nil)
+      return unless W3DHub.windows?
+      return if installed?(app_id, channel_id)
+
+      puts "Importing: #{app_id}-#{channel_id}"
+
+      require "win32/registry"
+
+      registry_path ||= "SOFTWARE\\W3D Hub\\games\\#{app_id}-#{channel_id}"
+      reg_type = Win32::Registry::KEY_READ
+
+      reg_constant = app_id == "ren" ? Win32::Registry::HKEY_CURRENT_USER : Win32::Registry::HKEY_LOCAL_MACHINE
+
+      begin
+        reg_constant.open(registry_path, reg_type) do |reg|
+          if (install_path = reg["InstallPath"])
+            if File.exist?(install_path) || (app_id == "ecw" && File.exist?("#{File.dirname(install_path)}/game750.exe"))
+              install_path.gsub!("\\", "/")
+              installed_version = reg["InstalledVersion"] unless app_id == "ren"
+
+              application_data = {
+                install_directory: File.dirname(install_path),
+                installed_version: app_id == "ren" ? "1.0.0.0" : installed_version,
+                install_path: app_id == "ecw" ? "#{File.dirname(install_path)}/game750.exe" : install_path,
+                wine_prefix: nil
+              }
+
+              window.settings[:games] ||= {}
+              window.settings[:games][:"#{app_id}_#{channel_id}"] = application_data
+              window.settings.save_settings
+            end
+          end
+        end
+      rescue => e
+        puts e.message, e.backtrace
+
+        false
       end
     end
 
@@ -109,7 +177,7 @@ class W3DHub
       }
 
       window.settings[:games] ||= {}
-      window.settings[:games,][:"#{task.app_id}_#{task.release_channel}"] = application_data
+      window.settings[:games][:"#{task.app_id}_#{task.release_channel}"] = application_data
       window.settings.save_settings
     end
 

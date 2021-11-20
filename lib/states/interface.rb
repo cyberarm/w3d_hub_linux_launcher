@@ -15,6 +15,8 @@ class W3DHub
 
         @main_thread_queue = []
 
+        window.application_manager.auto_import
+
         theme(W3DHub::THEME)
 
         stack(width: 1.0, height: 1.0, border_thickness: 1, border_color: 0xff_aaaaaa) do
