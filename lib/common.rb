@@ -32,6 +32,14 @@ class W3DHub
     linux? || mac?
   end
 
+  def self.tar_command
+    if windows?
+      "tar"
+    else
+      "bsdtar"
+    end
+  end
+
   def self.home_directory
     File.expand_path("~")
   end
