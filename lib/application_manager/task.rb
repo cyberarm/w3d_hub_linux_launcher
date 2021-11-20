@@ -98,12 +98,12 @@ class W3DHub
       # Quick checks before network and computational work starts
       def fail_fast
         # tar present?
-        tar_present = system("tar --help")
-        fail!("FAIL FAST: `tar --help` command failed, tar is not installed. Will be unable to unpack packages.") unless tar_present
+        bsdtar_present = system("bsdtar --help")
+        fail!("FAIL FAST: `bsdtar --help` command failed, bsdtar is not installed. Will be unable to unpack packages.") unless bsdtar_present
 
         if W3DHub.unix?
           wine_present = system("which #{window.settings[:wine_command]}")
-          fail!("FAIL FAST: `which wine` command failed, wine is not installed. Will be unable to create prefixes or launch games.") unless wine_prefix
+          fail!("FAIL FAST: `which #{window.settings[:wine_command]}` command failed, wine is not installed. Will be unable to create prefixes or launch games.") unless wine_present
         end
       end
 
@@ -257,17 +257,19 @@ class W3DHub
       def unpack_packages(packages)
         path = Cache.install_path(@application, @channel)
         puts "Unpacking packages in '#{path}'..."
-        Cache.create_directories(path)
+        Cache.create_directories(path, true)
 
         packages.each do |package|
           puts "    #{package.name}:#{package.version}"
           package_path = Cache.package_path(package.category, package.subcategory, "#{package.name}.zip", package.version)
 
-          puts "      Running tar command: #{"tar -xf #{package_path} -C #{path}"}"
-          status = system("tar -xf #{package_path} -C #{path}")
+          puts "      Running bsdtar command: #{"bsdtar -xf #{package_path} -C #{path}"}"
+          status = system("bsdtar -xf #{package_path} -C #{path}")
           if status
           else
             puts "COMMAND FAILED!"
+            fail!("Failed to unpack #{package.name}")
+            break
           end
         end
       end

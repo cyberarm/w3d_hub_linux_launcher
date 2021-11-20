@@ -46,7 +46,7 @@ class W3DHub
         exe = "#{app_data[:install_directory]}/#{config_exe}"
 
         if File.exist?(exe)
-          Process.spawn("\"#{exe}\"")
+          Process.spawn("#{wine_command(app_id, channel)}\"#{exe}\"")
         end
       end
     end
@@ -86,9 +86,19 @@ class W3DHub
       end
     end
 
+    def wine_command(app_id, channel)
+      return "" if W3DHub.windows?
+
+      if window.settings[:wine_prefix]
+        "WINEPREFIX=\"#{window.settings[:wine_prefix]}\" \"#{window.settings[:wine_command]}\" "
+      else
+        "#{window.settings[:wine_command]} "
+      end
+    end
+
     def run(app_id, channel, *args)
       if (app_data = installed?(app_id, channel))
-        Process.spawn("\"#{app_data[:install_path]}\"", *args)
+        Process.spawn("#{wine_command(app_id, channel)}\"#{app_data[:install_path]}\"", *args)
       end
     end
 
