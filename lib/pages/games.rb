@@ -88,6 +88,7 @@ class W3DHub
               if window.application_manager.installed?(game.id, channel.id)
                 Hash.new.tap { |hash|
                   hash["Game Settings"] = { icon: "gear", block: proc { window.application_manager.settings(game.id, channel.id) } }
+                  hash["Wine Configuration"] = { icon: "gear", block: proc { window.application_manager.wine_configuration(game.id, channel.id) } } if W3DHub.unix?
                   if game.id != "ren"
                     hash["Repair Installation"] = { icon: "wrench", block: proc { window.application_manager.repair(game.id, channel.id) } }
                     hash["Uninstall"] = { icon: "trashCan", block: proc { window.application_manager.uninstall(game.id, channel.id) } }

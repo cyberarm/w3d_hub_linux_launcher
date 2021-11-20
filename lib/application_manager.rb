@@ -51,6 +51,22 @@ class W3DHub
       end
     end
 
+    def wine_configuration(app_id, channel)
+      puts "Wine Configuration Request: #{app_id}-#{channel}"
+
+      # open wwconfig.exe or config.exe for ecw
+
+      if (app_data = installed?(app_id, channel) && W3DHub.unix?)
+        exe = if window.settings[:wine_prefix]
+          "WINEPREFIX=\"#{window.settings[:wine_prefix]}\" winecfg"
+        else
+          "winecfg"
+        end
+
+        Process.spawn("#{exe}")
+      end
+    end
+
     def repair(app_id, channel)
       puts "Repair Installation Request: #{app_id}-#{channel}"
 
