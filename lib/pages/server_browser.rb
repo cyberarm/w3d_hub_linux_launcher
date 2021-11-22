@@ -13,7 +13,7 @@ class W3DHub
         body.clear do
           stack(width: 1.0, height: 1.0, padding: 8) do
             stack(width: 1.0, height: 0.04) do
-              inscription "<b>Filters</b>"
+              inscription "<b>#{I18n.t(:"server_browser.filters")}</b>"
             end
 
             flow(width: 1.0, height: 0.06) do
@@ -38,7 +38,7 @@ class W3DHub
                   end
                 end
 
-                para "Region"
+                para I18n.t(:"server_browser.region")
                 list_box items: ["Any", "North America", "Europe"], width: 0.25 do |value|
                   @filter_region = value
 
@@ -47,9 +47,9 @@ class W3DHub
               end
 
               flow(width: 0.249, height: 1.0) do
-                inscription "Nickname:", width: 0.32
+                inscription "#{I18n.t(:"server_browser.nickname")}:", width: 0.32
                 @nickname_label = inscription "#{window.settings[:server_list_username]}", width: 0.6
-                image "#{GAME_ROOT_PATH}/media/ui_icons/wrench.png", height: 16, hover: { color: 0xaa_ffffff }, tip: "Set nickname" do
+                image "#{GAME_ROOT_PATH}/media/ui_icons/wrench.png", height: 16, hover: { color: 0xaa_ffffff }, tip: I18n.t(:"server_browser.set_nickname") do
                   # Prompt for player name
                   prompt_for_nickname(
                     accept_callback: proc do |entry|
@@ -74,29 +74,29 @@ class W3DHub
                   end
 
                   stack(width: 0.50, height: 1.0) do
-                    para "<b>Hostname</b>", text_wrap: :none, width: 1.0
+                    para "<b>#{I18n.t(:"server_browser.hostname")}</b>", text_wrap: :none, width: 1.0
                   end
 
                   flow(width: 0.24, height: 1.0) do
-                    para "<b>Current Map</b>", text_wrap: :none, width: 1.0
+                    para "<b>#{I18n.t(:"server_browser.current_map")}</b>", text_wrap: :none, width: 1.0
                   end
 
                   flow(width: 0.11, height: 1.0) do
-                    para "<b>Players</b>", text_wrap: :none, width: 1.0
+                    para "<b>#{I18n.t(:"server_browser.players")}</b>", text_wrap: :none, width: 1.0
                   end
 
                   stack(width: 0.06) do
-                    para "<b>Ping</b>", text_wrap: :none, width: 1.0
+                    para "<b>#{I18n.t(:"server_browser.ping")}</b>", text_wrap: :none, width: 1.0
                   end
                 end
 
                 @server_list_container = stack(width: 1.0, height: 0.95, scroll: true) do
-                  para "Fetching server list..."
+                  para I18n.t(:"server_browser.fetching_server_list")
                 end
               end
 
               @game_server_info_container = stack(width: 0.38, height: 1.0) do
-                para "No server selected", width: 1.0, text_align: :center
+                para I18n.t(:"server_browser.no_server_selected"), width: 1.0, text_align: :center
               end
             end
           end
@@ -191,10 +191,12 @@ class W3DHub
               stack(width: 1.0, height: 0.25) do
                 game_installed = window.application_manager.installed?(server.game, window.applications.games.find { |g| g.id == server.game }.channels.first.id)
 
-                button "<b>Join Server</b>", enabled: !game_installed.nil? do
+                button "<b>#{I18n.t(:"server_browser.join_server")}</b>", enabled: !game_installed.nil? do
                   # Check for nickname
                   #   prompt for nickname
                   # !abort unless nickname set
+                  # Check if password needed
+                  #   prompt for password
                   # Launch game
                   if window.settings[:server_list_username].to_s.length.zero?
                     prompt_for_nickname(
@@ -203,34 +205,44 @@ class W3DHub
                         window.settings[:server_list_username] = entry
                         window.settings.save_settings
 
-                        window.application_manager.join_server(
-                          server.game,
-                          window.applications.games.find { |g| g.id == server.game }.channels.first.id, server
-                        )
+                        if server.status.password
+                          prompt_for_password(
+                            accept_callback: proc do |password|
+                              join_server(game, server, password)
+                            end
+                          )
+                        else
+                          join_server(game, server, nil)
+                        end
+                      end
+                    )
+                  end
+
+                  if server.status.password
+                    prompt_for_password(
+                      accept_callback: proc do |password|
+                        join_server(game, server, password)
                       end
                     )
                   else
-                    window.application_manager.join_server(
-                      server.game,
-                      window.applications.games.find { |g| g.id == server.game }.channels.first.id, server
-                    )
+                    join_server(game, server, nil)
                   end
                 end
               end
 
               stack(width: 1.0, height: 0.55, margin_top: 16) do
                 flow(width: 1.0, height: 0.33) do
-                  inscription "<b>Game</b>", width: 0.28, text_wrap: :none
+                  inscription "<b>#{I18n.t(:"server_browser.game")}</b>", width: 0.28, text_wrap: :none
                   inscription "#{game_name(server.game)} (branch)", width: 0.71, text_wrap: :none
                 end
 
                 flow(width: 1.0, height: 0.33) do
-                  inscription "<b>Map</b>", width: 0.28, text_wrap: :none
+                  inscription "<b>#{I18n.t(:"server_browser.map")}</b>", width: 0.28, text_wrap: :none
                   inscription server.status.map, width: 0.71, text_wrap: :none
                 end
 
                 flow(width: 1.0, height: 0.33) do
-                  inscription "<b>Max Players</b>", width: 0.28, text_wrap: :none
+                  inscription "<b>#{I18n.t(:"server_browser.max_players")}</b>", width: 0.28, text_wrap: :none
                   inscription "#{server.status.max_players}", width: 0.71, text_wrap: :none
                 end
               end
@@ -285,7 +297,7 @@ class W3DHub
             list = Api.server_list(2)
 
             if list
-              @server_list = list.sort_by! { |s| s&.status&.players.size }.reverse
+              @server_list = list.sort_by! { |s| s&.status&.players&.size }.reverse
 
 
               main_thread_queue << proc { populate_server_list }
@@ -303,30 +315,46 @@ class W3DHub
       end
 
       def game_name(game)
-        case game
-        when "ia"
-          "Interim Apex"
-        when "apb"
-          "Red Alert: A Path Beyond"
-        when "tsr"
-          "Tiberian Sun: Reborn"
-        when "ecw"
-          "Expansive Civilian Warfare"
-        else
-          "C&C Renegade"
-        end
+        window.applications.games.detect { |g| g.id == game }&.name
       end
 
       def prompt_for_nickname(accept_callback: nil, cancel_callback: nil)
         push_state(
           W3DHub::States::PromptDialog,
-          title: "Set Nickname",
-          message: "Set a nickname that will be used when joining a server:",
+          title: I18n.t(:"server_browser.set_nickname"),
+          message: I18n.t(:"server_browser.set_nickname_message"),
           prefill: window.settings[:server_list_username],
           accept_callback: accept_callback,
           cancel_callback: cancel_callback,
           valid_callback: proc { |entry| entry.length.positive? }
         )
+      end
+
+      def prompt_for_password(accept_callback: nil, cancel_callback: nil)
+        push_state(
+          W3DHub::States::PromptDialog,
+          title: I18n.t(:"server_browser.enter_password"),
+          message: I18n.t(:"server_browser.enter_password_message"),
+          input_type: :password,
+          accept_callback: accept_callback,
+          cancel_callback: cancel_callback,
+          valid_callback: proc { |entry| entry.length.positive? }
+        )
+      end
+
+      def join_server(game, server, password)
+        if (
+          (server.status.password && password.length.positive?) ||
+          !server.status.password) &&
+           window.settings[:server_list_username].to_s.length.zero?
+
+          window.application_manager.join_server(
+            server.game,
+            window.applications.games.find { |g| g.id == server.game }.channels.first.id, server, password
+          )
+        else
+          window.push_state(W3DHub::States::MessageDialog, type: "?", title: "?", message: "?")
+        end
       end
     end
   end

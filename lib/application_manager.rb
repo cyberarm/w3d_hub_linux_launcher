@@ -46,7 +46,8 @@ class W3DHub
         exe = "#{app_data[:install_directory]}/#{config_exe}"
 
         if File.exist?(exe)
-          Process.spawn("#{wine_command(app_id, channel)}\"#{exe}\"")
+          pid = Process.spawn("#{wine_command(app_id, channel)}\"#{exe}\"")
+          Process.detach(pid)
         end
       end
     end
@@ -114,7 +115,9 @@ class W3DHub
 
     def run(app_id, channel, *args)
       if (app_data = installed?(app_id, channel))
-        Process.spawn("#{wine_command(app_id, channel)}\"#{app_data[:install_path]}\"", *args)
+        pp "#{wine_command(app_id, channel)}#{app_data[:install_path]}", *args
+        pid = Process.spawn("#{wine_command(app_id, channel)}#{app_data[:install_path]}", *args)
+        Process.detach(pid)
       end
     end
 
@@ -122,6 +125,7 @@ class W3DHub
       if installed?(app_id, channel) && window.settings[:server_list_username].to_s.length.positive?
         run(
           app_id, channel,
+          "-launcher",
           "+connect #{server.address}:#{server.port}",
           "+netplayername \"#{window.settings[:server_list_username]}\"",
           password ? "+password \"#{password}\"" : ""

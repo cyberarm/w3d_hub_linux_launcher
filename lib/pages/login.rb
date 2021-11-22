@@ -80,8 +80,8 @@ class W3DHub
             tagline "<b>#{window.account.username}</b>"
 
             flow(width: 1.0) do
-              link("Logout", text_size: 16) { depopulate_account_info }
-              link "Profile", text_size: 16 do
+              link(I18n.t(:"interface.log_out"), text_size: 16, width: 0.5) { depopulate_account_info }
+              link I18n.t(:"interface.profile"), text_size: 16, width: 0.49 do
                 Launchy.open("https://secure.w3dhub.com/forum/index.php?showuser=#{window.account.id}")
               end
             end
@@ -98,11 +98,11 @@ class W3DHub
         @host.instance_variable_get(:"@account_container").clear do
           stack(width: 0.7, height: 1.0) do
             # background 0xff_222222
-            tagline "<b>Not Logged In</b>", text_wrap: :none
+            tagline "<b>#{I18n.t(:"interface.not_logged_in")}</b>", text_wrap: :none
 
             flow(width: 1.0) do
-              link("Log in", text_size: 16) { page(W3DHub::Pages::Login) }
-              link "Register", text_size: 16 do
+              link(I18n.t(:"interface.log_in"), text_size: 16, width: 0.5) { page(W3DHub::Pages::Login) }
+              link I18n.t(:"interface.register"), text_size: 16, width: 0.49 do
                 Launchy.open("https://secure.w3dhub.com/forum/index.php?app=core&module=global&section=register")
               end
             end

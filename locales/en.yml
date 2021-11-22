@@ -1,0 +1,46 @@
+en:
+  app_name: W3D Hub Launcher
+  interface:
+    log_in: Log in
+    register: Register
+    log_out: Log out
+    not_logged_in: Not Logged In
+    profile: Profile
+    games: Games
+    server_browser: Server Browser
+    community: Community
+    download_manager: Download Manager
+    play_now: Play Now
+    single_player: Single Player
+    import: Import
+    install: Install
+    app_settings_tip: W3D Hub Launcher Settings
+  games:
+    game_settings: Game Settings
+    wine_configuration: Wine Configuration
+    repair_installation: Repair Installation
+    uninstall_game: Uninstall Game
+    install_folder: Install Folder
+    user_data_folder: User Data Folder
+    view_screenshots: View Screenshots
+    read_more: Read More
+    fetching_news: Fetching news...
+    channel: Channel
+  server_browser:
+    join_server: Join Server
+    game: Game
+    map: Map
+    max_players: Max Players
+    filters: Filters
+    region: Region
+    fetching_server_list: Fetching server list...
+    no_server_selected: No server selected
+    hostname: Hostname
+    current_map: Current Map
+    players: Players
+    ping: Ping
+    nickname: Nickname
+    set_nickname: Set Nickname
+    set_nickname_message: Set a nickname that will be used when joining a server
+    enter_password: Enter Password
+    enter_password_message: This server requires a password

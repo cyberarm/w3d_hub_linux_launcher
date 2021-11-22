@@ -2,4 +2,5 @@ source "https://rubygems.org"
 
 gem "cyberarm_engine"
 gem "launchy"
-gem "async-websocket"
+gem "i18n"
+# gem "async-websocket"

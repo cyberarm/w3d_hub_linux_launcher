@@ -10,8 +10,12 @@ require "fileutils"
 require "digest"
 require "rexml"
 
+require "i18n"
 require "launchy"
 require "zip"
+
+I18n.load_path << Dir[File.expand_path("locales") + "/*.yml"]
+I18n.default_locale = :en
 
 class W3DHub
   GAME_ROOT_PATH = File.expand_path(".", __dir__)

@@ -32,12 +32,12 @@ class W3DHub
                 # background 0xff_8855ff
 
                 stack(width: 0.75, height: 1.0) do
-                  title "<b>W3D Hub Launcher</b>", height: 0.5
+                  title "<b>#{I18n.t(:"app_name")}</b>", height: 0.5
                   flow(width: 1.0, height: 0.5) do
                     flow(width: 0.18, height: 1.0) do
                       button(
                         get_image("#{GAME_ROOT_PATH}/media/ui_icons/gear.png"),
-                        tip: "W3D Hub Launcher Settings",
+                        tip: I18n.t(:"interface.app_settings_tip"),
                         image_height: 1.0,
                         padding_left: 4,
                         padding_top: 4,
@@ -50,7 +50,7 @@ class W3DHub
 
                       button(
                         get_image("#{GAME_ROOT_PATH}/media/ui_icons/import.png"),
-                        tip: "Download Manager",
+                        tip: I18n.t(:"interface.download_manager"),
                         image_height: 1.0,
                         padding_left: 4,
                         padding_top: 4,
@@ -64,11 +64,11 @@ class W3DHub
 
                     @application_taskbar_container = stack(width: 0.77, height: 1.0, margin_left: 16) do
                       flow(width: 1.0, height: 0.65) do
-                        @application_taskbar_label = inscription "Downloading Expansive Civilian Warfare...", width: 0.65, text_wrap: :none
-                        @application_taskbar_status_label = inscription "460.2 MB / 254.5 GB", width: 0.35, text_align: :right, text_wrap: :none
+                        @application_taskbar_label = inscription "", width: 0.65, text_wrap: :none
+                        @application_taskbar_status_label = inscription "", width: 0.35, text_align: :right, text_wrap: :none
                       end
 
-                      @application_taskbar_progressbar = progress fraction: 0.4, height: 2, width: 1.0
+                      @application_taskbar_progressbar = progress fraction: 0.0, height: 2, width: 1.0
                     end
                   end
                 end
@@ -76,11 +76,11 @@ class W3DHub
                 @account_container = flow(width: 0.25, height: 1.0) do
                   stack(width: 0.7, height: 1.0) do
                     # background 0xff_222222
-                    tagline "<b>Not Logged In</b>", text_wrap: :none
+                    tagline "<b>#{I18n.t(:"interface.not_logged_in")}</b>", text_wrap: :none
 
                     flow(width: 1.0) do
-                      link("Log in", text_size: 16) { page(W3DHub::Pages::Login) }
-                      link "Register", text_size: 16 do
+                      link(I18n.t(:"interface.log_in"), text_size: 16, width: 0.5) { page(W3DHub::Pages::Login) }
+                      link I18n.t(:"interface.register"), text_size: 16, width: 0.49 do
                         Launchy.open("https://secure.w3dhub.com/forum/index.php?app=core&module=global&section=register")
                       end
                     end
@@ -95,15 +95,15 @@ class W3DHub
                 end
 
                 flow(width: 0.55, height: 1.0) do
-                  link "Games" do
+                  link I18n.t(:"interface.games") do
                     page(W3DHub::Pages::Games)
                   end
 
-                  link "Server Browser", margin_left: 18 do
+                  link I18n.t(:"interface.server_browser"), margin_left: 18 do
                     page(W3DHub::Pages::ServerBrowser)
                   end
 
-                  link "Community", margin_left: 18 do
+                  link I18n.t(:"interface.community"), margin_left: 18 do
                     page(W3DHub::Pages::Community)
                   end
                 end

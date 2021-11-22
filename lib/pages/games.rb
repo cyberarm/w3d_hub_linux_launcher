@@ -61,7 +61,7 @@ class W3DHub
           flow(width: 1.0, height: 0.03) do
             # background 0xff_444411
 
-            inscription "Channel"
+            inscription I18n.t(:"games.channel")
             list_box(items: game.channels.map(&:name), choose: channel.name, enabled: game.channels.count > 1,
                      margin_top: 0, margin_bottom: 0, width: 128,
                      padding_left: 1, padding_top: 1, padding_right: 1, padding_bottom: 1, text_size: 14) do |value|
@@ -87,15 +87,15 @@ class W3DHub
 
               if window.application_manager.installed?(game.id, channel.id)
                 Hash.new.tap { |hash|
-                  hash["Game Settings"] = { icon: "gear", block: proc { window.application_manager.settings(game.id, channel.id) } }
-                  hash["Wine Configuration"] = { icon: "gear", block: proc { window.application_manager.wine_configuration(game.id, channel.id) } } if W3DHub.unix?
+                  hash[I18n.t(:"games.game_settings")] = { icon: "gear", block: proc { window.application_manager.settings(game.id, channel.id) } }
+                  hash[I18n.t(:"games.wine_configuration")] = { icon: "gear", block: proc { window.application_manager.wine_configuration(game.id, channel.id) } } if W3DHub.unix?
                   if game.id != "ren"
-                    hash["Repair Installation"] = { icon: "wrench", block: proc { window.application_manager.repair(game.id, channel.id) } }
-                    hash["Uninstall"] = { icon: "trashCan", block: proc { window.application_manager.uninstall(game.id, channel.id) } }
+                    hash[I18n.t(:"games.repair_installation")] = { icon: "wrench", block: proc { window.application_manager.repair(game.id, channel.id) } }
+                    hash[I18n.t(:"games.uninstall_game")] = { icon: "trashCan", block: proc { window.application_manager.uninstall(game.id, channel.id) } }
                   end
-                  hash["Install Folder"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, channel.id, :installation) } }
-                  hash["User Data Folder"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, channel.id, :user_data) } }
-                  hash["View Screenshots"] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, channel.id, :screenshots) } }
+                  hash[I18n.t(:"games.install_folder")] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, channel.id, :installation) } }
+                  hash[I18n.t(:"games.user_data_folder")] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, channel.id, :user_data) } }
+                  hash[I18n.t(:"games.view_screenshots")] = { icon: nil, block: proc { window.application_manager.show_folder(game.id, channel.id, :screenshots) } }
                 }.each do |key, hash|
                   flow(width: 1.0, height: 22, margin_bottom: 8) do
                     image "#{GAME_ROOT_PATH}/media/ui_icons/#{hash[:icon]}.png", width: 0.11 if hash[:icon]
@@ -128,22 +128,22 @@ class W3DHub
             # background 0xff_551100
 
             if window.application_manager.installed?(game.id, channel.id)
-              button "<b>Play Now</b>", margin_left: 24 do
+              button "<b>#{I18n.t(:"interface.play_now")}</b>", margin_left: 24 do
                 window.application_manager.run(game.id, channel.id)
               end
 
-              button "<b>Single Player</b>", margin_left: 24 do
+              button "<b>#{I18n.t(:"interface.single_player")}</b>", margin_left: 24 do
                 window.application_manager.run(game.id, channel.id)
               end
             else
               unless game.id == "ren"
-                button "<b>Install</b>", margin_left: 24, enabled: !window.application_manager.task?(:installer, game.id, channel.id) do |button|
+                button "<b>#{I18n.t(:"interface.install")}</b>", margin_left: 24, enabled: !window.application_manager.task?(:installer, game.id, channel.id) do |button|
                   button.enabled = false
                   window.application_manager.install(game.id, channel.id)
                 end
               end
 
-              button "<b>Import</b>", margin_left: 24, enabled: false do
+              button "<b>#{I18n.t(:"interface.import")}</b>", margin_left: 24, enabled: false do
                 window.application_manager.import(game.id, channel.id, "?")
               end
             end
@@ -159,7 +159,7 @@ class W3DHub
           end
 
           @game_news_container.clear do
-            title "Fetching News...", padding: 8
+            title I18n.t(:"games.fetching_news"), padding: 8
           end
         end
       end
@@ -203,7 +203,7 @@ class W3DHub
 
                   flow(width: 1.0) do
                     inscription item.timestamp.strftime("%Y-%m-%d"), width: 0.5
-                    link "Read More", width: 0.5, text_align: :right, text_size: 14 do
+                    link I18n.t(:"games.read_more"), width: 0.5, text_align: :right, text_size: 14 do
                       Launchy.open(item.uri)
                     end
                   end

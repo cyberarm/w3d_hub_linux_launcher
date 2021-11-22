@@ -16,7 +16,7 @@ class W3DHub
       end
 
       class Status
-        attr_reader :name, :map, :max_players, :player_count, :started, :remaining, :teams, :players
+        attr_reader :name, :password, :map, :max_players, :player_count, :started, :remaining, :teams, :players
 
         def initialize(hash)
           @data = hash
@@ -25,6 +25,7 @@ class W3DHub
           @players = @data[:players]&.map { |t| Player.new(t) }
 
           @name         = @data[:name]
+          @password     = @data[:password] || false
           @map          = @data[:map]
           @max_players  = @data[:maxplayers]
           @player_count = @players.size || @data[:numplayers].to_i
