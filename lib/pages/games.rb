@@ -34,7 +34,7 @@ class W3DHub
 
               flow(width: 1.0, height: 48) do
                 stack(width: 0.3)
-                image "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png", height: 48
+                image "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png", height: 48, color: window.application_manager.installed?(game.id, game.channels.first.id) ? 0xff_ffffff : 0xee_444444
               end
               inscription game.name, width: 1.0, text_align: :center
             end
