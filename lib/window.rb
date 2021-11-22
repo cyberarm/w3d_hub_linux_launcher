@@ -4,7 +4,7 @@ class W3DHub
     attr_accessor :account, :service_status, :applications
 
     def setup
-      self.caption = "#{W3DHub::NAME}"
+      self.caption = I18n.t(:app_name)
 
       @settings = Settings.new
       @application_manager = ApplicationManager.new

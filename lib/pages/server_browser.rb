@@ -208,24 +208,24 @@ class W3DHub
                         if server.status.password
                           prompt_for_password(
                             accept_callback: proc do |password|
-                              join_server(game, server, password)
+                              join_server(server, password)
                             end
                           )
                         else
-                          join_server(game, server, nil)
+                          join_server(server, nil)
                         end
                       end
                     )
-                  end
-
-                  if server.status.password
-                    prompt_for_password(
-                      accept_callback: proc do |password|
-                        join_server(game, server, password)
-                      end
-                    )
                   else
-                    join_server(game, server, nil)
+                    if server.status.password
+                      prompt_for_password(
+                        accept_callback: proc do |password|
+                          join_server(server, password)
+                        end
+                      )
+                    else
+                      join_server(server, nil)
+                    end
                   end
                 end
               end
@@ -342,11 +342,11 @@ class W3DHub
         )
       end
 
-      def join_server(game, server, password)
+      def join_server(server, password)
         if (
           (server.status.password && password.length.positive?) ||
           !server.status.password) &&
-           window.settings[:server_list_username].to_s.length.zero?
+           window.settings[:server_list_username].to_s.length.positive?
 
           window.application_manager.join_server(
             server.game,

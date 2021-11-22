@@ -1,4 +1,7 @@
 class W3DHub
+  REGULAR_FONT = "#{GAME_ROOT_PATH}/media/fonts/NotoSans-Regular.ttf"
+  BOLD_FONT = "#{GAME_ROOT_PATH}/media/fonts/NotoSans-Bold.ttf"
+
   THEME = {
     ToolTip: {
       background: 0xff_dedede,
@@ -8,7 +11,7 @@ class W3DHub
       text_shadow: false
     },
     TextBlock: {
-      # font: "Inconsolata",
+      font: BOLD_FONT,
       text_border: false,
       text_shadow: true,
       text_shadow_size: 1,
