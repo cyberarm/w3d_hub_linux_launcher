@@ -2,8 +2,11 @@ class W3DHub
   class Pages
     class ServerBrowser < Page
       def setup
+        @server_locked_icons = {}
+
         @selected_server ||= nil
         @selected_color = 0xff_666655
+
         @filters = Store.settings[:server_list_filters] || {}
         @filter_region = Store.settings[:server_list_region] || "Any" # "Any", "North America", "Europe"
 
@@ -127,7 +130,7 @@ class W3DHub
             server_container = flow(width: 1.0, height: 48, hover: { background: 0xff_555566 }, active: { background: 0xff_555588 }) do
               background 0xff_333333 if i.odd?
 
-              image game_icon(server.game), width: 0.08, padding: 4
+              image game_icon(server), width: 0.08, padding: 4
 
               stack(width: 0.45, height: 1.0) do
                 inscription "<b>#{server&.status&.name}</b>"
@@ -191,7 +194,7 @@ class W3DHub
           stack(width: 1.0, height: 1.0, padding: 8) do
             stack(width: 1.0, height: 0.3) do
               flow(width: 1.0, height: 0.2) do
-                image game_icon(server.game), width: 0.05
+                image game_icon(server), width: 0.05
                 tagline server.status.name, width: 0.949, text_wrap: :none
               end
 
@@ -317,8 +320,19 @@ class W3DHub
         end
       end
 
-      def game_icon(game)
-        "#{GAME_ROOT_PATH}/media/icons/#{game.nil? ? 'ren' : game}.png"
+      def game_icon(server)
+        if server.status.password
+          @server_locked_icons[server.game] ||= Gosu.render(96, 96) do
+            i = get_image("#{GAME_ROOT_PATH}/media/icons/#{server.game.nil? ? 'ren' : server.game}.png")
+            lock = get_image("#{GAME_ROOT_PATH}/media/ui_icons/locked.png")
+            scale = [96.0 / i.width, 96.0 / i.height].min
+
+            i.draw(0, 0, 0, scale, scale)
+            lock.draw(96 - lock.width * 0.5, 96 - lock.height * 0.5, 0, 0.5, 0.5, 0xff_ff8800)
+          end
+        else
+          "#{GAME_ROOT_PATH}/media/icons/#{server.game.nil? ? 'ren' : server.game}.png"
+        end
       end
 
       def game_name(game)
