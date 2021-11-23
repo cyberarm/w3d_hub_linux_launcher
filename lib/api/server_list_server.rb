@@ -22,7 +22,7 @@ class W3DHub
           @data = hash
 
           @teams   = @data[:teams]&.map { |t| Team.new(t) }
-          @players = @data[:players]&.map { |t| Player.new(t) }
+          @players = @data[:players]&.select { |t| t[:nick] != "Nod" && t[:nick] != "GDI" }&.map { |t| Player.new(t) }
 
           @name         = @data[:name]
           @password     = @data[:password] || false

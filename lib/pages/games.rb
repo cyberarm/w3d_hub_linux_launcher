@@ -129,7 +129,7 @@ class W3DHub
 
             if Store.application_manager.installed?(game.id, channel.id)
               button "<b>#{I18n.t(:"interface.play_now")}</b>", margin_left: 24 do
-                Store.application_manager.run(game.id, channel.id)
+                Store.application_manager.play_now(game.id, channel.id)
               end
 
               button "<b>#{I18n.t(:"interface.single_player")}</b>", margin_left: 24 do

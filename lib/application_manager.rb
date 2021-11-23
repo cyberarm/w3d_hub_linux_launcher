@@ -94,13 +94,32 @@ class W3DHub
     def show_folder(app_id, channel, type)
       puts "Show Folder Request: #{app_id} -> #{type.inspect}"
 
-      case type
+      app_data = installed?(app_id, channel)
+
+      return false unless app_data
+
+      cmd = if W3DHub.windows?
+              "explorer"
+            elsif W3DHub.linux?
+              "xdg-open"
+            elsif W3DHub.mac?
+              "open"
+            end
+
+      path = case type
       when :installation
+        app_data[:install_directory]
       when :user_data
+        app_data[:install_directory]
       when :screenshots
+        app_data[:install_directory]
       else
-        warn "Unknown folder type: #{type.inspect}"
+        raise "Unknown folder type: #{type.inspect}"
       end
+
+      path.gsub!("/", "\\") if W3DHub.windows?
+
+      system("#{cmd} \"#{path}\"")
     end
 
     def wine_command(app_id, channel)
@@ -130,6 +149,18 @@ class W3DHub
           password ? "+password \"#{password}\"" : ""
         )
       end
+    end
+
+    def play_now(app_id, channel)
+      app_data = installed?(app_id, channel)
+
+      return false unless app_data
+
+      server = Store.server_list.select { |server| server.game == app_id && !server.status.password }&.first
+
+      return false unless server
+
+      join_server(app_id, channel, server)
     end
 
     def auto_import
