@@ -4,10 +4,10 @@ class W3DHub
       def setup
         @selected_server ||= nil
         @selected_color = 0xff_666655
-        @filters = {}
-        @filter_region = "Any" # "Any", "North America", "Europe"
+        @filters = Store.settings[:server_list_filters] || {}
+        @filter_region = Store.settings[:server_list_region] || "Any" # "Any", "North America", "Europe"
 
-        Store.applications.games.each { |game| @filters[game.id] = true }
+        Store.applications.games.each { |game| @filters[game.id.to_sym] = true if @filters[game.id.to_sym].nil? }
 
         body.clear do
           stack(width: 1.0, height: 1.0, padding: 8) do
@@ -18,12 +18,14 @@ class W3DHub
             flow(width: 1.0, height: 0.06) do
               flow(width: 0.75, height: 1.0) do
                 @filters.each do |app_id, enabled|
-                  app = Store.applications.games.find { |a| a.id == app_id }
+                  app = Store.applications.games.find { |a| a.id == app_id.to_s }
 
                   image "#{GAME_ROOT_PATH}/media/icons/#{app_id}.png", tip: "#{app.name}", height: 1.0,
                         border_thickness_bottom: 1, border_color_bottom: 0x00_000000,
                         color: enabled ? 0xff_ffffff : 0xff_444444, hover: { border_color_bottom: 0xff_aaaaaa }, margin_right: 32 do |img|
                     @filters[app_id] = !@filters[app_id]
+                    Store.settings[:server_list_filters] = @filters
+                    Store.settings.save_settings
 
                     if @filters[app_id]
                       img.style.color = 0xff_ffffff
@@ -38,8 +40,10 @@ class W3DHub
                 end
 
                 para I18n.t(:"server_browser.region")
-                list_box items: ["Any", "North America", "Europe"], width: 0.25 do |value|
+                list_box items: ["Any", "North America", "Europe"], choose: Store.settings[:server_list_region], width: 0.25 do |value|
                   @filter_region = value
+                  Store.settings[:server_list_region] = @filter_region
+                  Store.settings.save_settings
 
                   populate_server_list
                 end
@@ -115,7 +119,7 @@ class W3DHub
           i = -1
 
           Store.server_list.each do |server|
-            next unless @filters[server.game]
+            next unless @filters[server.game.to_sym]
             next unless server.region == @filter_region || @filter_region == "Any"
 
             i += 1

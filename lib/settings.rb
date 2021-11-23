@@ -9,6 +9,8 @@ class W3DHub
         create_wine_prefixes: true,
         allow_diagnostic_reports: false,
         server_list_username: "",
+        server_list_filters: {},
+        server_list_region: "Any",
         account: {},
         applications: {},
         games: {}
