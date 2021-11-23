@@ -2,7 +2,6 @@ class W3DHub
   class Pages
     class ServerBrowser < Page
       def setup
-        @server_list ||= []
         @selected_server ||= nil
         @selected_color = 0xff_666655
         @filters = {}
@@ -102,7 +101,11 @@ class W3DHub
           end
         end
 
-        fetch_server_list
+        if Store.server_list.empty?
+          fetch_server_list
+        else
+          populate_server_list
+        end
       end
 
       def populate_server_list
@@ -111,7 +114,7 @@ class W3DHub
         @server_list_container.clear do
           i = -1
 
-          @server_list.each do |server|
+          Store.server_list.each do |server|
             next unless @filters[server.game]
             next unless server.region == @filter_region || @filter_region == "Any"
 
@@ -297,7 +300,7 @@ class W3DHub
             list = Api.server_list(2)
 
             if list
-              @server_list = list.sort_by! { |s| s&.status&.players&.size }.reverse
+              Store.server_list = list.sort_by! { |s| s&.status&.players&.size }.reverse
 
 
               main_thread_queue << proc { populate_server_list }
@@ -305,7 +308,7 @@ class W3DHub
           rescue => e
             # Something went wrong!
             pp e
-            @server_list = []
+            Store.server_list = []
           end
         end
       end

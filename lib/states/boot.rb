@@ -11,7 +11,8 @@ class W3DHub
         @tasks = {
           refresh_user_token: { started: false, complete: false },
           service_status: { started: false, complete: false },
-          applications: { started: false, complete: false }
+          applications: { started: false, complete: false },
+          server_list: { started: false, complete: false }
         }
 
         @task_index = 0
@@ -108,6 +109,23 @@ class W3DHub
             @tasks[:applications][:complete] = true
           else
             # FIXME: Failed to retreive!
+          end
+        end
+      end
+
+      def server_list
+        @status_label.value = "Getting server list..."
+
+        Thread.new do
+          begin
+            list = Api.server_list(2)
+
+            Store.server_list = list.sort_by! { |s| s&.status&.players&.size }.reverse if list
+            @tasks[:server_list][:complete] = true
+          rescue => e
+            # Something went wrong!
+            pp e
+            Store.server_list = []
           end
         end
       end

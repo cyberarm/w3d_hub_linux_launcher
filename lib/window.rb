@@ -3,6 +3,7 @@ class W3DHub
     def setup
       self.caption = I18n.t(:app_name)
 
+      Store[:server_list] = []
       Store[:settings] = Settings.new
       Store[:application_manager] = ApplicationManager.new
 
