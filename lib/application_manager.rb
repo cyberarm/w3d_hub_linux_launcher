@@ -58,8 +58,8 @@ class W3DHub
       # open wwconfig.exe or config.exe for ecw
 
       if (app_data = installed?(app_id, channel) && W3DHub.unix?)
-        exe = if window.settings[:wine_prefix]
-          "WINEPREFIX=\"#{window.settings[:wine_prefix]}\" winecfg"
+        exe = if Store.settings[:wine_prefix]
+          "WINEPREFIX=\"#{Store.settings[:wine_prefix]}\" winecfg"
         else
           "winecfg"
         end
@@ -106,28 +106,27 @@ class W3DHub
     def wine_command(app_id, channel)
       return "" if W3DHub.windows?
 
-      if window.settings[:wine_prefix]
-        "WINEPREFIX=\"#{window.settings[:wine_prefix]}\" \"#{window.settings[:wine_command]}\" "
+      if Store.settings[:wine_prefix]
+        "WINEPREFIX=\"#{Store.settings[:wine_prefix]}\" \"#{Store.settings[:wine_command]}\" "
       else
-        "#{window.settings[:wine_command]} "
+        "#{Store.settings[:wine_command]} "
       end
     end
 
     def run(app_id, channel, *args)
       if (app_data = installed?(app_id, channel))
-        pp "#{wine_command(app_id, channel)}#{app_data[:install_path]}", *args
         pid = Process.spawn("#{wine_command(app_id, channel)}#{app_data[:install_path]}", *args)
         Process.detach(pid)
       end
     end
 
     def join_server(app_id, channel, server, password = nil)
-      if installed?(app_id, channel) && window.settings[:server_list_username].to_s.length.positive?
+      if installed?(app_id, channel) && Store.settings[:server_list_username].to_s.length.positive?
         run(
           app_id, channel,
           "-launcher",
           "+connect #{server.address}:#{server.port}",
-          "+netplayername \"#{window.settings[:server_list_username]}\"",
+          "+netplayername \"#{Store.settings[:server_list_username]}\"",
           password ? "+password \"#{password}\"" : ""
         )
       end
@@ -179,9 +178,9 @@ class W3DHub
                 wine_prefix: nil
               }
 
-              window.settings[:games] ||= {}
-              window.settings[:games][:"#{app_id}_#{channel_id}"] = application_data
-              window.settings.save_settings
+              Store.settings[:games] ||= {}
+              Store.settings[:games][:"#{app_id}_#{channel_id}"] = application_data
+              Store.settings.save_settings
             end
           end
         end
@@ -206,13 +205,13 @@ class W3DHub
         wine_prefix: task.wine_prefix
       }
 
-      window.settings[:games] ||= {}
-      window.settings[:games][:"#{task.app_id}_#{task.release_channel}"] = application_data
-      window.settings.save_settings
+      Store.settings[:games] ||= {}
+      Store.settings[:games][:"#{task.app_id}_#{task.release_channel}"] = application_data
+      Store.settings.save_settings
     end
 
     def installed?(app_id, channel)
-      window.settings[:games, :"#{app_id}_#{channel}"]
+      Store.settings[:games, :"#{app_id}_#{channel}"]
     end
 
     def installing?(app_id, channel)

@@ -28,6 +28,7 @@ end
 require_relative "lib/version"
 require_relative "lib/theme"
 require_relative "lib/common"
+require_relative "lib/store"
 require_relative "lib/window"
 require_relative "lib/cache"
 require_relative "lib/settings"

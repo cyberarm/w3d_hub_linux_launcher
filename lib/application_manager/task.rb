@@ -13,7 +13,7 @@ class W3DHub
 
         @task_state = :not_started # :not_started, :running, :paused, :halted, :complete, :failed
 
-        @application = window.applications.games.find { |g| g.id == app_id }
+        @application = Store.applications.games.find { |g| g.id == app_id }
         @channel = @application.channels.find { |c| c.id == release_channel }
 
         @packages_to_download = []
@@ -102,8 +102,8 @@ class W3DHub
         fail!("FAIL FAST: `#{W3DHub.tar_command} --help` command failed, #{W3DHub.tar_command} is not installed. Will be unable to unpack packages.") unless bsdtar_present
 
         if W3DHub.unix?
-          wine_present = system("which #{window.settings[:wine_command]}")
-          fail!("FAIL FAST: `which #{window.settings[:wine_command]}` command failed, wine is not installed. Will be unable to create prefixes or launch games.") unless wine_present
+          wine_present = system("which #{Store.settings[:wine_command]}")
+          fail!("FAIL FAST: `which #{Store.settings[:wine_command]}` command failed, wine is not installed. Will be unable to create prefixes or launch games.") unless wine_present
         end
       end
 
@@ -284,7 +284,7 @@ class W3DHub
       end
 
       def mark_application_installed
-        window.application_manager.installed!(self)
+        Store.application_manager.installed!(self)
 
         puts "#{@app_id} has been installed."
       end

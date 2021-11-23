@@ -5,7 +5,7 @@ class W3DHub
 
       def setup
         @download_package_info ||= {}
-        @task = window.application_manager.current_task
+        @task = Store.application_manager.current_task
 
         return unless @task
 

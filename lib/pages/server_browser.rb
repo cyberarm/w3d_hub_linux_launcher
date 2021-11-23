@@ -8,7 +8,7 @@ class W3DHub
         @filters = {}
         @filter_region = "Any" # "Any", "North America", "Europe"
 
-        window.applications.games.each { |game| @filters[game.id] = true }
+        Store.applications.games.each { |game| @filters[game.id] = true }
 
         body.clear do
           stack(width: 1.0, height: 1.0, padding: 8) do
@@ -19,7 +19,7 @@ class W3DHub
             flow(width: 1.0, height: 0.06) do
               flow(width: 0.75, height: 1.0) do
                 @filters.each do |app_id, enabled|
-                  app = window.applications.games.find { |a| a.id == app_id }
+                  app = Store.applications.games.find { |a| a.id == app_id }
 
                   image "#{GAME_ROOT_PATH}/media/icons/#{app_id}.png", tip: "#{app.name}", height: 1.0,
                         border_thickness_bottom: 1, border_color_bottom: 0x00_000000,
@@ -48,14 +48,14 @@ class W3DHub
 
               flow(width: 0.249, height: 1.0) do
                 inscription "#{I18n.t(:"server_browser.nickname")}:", width: 0.32
-                @nickname_label = inscription "#{window.settings[:server_list_username]}", width: 0.6
+                @nickname_label = inscription "#{Store.settings[:server_list_username]}", width: 0.6
                 image "#{GAME_ROOT_PATH}/media/ui_icons/wrench.png", height: 16, hover: { color: 0xaa_ffffff }, tip: I18n.t(:"server_browser.set_nickname") do
                   # Prompt for player name
                   prompt_for_nickname(
                     accept_callback: proc do |entry|
                       @nickname_label.value = entry
-                      window.settings[:server_list_username] = entry
-                      window.settings.save_settings
+                      Store.settings[:server_list_username] = entry
+                      Store.settings.save_settings
                     end
                   )
                 end
@@ -189,7 +189,7 @@ class W3DHub
               end
 
               stack(width: 1.0, height: 0.25) do
-                game_installed = window.application_manager.installed?(server.game, window.applications.games.find { |g| g.id == server.game }.channels.first.id)
+                game_installed = Store.application_manager.installed?(server.game, Store.applications.games.find { |g| g.id == server.game }.channels.first.id)
 
                 button "<b>#{I18n.t(:"server_browser.join_server")}</b>", enabled: !game_installed.nil? do
                   # Check for nickname
@@ -198,12 +198,12 @@ class W3DHub
                   # Check if password needed
                   #   prompt for password
                   # Launch game
-                  if window.settings[:server_list_username].to_s.length.zero?
+                  if Store.settings[:server_list_username].to_s.length.zero?
                     prompt_for_nickname(
                       accept_callback: proc do |entry|
                         @nickname_label.value = entry
-                        window.settings[:server_list_username] = entry
-                        window.settings.save_settings
+                        Store.settings[:server_list_username] = entry
+                        Store.settings.save_settings
 
                         if server.status.password
                           prompt_for_password(
@@ -315,7 +315,7 @@ class W3DHub
       end
 
       def game_name(game)
-        window.applications.games.detect { |g| g.id == game }&.name
+        Store.applications.games.detect { |g| g.id == game }&.name
       end
 
       def prompt_for_nickname(accept_callback: nil, cancel_callback: nil)
@@ -323,7 +323,7 @@ class W3DHub
           W3DHub::States::PromptDialog,
           title: I18n.t(:"server_browser.set_nickname"),
           message: I18n.t(:"server_browser.set_nickname_message"),
-          prefill: window.settings[:server_list_username],
+          prefill: Store.settings[:server_list_username],
           accept_callback: accept_callback,
           cancel_callback: cancel_callback,
           valid_callback: proc { |entry| entry.length.positive? }
@@ -346,11 +346,11 @@ class W3DHub
         if (
           (server.status.password && password.length.positive?) ||
           !server.status.password) &&
-           window.settings[:server_list_username].to_s.length.positive?
+           Store.settings[:server_list_username].to_s.length.positive?
 
-          window.application_manager.join_server(
+          Store.application_manager.join_server(
             server.game,
-            window.applications.games.find { |g| g.id == server.game }.channels.first.id, server, password
+            Store.applications.games.find { |g| g.id == server.game }.channels.first.id, server, password
           )
         else
           window.push_state(W3DHub::States::MessageDialog, type: "?", title: "?", message: "?")

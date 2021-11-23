@@ -44,9 +44,9 @@ class W3DHub
         @progressbar.value = @fraction
 
         if @progressbar.value >= 1.0 && @task_index == @tasks.size
-          window.account = @account
-          window.service_status = @service_status
-          window.applications = @applications
+          Store.account = @account
+          Store.service_status = @service_status
+          Store.applications = @applications
 
           push_state(States::Interface)
         end
@@ -61,17 +61,17 @@ class W3DHub
       end
 
       def refresh_user_token
-        if window.settings[:account, :refresh_token]
+        if Store.settings[:account, :refresh_token]
           Thread.new do
-            @account = Api.refresh_user_login(window.settings[:account, :refresh_token])
+            @account = Api.refresh_user_login(Store.settings[:account, :refresh_token])
 
             if @account
-              window.settings[:account][:refresh_token] = @account.refresh_token
-              window.settings.save_settings
+              Store.settings[:account][:refresh_token] = @account.refresh_token
             else
-              window.settings[:account][:refresh_token] = nil
-              window.settings.save_settings
+              Store.settings[:account][:refresh_token] = nil
             end
+
+            Store.settings.save_settings
 
             @tasks[:refresh_user_token][:complete] = true
           end

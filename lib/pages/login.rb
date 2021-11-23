@@ -40,9 +40,9 @@ class W3DHub
                     account = Api.user_login(@username.value, @password.value)
 
                     if account
-                      window.account = account
-                      window.settings[:account][:refresh_token] = account.refresh_token
-                      window.settings.save_settings
+                      Store.account = account
+                      Store.settings[:account][:refresh_token] = account.refresh_token
+                      Store.settings.save_settings
 
                       Cache.fetch(account.avatar_uri)
 
@@ -67,7 +67,7 @@ class W3DHub
           end
         end
 
-        if window.account
+        if Store.account
           populate_account_info
           page(W3DHub::Pages::Games)
         end
@@ -77,23 +77,23 @@ class W3DHub
         @host.instance_variable_get(:"@account_container").clear do
           stack(width: 0.7, height: 1.0) do
             # background 0xff_222222
-            tagline "<b>#{window.account.username}</b>"
+            tagline "<b>#{Store.account.username}</b>"
 
             flow(width: 1.0) do
               link(I18n.t(:"interface.log_out"), text_size: 16, width: 0.5) { depopulate_account_info }
               link I18n.t(:"interface.profile"), text_size: 16, width: 0.49 do
-                Launchy.open("https://secure.w3dhub.com/forum/index.php?showuser=#{window.account.id}")
+                Launchy.open("https://secure.w3dhub.com/forum/index.php?showuser=#{Store.account.id}")
               end
             end
           end
 
-          image Cache.path(window.account.avatar_uri), height: 1.0
+          image Cache.path(Store.account.avatar_uri), height: 1.0
         end
       end
 
       def depopulate_account_info
-        window.settings[:account][:refresh_token] = nil
-        window.settings.save_settings
+        Store.settings[:account][:refresh_token] = nil
+        Store.settings.save_settings
 
         @host.instance_variable_get(:"@account_container").clear do
           stack(width: 0.7, height: 1.0) do

@@ -15,7 +15,7 @@ class W3DHub
 
         @main_thread_queue = []
 
-        window.application_manager.auto_import
+        Store.application_manager.auto_import
 
         theme(W3DHub::THEME)
 
@@ -118,7 +118,7 @@ class W3DHub
           end
         end
 
-        if window.account
+        if Store.account
           page(W3DHub::Pages::Login)
         else
           page(W3DHub::Pages::Games)

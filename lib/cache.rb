@@ -34,13 +34,13 @@ class W3DHub
     end
 
     def self.package_path(category, subcategory, name, version)
-      package_cache_dir = $window.settings[:package_cache_dir]
+      package_cache_dir = $Store.settings[:package_cache_dir]
 
       "#{package_cache_dir}/#{category}/#{subcategory}/#{version}/#{name}.package"
     end
 
     def self.install_path(application, channel)
-      app_install_dir = $window.settings[:app_install_dir]
+      app_install_dir = $Store.settings[:app_install_dir]
 
       "#{app_install_dir}/#{application.category}/#{application.id}/#{channel.id}"
     end
