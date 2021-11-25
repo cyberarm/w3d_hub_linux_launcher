@@ -43,12 +43,16 @@ class W3DHub
                 end
 
                 para I18n.t(:"server_browser.region")
-                list_box items: ["Any", "North America", "Europe"], choose: Store.settings[:server_list_region], width: 0.25 do |value|
+                list_box items: ["Any", "North America", "Europe"], choose: Store.settings[:server_list_region], width: 0.2, height: 1.0 do |value|
                   @filter_region = value
                   Store.settings[:server_list_region] = @filter_region
                   Store.settings.save_settings
 
                   populate_server_list
+                end
+
+                button get_image("#{GAME_ROOT_PATH}/media/ui_icons/return.png"), image_height: 1.0, margin_left: 16, padding_left: 2, padding_right: 2, padding_top: 2, padding_bottom: 2 do
+                  fetch_server_list
                 end
               end
 
