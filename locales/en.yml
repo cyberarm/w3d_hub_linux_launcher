@@ -27,6 +27,7 @@ en:
     fetching_news: Fetching news...
     channel: Channel
   server_browser:
+    refresh: Refresh
     join_server: Join Server
     game: Game
     map: Map

@@ -51,7 +51,7 @@ class W3DHub
                   populate_server_list
                 end
 
-                button get_image("#{GAME_ROOT_PATH}/media/ui_icons/return.png"), image_height: 1.0, margin_left: 16, padding_left: 2, padding_right: 2, padding_top: 2, padding_bottom: 2 do
+                button get_image("#{GAME_ROOT_PATH}/media/ui_icons/return.png"), tip: I18n.t(:"server_browser.refresh"), image_height: 1.0, margin_left: 16, padding_left: 2, padding_right: 2, padding_top: 2, padding_bottom: 2 do
                   fetch_server_list
                 end
               end
@@ -306,13 +306,18 @@ class W3DHub
       end
 
       def fetch_server_list
+        unless Gosu.milliseconds - Store.server_list_last_fetch >= 30_000 # 30 seconds
+          populate_server_list # Fake it
+          return
+        end
+
         Thread.new do
           begin
             list = Api.server_list(2)
 
             if list
               Store.server_list = list.sort_by! { |s| s&.status&.players&.size }.reverse
-
+              Store.server_list_last_fetch = Gosu.milliseconds
 
               main_thread_queue << proc { populate_server_list }
             end

@@ -7,7 +7,13 @@ class W3DHub
         @download_package_info ||= {}
         @task = Store.application_manager.current_task
 
-        return unless @task
+        unless @task
+          body.clear do
+            tagline "No operations pending.", width: 1.0, text_align: :center, margin: 128
+          end
+
+          return
+        end
 
         body.clear do
           stack(width: 1.0, height: 1.0) do
@@ -16,11 +22,11 @@ class W3DHub
               background @task.application.color
 
               flow(width: 0.70, height: 1.0) do
-                image "#{GAME_ROOT_PATH}/media/icons/#{@task.app_id}.png", height: 1.0
+                @application_image = image "#{GAME_ROOT_PATH}/media/icons/#{@task.app_id}.png", height: 1.0
 
                 stack(margin_left: 8) do
-                  $bug_1 = tagline "#{@task.application.name}"
-                  $bug_2 = inscription "Version: #{@task.channel.current_version} (#{@task.channel.id})"
+                  @application_name_label = tagline "#{@task.application.name}"
+                  @application_version_label = inscription "Version: #{@task.channel.current_version} (#{@task.channel.id})"
                 end
               end
 
@@ -29,7 +35,7 @@ class W3DHub
               flow(width: 0.30, height: 1.0) do
                 stack(width: 0.499, height: 1.0) do
                   para "Download Speed", width: 1.0, text_align: :center
-                  inscription "10 MB/s", width: 1.0, text_align: :center
+                  @download_speed_label = inscription "0 b/s", width: 1.0, text_align: :center
                 end
 
                 stack(width: 0.5, height: 1.0) do

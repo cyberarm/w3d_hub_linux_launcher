@@ -9,6 +9,12 @@ class W3DHub
 
       Store.settings.save_settings
 
+      begin
+        I18n.locale = Store.settings[:language]
+      rescue I18n::InvalidLocale
+        I18n.locale = :en
+      end
+
       push_state(W3DHub::States::Boot)
     end
 

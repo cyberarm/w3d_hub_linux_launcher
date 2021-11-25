@@ -120,7 +120,12 @@ class W3DHub
           begin
             list = Api.server_list(2)
 
-            Store.server_list = list.sort_by! { |s| s&.status&.players&.size }.reverse if list
+            if list
+              Store.server_list = list.sort_by! { |s| s&.status&.players&.size }.reverse
+            end
+
+            Store.server_list_last_fetch = Gosu.milliseconds
+
             @tasks[:server_list][:complete] = true
           rescue => e
             # Something went wrong!

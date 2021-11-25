@@ -70,7 +70,7 @@ class W3DHub
           end
 
           # Game Stuff
-          flow(width: 1.0, height: 0.89) do
+          flow(width: 1.0, height: 0.88) do
             # background 0xff_9999ff
 
             # Game options
@@ -124,7 +124,7 @@ class W3DHub
           end
 
           # Play buttons
-          flow(width: 1.0, height: 0.08) do
+          flow(width: 1.0, height: 0.09, padding_top: 6) do
             # background 0xff_551100
 
             if Store.application_manager.installed?(game.id, channel.id)
