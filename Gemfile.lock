@@ -13,7 +13,7 @@ GEM
     digest-crc (0.6.4)
       rake (>= 12.0.0, < 14.0.0)
     excon (0.78.1)
-    ffi (1.15.4-x64-mingw32)
+    ffi (1.15.4)
     gosu (1.2.0)
     gosu_more_drawables (0.3.1)
     i18n (1.8.11)

@@ -174,10 +174,10 @@ class W3DHub
 
             next if file.removed? # No package data
 
-            if file.patch?
-              fail!("#{@application.name} requires patches. Patching is not yet supported.")
-              break
-            end
+            # if file.patch?
+            #   fail!("#{@application.name} requires patches. Patching is not yet supported.")
+            #   break
+            # end
 
             next if packages.detect do |pkg|
               pkg.category == "games" &&
@@ -186,7 +186,8 @@ class W3DHub
               pkg.version == manifest.version
             end
 
-            packages.push(Api::Package.new(
+            packages.push(
+              Api::Package.new(
                 { category: "games", subcategory: @app_id, name: file.package, version: manifest.version }
               )
             )
