@@ -174,10 +174,6 @@ class W3DHub
         @page.focus
       end
 
-      def update_application_manager_status
-        @page.update_application_manager_status
-      end
-
       def show_application_taskbar
         @application_taskbar_container.show
       end
@@ -186,30 +182,38 @@ class W3DHub
         @application_taskbar_container.hide
       end
 
-      def update_application_taskbar(message, status, progress)
-        @application_taskbar_label.value = message
-        @application_taskbar_status_label.value = status
-        @application_taskbar_progressbar.value = progress.clamp(0.0, 1.0)
-      end
+      def update_interface_task_status(task)
+        show_application_taskbar
 
-      # def update_download_manager_state(application, channel)
-      # end
+        @application_taskbar_label.value = task.status.label
+        @application_taskbar_status_label.value = task.status.value
+        @application_taskbar_progressbar.value = task.status.progress.clamp(0.0, 1.0)
 
-      def update_download_manager_list
-      end
-
-      def update_download_manager_task(checksum, name, status, progress)
         return unless @page.is_a?(Pages::DownloadManager)
 
-        download_package_info = @page.download_package_info
+        operation_info = @page.operation_info
+        operation_step = @page.operation_info[:___step]
 
-        name_ = download_package_info["#{checksum}_name"]
-        status_ = download_package_info["#{checksum}_status"]
-        progress_ = download_package_info["#{checksum}_progress"]
+        if task.status.step != operation_step
+          @page.regenerate(task)
 
-        name_.value = name if name
-        status_.value = status if status
-        progress_.value = progress if progress
+          return
+        end
+
+        task.status.operations.each do |key, operation|
+
+          name_ = operation_info["#{key}_name"]
+          status_ = operation_info["#{key}_status"]
+          progress_ = operation_info["#{key}_progress"]
+
+          next if name_.value == operation.label &&
+                  status_.value == operation.value &&
+                  progress_.value == operation.value
+
+          name_.value = operation.label if operation.label
+          status_.value = operation.value if operation.value
+          progress_.value = operation.progress.clamp(0.0, 1.0) if operation.progress
+        end
       end
     end
   end

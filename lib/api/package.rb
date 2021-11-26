@@ -2,7 +2,7 @@ class W3DHub
   class Api
     class Package
       attr_reader :category, :subcategory, :name, :version, :size, :checksum, :checksum_chunk_size, :checksum_chunks,
-                  :custom_partially_valid_at_bytes
+                  :custom_partially_valid_at_bytes, :custom_is_patch
 
       def initialize(hash)
         @data = hash
@@ -18,6 +18,7 @@ class W3DHub
         @checksum_chunks = @data[:"checksum-chunks"]
 
         @custom_partially_valid_at_bytes = 0
+        @custom_is_patch = false
       end
 
       def chunk(key)
@@ -26,6 +27,10 @@ class W3DHub
 
       def partially_valid_at_bytes=(i)
         @custom_partially_valid_at_bytes = i
+      end
+
+      def is_patch=(file)
+        @custom_is_patch = file
       end
 
       class Chunk

@@ -55,10 +55,10 @@ class W3DHub
 
       create_directories(path)
 
-      file = File.open(path, "wb")
+      file = File.open(path, "ab")
       if (start_from_bytes > 0)
         headers["Range"] = "bytes=#{start_from_bytes}-#{package.size}"
-        file.seek(start_from_bytes)
+        file.pos = start_from_bytes
       end
 
       streamer = lambda do |chunk, remaining_bytes, total_bytes|

@@ -19,9 +19,6 @@ class W3DHub
       @host.main_thread_queue
     end
 
-    def update_application_manager_status
-    end
-
     def options=(options)
       @options = options
     end

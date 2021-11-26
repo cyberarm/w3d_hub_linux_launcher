@@ -22,7 +22,6 @@ class W3DHub
       super
 
       Store.application_manager.start_next_available_task if Store.application_manager.idle?
-      current_state.update_application_manager_status if current_state.is_a?(States::Interface)
     end
 
     def close

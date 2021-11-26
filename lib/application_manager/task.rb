@@ -4,8 +4,7 @@ class W3DHub
       include CyberarmEngine::Common
 
       attr_reader :app_id, :release_channel, :application, :channel,
-                  :total_bytes_to_download, :bytes_downloaded, :packages_to_download,
-                  :manifests, :packages, :files, :wine_prefix
+                  :manifests, :packages, :files, :wine_prefix, :status
 
       def initialize(app_id, release_channel)
         @app_id = app_id
@@ -25,6 +24,8 @@ class W3DHub
         @packages = []
 
         @wine_prefix = nil
+
+        @status = Status.new(application: @application, channel: channel) { update_interface_task_status }
 
         setup
       end
@@ -119,19 +120,10 @@ class W3DHub
         )
       end
 
-      def update_application_taskbar(message, status, progress)
+      def update_interface_task_status
         run_on_main_thread(
           proc do
-            window.current_state.show_application_taskbar
-            window.current_state.update_application_taskbar(message, status, progress)
-          end
-        )
-      end
-
-      def update_download_manager_task(checksum, message, status, progress)
-        run_on_main_thread(
-          proc do
-            window.current_state.update_download_manager_task(checksum, message, status, progress)
+            window.current_state.update_interface_task_status(self)
           end
         )
       end
@@ -149,6 +141,13 @@ class W3DHub
       ###############
 
       def fetch_manifests
+        @status.operations.clear
+        @status.label = "Downloading #{@application.name}..."
+        @status.value = "Fetching manifests..."
+        @status.progress = 0.0
+
+        @status.step = :fetching_manifests
+
         if fetch_manifest("games", app_id, "manifest.xml", @channel.current_version)
           manifest = load_manifest("games", app_id, "manifest.xml", @channel.current_version)
           @manifests << manifest
@@ -164,6 +163,13 @@ class W3DHub
       end
 
       def build_package_list(manifests)
+        @status.operations.clear
+        @status.label = "Downloading #{@application.name}..."
+        @status.value = "Building package list..."
+        @status.progress = 0.0
+
+        @status.step = :build_package_list
+
         packages = []
 
         manifests.reverse.each do |manifest|
@@ -191,6 +197,8 @@ class W3DHub
                 { category: "games", subcategory: @app_id, name: file.package, version: manifest.version }
               )
             )
+
+            packages.last.is_patch = file if file.patch?
           end
 
           # TODO: Dependencies
@@ -215,34 +223,58 @@ class W3DHub
           @packages = [package_details].flatten
           @packages_to_download = []
 
-          update_application_taskbar("Downloading #{@application.name}...", "Verifying local packages...", 0.0)
+          @status.label = "Downloading #{@application.name}..."
+          @status.value = "Verifying local packages..."
+          @status.progress = 0.0
 
           package_details.each do |pkg|
-            @packages_to_download << pkg unless verify_package(pkg)
+            @status.operations[:"#{pkg.checksum}"] = Status::Operation.new(
+              label: pkg.name,
+              value: "Verifying...",
+              progress: 0.0
+            )
           end
+
+          @status.step = :prefetch_verifying_packages
+
+          package_details.each do |pkg|
+            operation = @status.operations[:"#{pkg.checksum}"]
+
+            if verify_package(pkg)
+              operation.value = "Verified."
+              operation.progress = 1.0
+            else
+              @packages_to_download << pkg
+
+              operation.value = "#{W3DHub.format_size(pkg.custom_partially_valid_at_bytes)} / #{W3DHub.format_size(pkg.size)}"
+              operation.progress = pkg.custom_partially_valid_at_bytes.to_f / pkg.size
+            end
+
+            update_interface_task_status
+          end
+
+          @status.operations.delete_if { |key, o| o.progress >= 1.0 }
+
+          @status.step = :fetch_packages
 
           @total_bytes_to_download = @packages_to_download.sum { |pkg| pkg.size - pkg.custom_partially_valid_at_bytes }
           @bytes_downloaded = 0
 
           @packages_to_download.each do |pkg|
-            package_bytes_downloaded = 0
+            package_bytes_downloaded = pkg.custom_partially_valid_at_bytes
 
             package_fetch(pkg) do |chunk, remaining_bytes, total_bytes|
               @bytes_downloaded += chunk.to_s.length
               package_bytes_downloaded += chunk.to_s.length
 
-              update_application_taskbar(
-                "Downloading #{@application.name}...",
-                "#{W3DHub.format_size(@bytes_downloaded)} / #{W3DHub.format_size(@total_bytes_to_download)}",
-                @bytes_downloaded.to_f / @total_bytes_to_download
-              )
+              @status.value = "#{W3DHub.format_size(@bytes_downloaded)} / #{W3DHub.format_size(@total_bytes_to_download)}"
+              @status.progress = @bytes_downloaded.to_f / @total_bytes_to_download
 
-              update_download_manager_task(
-                pkg.checksum,
-                pkg.name,
-                "#{W3DHub.format_size(package_bytes_downloaded)} / #{W3DHub.format_size(total_bytes)}",
-                package_bytes_downloaded.to_f / total_bytes
-              )
+              operation = @status.operations[:"#{pkg.checksum}"]
+              operation.value = "#{W3DHub.format_size(package_bytes_downloaded)} / #{W3DHub.format_size(pkg.size)}"
+              operation.progress = package_bytes_downloaded.to_f / total_bytes
+
+              update_interface_task_status
             end
           end
         else
@@ -260,32 +292,74 @@ class W3DHub
         puts "Unpacking packages in '#{path}'..."
         Cache.create_directories(path, true)
 
+        @status.operations.clear
+        @status.label = "Installing #{@application.name}..."
+        @status.value = "Unpacking..."
+        @status.progress = 0.0
+
+        packages.each do |pkg|
+          @status.operations[:"#{pkg.checksum}"] = Status::Operation.new(
+            label: pkg.name,
+            value: "Pending",
+            progress: 0.0
+          )
+        end
+
+        @status.step = :unpacking
+
+        # TODO: Add support for patches
         packages.each do |package|
           puts "    #{package.name}:#{package.version}"
           package_path = Cache.package_path(package.category, package.subcategory, "#{package.name}.zip", package.version)
 
           puts "      Running #{W3DHub.tar_command} command: #{"#{W3DHub.tar_command} -xf #{package_path} -C #{path}"}"
           status = system("#{W3DHub.tar_command} -xf #{package_path} -C #{path}")
+
           if status
+            @status.operations[:"#{pkg.checksum}"].value = "Unpacked"
+            @status.operations[:"#{pkg.checksum}"].progress = 1.0
+
+            update_interface_task_status
           else
             puts "COMMAND FAILED!"
             fail!("Failed to unpack #{package.name}")
+
             break
           end
         end
       end
 
       def create_wine_prefix
-        if W3DHub.unix?
+        if W3DHub.unix? && @wine_prefix
           # TODO: create a wine prefix if configured
+          @status.operations.clear
+          @status.label = "Installing #{@application.name}..."
+          @status.value = "Creating wine prefix..."
+          @status.progress = 0.0
+
+          @status.step = :create_wine_prefix
         end
       end
 
       def install_dependencies(packages)
+        # TODO: install dependencies
+        @status.operations.clear
+        @status.label = "Installing #{@application.name}..."
+        @status.value = "Installing dependencies..."
+        @status.progress = 0.0
+
+        @status.step = :install_dependencies
       end
 
       def mark_application_installed
         Store.application_manager.installed!(self)
+
+        @status.operations.clear
+        @status.label = "Installed #{@application.name}"
+        @status.value = ""
+        @status.progress = 1.0
+
+        @status.step = :mark_application_installed
 
         puts "#{@app_id} has been installed."
       end
@@ -353,12 +427,20 @@ class W3DHub
 
         return false unless File.exist?(path)
 
+        operation = @status.operations[:"#{package.checksum}"]
+        operation&.value = "Verifying..."
+
         file_size = File.size(path)
         puts "    File size: #{file_size}"
         chunk_size = package.checksum_chunk_size
+        chunks = package.checksum_chunks.size
 
         File.open(path) do |f|
+          i = -1
           package.checksum_chunks.each do |chunk_start, checksum|
+            i += 1
+            operation&.progress = i.to_f / chunks
+
             chunk_start = Integer(chunk_start.to_s)
 
             read_length = chunk_size
