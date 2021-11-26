@@ -2,6 +2,7 @@ class W3DHub
   class States
     class Interface < CyberarmEngine::GuiState
       attr_reader :main_thread_queue
+      attr_accessor :interface_task_update_pending
 
       def setup
         window.show_cursor = true
@@ -9,6 +10,8 @@ class W3DHub
         @account = @options[:account]
         @service_status = @options[:service_status]
         @applications = @options[:applications]
+
+        @interface_task_update_pending = nil
 
         @page = nil
         @pages = {}
@@ -141,6 +144,8 @@ class W3DHub
         while(block = @main_thread_queue.shift)
           block&.call
         end
+
+        update_interface_task_status(@interface_task_update_pending) if @interface_task_update_pending
       end
 
       def button_down(id)

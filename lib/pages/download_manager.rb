@@ -53,13 +53,9 @@ class W3DHub
             @operations_container = stack(width: 1.0, height: 0.9, padding: 8, scroll: true) do
               # TODO: Show actual list of downloads
 
-              p ["DOWNLOAD MANAGER", task.status.operations.size]
-
               i = -1
               task.status.operations.each do |key, operation|
                 i += 1
-
-                p [key, operation.label]
 
                 stack(width: 1.0, height: 24, padding: 8) do
                   background 0xff_333333 if i.odd?

@@ -123,7 +123,7 @@ class W3DHub
       def update_interface_task_status
         run_on_main_thread(
           proc do
-            window.current_state.update_interface_task_status(self)
+            window.current_state.interface_task_update_pending = self
           end
         )
       end
@@ -237,7 +237,7 @@ class W3DHub
 
           @status.step = :prefetch_verifying_packages
 
-          package_details.each do |pkg|
+          package_details.each_with_index.each do |pkg, i|
             operation = @status.operations[:"#{pkg.checksum}"]
 
             if verify_package(pkg)
@@ -249,6 +249,8 @@ class W3DHub
               operation.value = "#{W3DHub.format_size(pkg.custom_partially_valid_at_bytes)} / #{W3DHub.format_size(pkg.size)}"
               operation.progress = pkg.custom_partially_valid_at_bytes.to_f / pkg.size
             end
+
+            @status.progress = i.to_f / package_details.count
 
             update_interface_task_status
           end
@@ -300,24 +302,29 @@ class W3DHub
         packages.each do |pkg|
           @status.operations[:"#{pkg.checksum}"] = Status::Operation.new(
             label: pkg.name,
-            value: "Pending",
+            value: "Pending...",
             progress: 0.0
           )
         end
 
         @status.step = :unpacking
 
-        # TODO: Add support for patches
         packages.each do |package|
-          puts "    #{package.name}:#{package.version}"
-          package_path = Cache.package_path(package.category, package.subcategory, "#{package.name}.zip", package.version)
+          status = if package.custom_is_patch
+            @status.operations[:"#{package.checksum}"].value = "Patching..."
+            update_interface_task_status
 
-          puts "      Running #{W3DHub.tar_command} command: #{"#{W3DHub.tar_command} -xf #{package_path} -C #{path}"}"
-          status = system("#{W3DHub.tar_command} -xf #{package_path} -C #{path}")
+            apply_patch(package)
+          else
+            @status.operations[:"#{package.checksum}"].value = "Unpacking..."
+            update_interface_task_status
+
+            unpack_package(package)
+          end
 
           if status
-            @status.operations[:"#{pkg.checksum}"].value = "Unpacked"
-            @status.operations[:"#{pkg.checksum}"].progress = 1.0
+            @status.operations[:"#{package.checksum}"].value = "Unpacked"
+            @status.operations[:"#{package.checksum}"].progress = 1.0
 
             update_interface_task_status
           else
@@ -440,6 +447,7 @@ class W3DHub
           package.checksum_chunks.each do |chunk_start, checksum|
             i += 1
             operation&.progress = i.to_f / chunks
+            update_interface_task_status
 
             chunk_start = Integer(chunk_start.to_s)
 
@@ -470,6 +478,24 @@ class W3DHub
 
       def load_manifest(category, subcategory, name, version)
         Manifest.new(category, subcategory, name, version)
+      end
+
+      def unpack_package(package)
+        puts "    #{package.name}:#{package.version}"
+        package_path = Cache.package_path(package.category, package.subcategory, "#{package.name}.zip", package.version)
+
+        puts "      Running #{W3DHub.tar_command} command: #{"#{W3DHub.tar_command} -xf #{package_path} -C #{path}"}"
+        return system("#{W3DHub.tar_command} -xf #{package_path} -C #{path}")
+      end
+
+      def apply_patch(package)
+        # Unpack patch to a known directory
+        # Load MIX1 file
+        # Read and Parse .w3dhub.patch json file
+        # Load target MIX1 (.mix and .dat)
+        # Update and remove files
+        # Overwrite updated file
+        false
       end
     end
   end
