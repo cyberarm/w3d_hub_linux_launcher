@@ -84,11 +84,20 @@ class W3DHub
     end
 
     def uninstall(app_id, channel)
-      puts "Uninstall Request: #{app_idchannel}"
+      puts "Uninstall Request: #{app_id} #{channel}"
 
       return false if !installed?(app_id, channel) || installing?(app_id, channel)
 
-      @tasks.push(Uninstaller.new(app_id, channel))
+      return false unless (game = Store.applications.games.find { |g| g.id == app_id})
+
+      push_state(
+        States::ConfirmDialog,
+        title: "Uninstall #{game.name}?",
+        message: "Are you sure you want to uninstall #{game.name} (#{channel})?",
+        accept_callback: proc {
+          @tasks.push(Uninstaller.new(app_id, channel))
+        }
+      )
     end
 
     def show_folder(app_id, channel, type)

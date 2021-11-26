@@ -123,8 +123,8 @@ class W3DHub
 
     # /apis/w3dhub/1/get-news
     # Client sends an Authorization header bearer token which is received from logging in (Optional)
-    # Client requests news for a specific application/game e.g.: data={"category":"ia"}
-    # Response is a JSON hash with a "highlighted" and "news" keys; the "news" on seems to be the desired one
+    # Client requests news for a specific application/game e.g.: data={"category":"ia"} ("launcher-home" retrieves the weekly hub updates)
+    # Response is a JSON hash with a "highlighted" and "news" keys; the "news" one seems to be the desired one
     def self.news(category)
       response = W3DHUB_API_CONNECTION.post(
         path: "apis/w3dhub/1/get-news",
