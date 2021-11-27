@@ -509,8 +509,8 @@ class W3DHub
         puts "    #{package.name}:#{package.version}"
         package_path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
 
-        puts "      Running #{W3DHub.tar_command} command: #{"#{W3DHub.tar_command} -xf #{package_path} -C #{path}"}"
-        return system("#{W3DHub.tar_command} -xf #{package_path} -C #{path}")
+        puts "      Running #{W3DHub.tar_command} command: #{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{path}\""
+        return system("#{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{path}\"")
       end
 
       def apply_patch(package, path)
@@ -521,8 +521,8 @@ class W3DHub
 
         Cache.create_directories(temp_path, true)
 
-        puts "      Running #{W3DHub.tar_command} command: #{"#{W3DHub.tar_command} -xf #{package_path} -C #{temp_path}"}"
-        system("#{W3DHub.tar_command} -xf #{package_path} -C #{temp_path}")
+        puts "      Running #{W3DHub.tar_command} command: #{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{temp_path}\""
+        system("#{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{temp_path}\"")
 
         puts "      Loading #{temp_path}/#{manifest_file.name}.patch..."
         patch_mix = W3DHub::Mixer::Reader.new(file_path: "#{temp_path}/#{manifest_file.name}.patch", ignore_crc_mismatches: true, eager_load: true)
