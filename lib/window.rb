@@ -15,6 +15,7 @@ class W3DHub
         I18n.locale = :en
       end
 
+      # push_state(W3DHub::States::DemoInputDelay)
       push_state(W3DHub::States::Boot)
     end
 

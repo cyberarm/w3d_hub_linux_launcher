@@ -1,4 +1,5 @@
 require "digest"
+require "stringio"
 
 class W3DHub
 
@@ -10,9 +11,9 @@ class W3DHub
     class Reader
       attr_reader :package
 
-      def initialize(file_path:, ignore_crc_mismatches: false)
+      def initialize(file_path:, ignore_crc_mismatches: false, eager_load: false)
         @package = Package.new
-        @file = File.open(file_path)
+        @file = eager_load ? StringIO.new(File.read(file_path)) : File.open(file_path)
 
         @file.pos = 0
 
@@ -79,10 +80,10 @@ class W3DHub
     class Writer
       attr_reader :package
 
-      def initialize(file_path:, package:)
+      def initialize(file_path:, package:, memory_buffer: false)
         @package = package
 
-        @file = File.open(file_path, "wb")
+        @file = memory_buffer ? StringIO.new : File.open(file_path, "wb")
         @file.pos = 0
 
         @file.write("MIX1")
@@ -121,7 +122,8 @@ class W3DHub
         write_i32(file_name_offset)
 
         @file.pos = 0
-        @file.flush
+
+        File.write(file_path, @file.string) if memory_buffer
       ensure
         @file&.close
       end

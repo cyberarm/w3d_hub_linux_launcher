@@ -51,6 +51,10 @@ class W3DHub
         Thread.new do
           status = execute_task
 
+          # Force free some bytes
+          GC.compact if GC.respond_to?(:compact)
+          GC.start
+
           @task_state = :failed unless status
           @task_state = :complete unless @task_state == :failed
 
@@ -221,6 +225,21 @@ class W3DHub
 
         if package_details
           @packages = [package_details].flatten
+          @packages.each do |rich|
+            package = packages.find do |pkg|
+              pkg.category == rich.category &&
+              pkg.subcategory == rich.subcategory &&
+              "#{pkg.name}.zip" == rich.name &&
+              pkg.version == rich.version
+            end
+
+            package.instance_variable_set(:"@name", rich.name)
+            package.instance_variable_set(:"@size", rich.size)
+            package.instance_variable_set(:"@checksum", rich.checksum)
+            package.instance_variable_set(:"@checksum_chunk_size", rich.checksum_chunk_size)
+            package.instance_variable_set(:"@checksum_chunks", rich.checksum_chunks)
+          end
+
           @packages_to_download = []
 
           @status.label = "Downloading #{@application.name}..."
@@ -230,7 +249,7 @@ class W3DHub
           package_details.each do |pkg|
             @status.operations[:"#{pkg.checksum}"] = Status::Operation.new(
               label: pkg.name,
-              value: "Verifying...",
+              value: "Pending...",
               progress: 0.0
             )
           end
@@ -283,7 +302,6 @@ class W3DHub
           puts "FAILED!"
           pp package_details
         end
-
       end
 
       def verify_packages(packages)
@@ -309,18 +327,25 @@ class W3DHub
 
         @status.step = :unpacking
 
+        i = -1
         packages.each do |package|
+          i += 1
+
           status = if package.custom_is_patch
             @status.operations[:"#{package.checksum}"].value = "Patching..."
+            @status.progress = i.to_f / packages.count
             update_interface_task_status
 
-            apply_patch(package)
+            apply_patch(package, path)
           else
             @status.operations[:"#{package.checksum}"].value = "Unpacking..."
+            @status.progress = i.to_f / packages.count
             update_interface_task_status
 
-            unpack_package(package)
+            unpack_package(package, path)
           end
+
+          repair_windows_case_insensitive(package, path)
 
           if status
             @status.operations[:"#{package.checksum}"].value = "Unpacked"
@@ -435,7 +460,7 @@ class W3DHub
         return false unless File.exist?(path)
 
         operation = @status.operations[:"#{package.checksum}"]
-        operation&.value = "Verifying..."
+          operation&.value = "Verifying..."
 
         file_size = File.size(path)
         puts "    File size: #{file_size}"
@@ -480,22 +505,74 @@ class W3DHub
         Manifest.new(category, subcategory, name, version)
       end
 
-      def unpack_package(package)
+      def unpack_package(package, path)
         puts "    #{package.name}:#{package.version}"
-        package_path = Cache.package_path(package.category, package.subcategory, "#{package.name}.zip", package.version)
+        package_path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
 
         puts "      Running #{W3DHub.tar_command} command: #{"#{W3DHub.tar_command} -xf #{package_path} -C #{path}"}"
         return system("#{W3DHub.tar_command} -xf #{package_path} -C #{path}")
       end
 
-      def apply_patch(package)
-        # Unpack patch to a known directory
-        # Load MIX1 file
-        # Read and Parse .w3dhub.patch json file
-        # Load target MIX1 (.mix and .dat)
-        # Update and remove files
-        # Overwrite updated file
-        false
+      def apply_patch(package, path)
+        puts "    #{package.name}:#{package.version}"
+        package_path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
+        temp_path = "#{Store.settings[:package_cache_dir]}/temp"
+        manifest_file = package.custom_is_patch
+
+        Cache.create_directories(temp_path, true)
+
+        puts "      Running #{W3DHub.tar_command} command: #{"#{W3DHub.tar_command} -xf #{package_path} -C #{temp_path}"}"
+        system("#{W3DHub.tar_command} -xf #{package_path} -C #{temp_path}")
+
+        puts "      Loading #{temp_path}/#{manifest_file.name}.patch..."
+        patch_mix = W3DHub::Mixer::Reader.new(file_path: "#{temp_path}/#{manifest_file.name}.patch", ignore_crc_mismatches: true, eager_load: true)
+        patch_info = JSON.parse(patch_mix.package.files.find { |f| f.name == ".w3dhub.patch" || f.name == ".bhppatch" }.data, symbolize_names: true)
+
+        repaired_path = "#{path}/#{manifest_file.name}"
+        # Fix borked data -> Data 'cause Windows don't care about capitalization
+        repaired_path = "#{path}/#{manifest_file.name.sub('data', 'Data')}" unless File.exist?(repaired_path) && path
+
+        puts "      Loading #{repaired_path}..."
+        target_mix = W3DHub::Mixer::Reader.new(file_path: repaired_path, ignore_crc_mismatches: true, eager_load: true)
+
+        puts "      Removing files..." if patch_info[:removedFiles].size.positive?
+        patch_info[:removedFiles].each do |file|
+          target_mix.package.files.delete_if { |f| f.name == file }
+        end
+
+        puts "      Adding/Updating files..." if patch_info[:updatedFiles].size.positive?
+        patch_info[:updatedFiles].each do |file|
+          patch = patch_mix.package.files.find { |f| f.name == file }
+          target = target_mix.package.files.find { |f| f.name == file }
+
+          if target
+            target_mix.package.files[target_mix.package.files.index(target)] = patch
+          else
+            target_mix.package.files << patch
+          end
+        end
+
+
+        puts "      Writing updated #{repaired_path}..." if patch_info[:updatedFiles].size.positive?
+        W3DHub::Mixer::Writer.new(file_path: repaired_path, package: target_mix.package, memory_buffer: true)
+
+        FileUtils.remove_dir(temp_path)
+
+        true
+      end
+
+      def repair_windows_case_insensitive(package, path)
+        return true if @app_id == "apb"
+
+        # Force data/ to Data/
+        return true unless File.exist?("#{path}/data") && File.directory?("#{path}/data")
+
+        puts "      Moving #{path}/data/ to #{path}/Data/"
+
+        FileUtils.mv(Dir.glob("#{path}/data/**"), "#{path}/Data", force: true)
+        FileUtils.remove_dir("#{path}/data", force: true)
+
+        true
       end
     end
   end
