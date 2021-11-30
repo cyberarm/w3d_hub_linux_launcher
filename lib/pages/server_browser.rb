@@ -262,14 +262,14 @@ class W3DHub
               end
             end
 
-            game_balance_icon = server_game_balance_icon(server)
+            game_balance = server_game_balance(server)
 
             flow(width: 1.0, height: 0.05) do
               stack(width: 0.465, height: 1.0) do
                 para "<b>#{server.status.teams[0].name}</b>", width: 1.0, text_align: :center
               end
 
-              image game_balance_icon, height: 1.0, tip: "Estimate of game balance based on score"
+              image game_balance[:icon], height: 1.0, tip: game_balance[:message], color: game_balance[:color]
 
               stack(width: 0.46, height: 1.0) do
                 para "<b>#{server.status.teams[1].name}</b>", width: 1.0, text_align: :center
@@ -352,7 +352,14 @@ class W3DHub
         Store.applications.games.detect { |g| g.id == game }&.name
       end
 
-      def server_game_balance_icon(server)
+      def server_game_balance(server)
+
+        data = {
+          icon: BLACK_IMAGE,
+          color: 0xff_ffffff,
+          message: "Estimate of game balance based on score"
+        }
+
         # team 0 is left side
         team_0_score = server.status.players.select { |ply| ply.team == 0 }.map(&:score).sum.to_f
 
@@ -362,15 +369,29 @@ class W3DHub
         ratio = 1.0 / (team_0_score / team_1_score)
         ratio = 1.0 if ratio.to_s == "NaN"
 
-        if team_0_score + team_1_score < 2_500
+        data[:icon] = if  server.status.players.size < 20 && server.game != "ren"
+          data[:color] = 0xff_600000
+          data[:message] = "Too few players for a balanced game"
+          "#{GAME_ROOT_PATH}/media/ui_icons/cross.png"
+        elsif team_0_score + team_1_score < 2_500
+          data[:message] = "Score to low to estimate game balance"
+          data[:color] = 0xff_444444
           "#{GAME_ROOT_PATH}/media/ui_icons/question.png"
         elsif ratio.between?(0.75, 1.25)
+          data[:message] = "Game seems balanced based on score"
+          data[:color] = 0xff_008000
           "#{GAME_ROOT_PATH}/media/ui_icons/checkmark.png"
         elsif ratio < 0.75
+          data[:color] = 0xff_dd8800
+          data[:message] = "#{server.status.teams[0].name} is winning significantly"
           "#{GAME_ROOT_PATH}/media/ui_icons/arrowRight.png"
         else
+          data[:color] = 0xff_dd8800
+          data[:message] = "#{server.status.teams[1].name} is winning significantly"
           "#{GAME_ROOT_PATH}/media/ui_icons/arrowLeft.png"
         end
+
+        data
       end
 
       def prompt_for_nickname(accept_callback: nil, cancel_callback: nil)

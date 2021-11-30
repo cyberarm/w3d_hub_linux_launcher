@@ -152,10 +152,7 @@ class W3DHub
       if installed?(app_id, channel) && Store.settings[:server_list_username].to_s.length.positive?
         run(
           app_id, channel,
-          "-launcher",
-          "+connect #{server.address}:#{server.port}",
-          "+netplayername \"#{Store.settings[:server_list_username]}\"",
-          password ? "+password \"#{password}\"" : ""
+          "-launcher +connect #{server.address}:#{server.port} +netplayername #{Store.settings[:server_list_username]}#{password ? " +password \"#{password}\"" : ""}"
         )
       end
     end
