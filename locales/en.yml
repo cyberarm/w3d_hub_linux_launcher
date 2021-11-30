@@ -1,5 +1,9 @@
 en:
-  app_name: W3D Hub Launcher
+  app_name: Cyberarm's Linux Friendly W3D Hub Launcher # W3D Hub Launcher
+  app_name_simple: W3D Hub Linux Launcher
+  boot:
+    w3dhub_service_is_down: W3D Hub service is down.
+    checking_for_updates: Checking for updates...
   interface:
     log_in: Log in
     register: Register

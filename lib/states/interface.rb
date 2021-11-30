@@ -26,7 +26,7 @@ class W3DHub
           background 0xff_252525
 
           @header_container = flow(width: 1.0, height: 0.15, padding: 4) do
-            image "#{GAME_ROOT_PATH}/media/icons/w3dhub.png", width: 0.11
+            image "#{GAME_ROOT_PATH}/media/icons/app.png", width: 0.11
 
             stack(width: 0.89, height: 1.0) do
               # background 0xff_885500

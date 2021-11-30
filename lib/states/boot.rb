@@ -7,7 +7,7 @@ class W3DHub
         background 0xff_252525
 
         @fraction = 0.0
-        @w3dhub_logo = get_image("#{GAME_ROOT_PATH}/media/icons/w3dhub.png")
+        @w3dhub_logo = get_image("#{GAME_ROOT_PATH}/media/icons/app.png")
         @tasks = {
           refresh_user_token: { started: false, complete: false },
           service_status: { started: false, complete: false },
@@ -24,8 +24,8 @@ class W3DHub
           @progressbar = progress height: 0.025, width: 1.0
 
           flow(width: 1.0, height: 0.05, padding_left: 16, padding_right: 16, padding_bottom: 8, padding_top: 8) do
-            @status_label = caption "Starting #{NAME}...", width: 0.5
-            inscription "#{NAME} #{W3DHub::VERSION}", width: 0.5, text_align: :right
+            @status_label = caption "Starting #{I18n.t(:app_name_simple)}...", width: 0.5
+            inscription "#{I18n.t(:app_name)} #{W3DHub::VERSION}", width: 0.5, text_align: :right
           end
         end
       end
@@ -94,13 +94,13 @@ class W3DHub
             @tasks[:service_status][:complete] = true
           else
             # FIXME: MAIN THREAD!
-            @status_label.value = "W3D Hub Service is down."
+            @status_label.value = I18n.t(:"boot.w3dhub_service_is_down")
           end
         end
       end
 
       def applications
-        @status_label.value = "Checking for updates..."
+        @status_label.value = I18n.t(:"boot.checking_for_updates")
 
         Thread.new do
           @applications = Api.applications
@@ -114,7 +114,7 @@ class W3DHub
       end
 
       def server_list
-        @status_label.value = "Getting server list..."
+        @status_label.value = I18n.t(:"server_browser.fetching_server_list")
 
         Thread.new do
           begin
