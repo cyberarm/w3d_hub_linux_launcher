@@ -8,28 +8,155 @@ class W3DHub
     class MixParserException < RuntimeError; end
     class MixFormatException < RuntimeError; end
 
+    class MemoryBuffer
+      def initialize(file_path:, mode:, buffer_size:)
+        @file = File.open(file_path, mode)
+        @file.pos = 0
+        @file_size = File.size(file_path)
+
+        @buffer_size = buffer_size
+        @chunk = 0
+        @last_chunk = 0
+        @max_chunks = @file_size / @buffer_size
+        @last_cached_chunk = nil
+
+        @buffer = StringIO.new(@file.read(@buffer_size))
+        @last_buffer_pos = 0
+
+        # Cache frequently accessed chunks to reduce disk hits
+        @cache = {}
+      end
+
+      def pos
+        @chunk * @buffer_size + @buffer.pos
+      end
+
+      def pos=(offset)
+        @chunk = offset / @buffer_size
+
+        fetch_chunk(@chunk)
+
+        @buffer.pos = offset % @buffer_size
+      end
+
+      def write(string)
+        # TODO: write to disk and reset buffer to an empty string
+        #       when buffer exceeds @buffer_size
+      end
+
+      def read(bytes = 0)
+        raise ArgumentError, "Cannot read whole file" if bytes.nil? || bytes.zero?
+        raise ArgumentError, "Cannot under read buffer" if bytes.negative?
+
+        # Long read, need to fetch next chunk while reading, mostly defeats this class...?
+        if @buffer.pos + bytes > buffered
+          buff = string[@buffer.pos..buffered]
+
+          bytes_to_read = bytes - buff.length
+          chunks_to_read = (bytes_to_read / @buffer_size.to_f).ceil
+
+          (chunks_to_read).times do |i|
+            i += 1
+
+            fetch_chunk(@chunk + 1)
+
+            if i == chunks_to_read # read partial
+              already_read_bytes = (chunks_to_read - 1) * @buffer_size
+              bytes_more_to_read = bytes_to_read - already_read_bytes
+
+              buff << @buffer.read(bytes_more_to_read)
+            else
+              buff << @buffer.read
+            end
+          end
+
+          buff
+        else
+          fetch_chunk(@chunk) if @last_chunk != @chunk
+
+          @buffer.read(bytes)
+        end
+      end
+
+      def readbyte
+        fetch_chunk(@chunk + 1) if @buffer.pos + 1 > buffered
+
+        @buffer.readbyte
+      end
+
+      def fetch_chunk(chunk)
+        raise ArgumentError, "Cannot fetch chunk #{chunk}, only #{@max_chunks} exist!" if chunk > @max_chunks
+        @last_chunk = @chunk
+        @chunk = chunk
+        @last_buffer_pos = @buffer.pos
+
+        cached = @cache[chunk]
+
+        if cached
+          @buffer.string = cached
+        else
+          @file.pos = chunk * @buffer_size
+          buff = @buffer.string = @file.read(@buffer_size)
+
+          # Cache the active chunk (implementation bounces from @file_data_chunk and back to this for each 'file' processed)
+          if @chunk != @file_data_chunk && @chunk != @last_cached_chunk
+            @cache.delete(@last_cached_chunk) unless @last_cached_chunk == @file_data_chunk
+            @cache[@chunk] = buff
+            @last_cached_chunk = @chunk
+          end
+
+          buff
+        end
+      end
+
+      # This is accessed quite often, keep it around
+      def cache_file_data_chunk!
+        @file_data_chunk = @chunk
+
+        last_buffer_pos = @buffer.pos
+        @buffer.pos = 0
+        @cache[@chunk] = @buffer.read
+        @buffer.pos = last_buffer_pos
+      end
+
+      def string
+        @buffer.string
+      end
+
+      def buffered
+        @buffer.string.length
+      end
+
+      def close
+        @file&.close
+      end
+    end
+
     class Reader
       attr_reader :package
 
-      def initialize(file_path:, ignore_crc_mismatches: false, eager_load: false)
+      def initialize(file_path:, ignore_crc_mismatches: false, eager_load: false, metadata_only: false, buffer_size: 32_000_000)
         @package = Package.new
-        @file = eager_load ? StringIO.new(File.read(file_path)) : File.open(file_path)
 
-        @file.pos = 0
+        @buffer = MemoryBuffer.new(file_path: file_path, mode: "r", buffer_size: buffer_size)
+
+        @buffer.pos = 0
 
         # Valid header
         if read_i32 == 0x3158494D
           file_data_offset = read_i32
           file_names_offset = read_i32
 
-          @file.pos = file_names_offset
+          @buffer.pos = file_names_offset
           file_count = read_i32
 
           file_count.times do
             @package.files << Package::File.new(name: read_string)
           end
 
-          @file.pos = file_data_offset
+          @buffer.pos = file_data_offset
+          @buffer.cache_file_data_chunk!
+
           _file_count = read_i32
 
           file_count.times do |i|
@@ -39,38 +166,39 @@ class W3DHub
             file.content_offset = read_u32
             file.content_length = read_u32
 
-            if file.mix_crc != file.file_crc && !ignore_crc_mismatches
+            if !ignore_crc_mismatches && file.mix_crc != file.file_crc
               raise MixParserException, "CRC mismatch for #{file.name}. #{file.mix_crc.inspect} != #{file.file_crc.inspect}"
             end
 
-            pos = @file.pos
-            @file.pos = file.content_offset
-            file.data = @file.read(file.content_length)
-            @file.pos = pos
+            pos = @buffer.pos
+            @buffer.pos = file.content_offset
+            file.data = @buffer.read(file.content_length) unless metadata_only
+            @buffer.pos = pos
           end
         else
           raise MixParserException, "Invalid MIX file"
         end
 
       ensure
-        @file&.close
+        @buffer&.close
+        @buffer = nil # let GC collect
       end
 
       def read_i32
-        @file.read(4).unpack1("l")
+        @buffer.read(4).unpack1("l")
       end
 
       def read_u32
-        @file.read(4).unpack1("L")
+        @buffer.read(4).unpack1("L")
       end
 
       def read_string
         buffer = ""
 
-        length = @file.readbyte
+        length = @buffer.readbyte
 
         length.times do
-          buffer << @file.readbyte
+          buffer << @buffer.readbyte
         end
 
         buffer.strip
@@ -80,7 +208,7 @@ class W3DHub
     class Writer
       attr_reader :package
 
-      def initialize(file_path:, package:, memory_buffer: false)
+      def initialize(file_path:, package:, memory_buffer: false, buffer_size: 32_000_000)
         @package = package
 
         @file = memory_buffer ? StringIO.new : File.open(file_path, "wb")
@@ -138,6 +266,19 @@ class W3DHub
 
       def write_byte(byte)
         @file.write([byte].pack("c"))
+      end
+    end
+
+    # Eager loads patch file and streams target file metadata (doen't load target file data or generate CRCs)
+    # after target file metadata is loaded, create a temp file and merge patched files into list then
+    # build ordered file list and stream patched files and target file chunks into temp file,
+    # after that is done, replace target file with temp file
+    class Patcher
+      def initialize(patch_file:, target_file:, temp_file:, buffer_size: 32_000_000)
+        @patch_file = Reader.new(file_path: patch_file, eager_load: true)
+        @target_file = File.open(target_file)
+        @temp_file = File.open(temp_file, "a+b")
+        @buffer_size = buffer_size
       end
     end
 
