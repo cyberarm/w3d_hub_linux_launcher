@@ -262,12 +262,16 @@ class W3DHub
               end
             end
 
+            game_balance_icon = server_game_balance_icon(server)
+
             flow(width: 1.0, height: 0.05) do
-              stack(width: 0.5, height: 1.0) do
+              stack(width: 0.465, height: 1.0) do
                 para "<b>#{server.status.teams[0].name}</b>", width: 1.0, text_align: :center
               end
 
-              stack(width: 0.5, height: 1.0) do
+              image game_balance_icon, height: 1.0, tip: "Estimate of game balance based on score"
+
+              stack(width: 0.46, height: 1.0) do
                 para "<b>#{server.status.teams[1].name}</b>", width: 1.0, text_align: :center
               end
             end
@@ -346,6 +350,27 @@ class W3DHub
 
       def game_name(game)
         Store.applications.games.detect { |g| g.id == game }&.name
+      end
+
+      def server_game_balance_icon(server)
+        # team 0 is left side
+        team_0_score = server.status.players.select { |ply| ply.team == 0 }.map(&:score).sum.to_f
+
+        # team 1 is right side
+        team_1_score = server.status.players.select { |ply| ply.team == 1 }.map(&:score).sum.to_f
+
+        ratio = 1.0 / (team_0_score / team_1_score)
+        ratio = 1.0 if ratio.to_s == "NaN"
+
+        if team_0_score + team_1_score < 2_500
+          "#{GAME_ROOT_PATH}/media/ui_icons/question.png"
+        elsif ratio.between?(0.75, 1.25)
+          "#{GAME_ROOT_PATH}/media/ui_icons/checkmark.png"
+        elsif ratio < 0.75
+          "#{GAME_ROOT_PATH}/media/ui_icons/arrowRight.png"
+        else
+          "#{GAME_ROOT_PATH}/media/ui_icons/arrowLeft.png"
+        end
       end
 
       def prompt_for_nickname(accept_callback: nil, cancel_callback: nil)
