@@ -13,7 +13,7 @@ class W3DHub
       if File.exist?(path)
         path
       else
-        response = Excon.get(uri)
+        response = Excon.get(uri, tcp_nodelay: true)
 
         if response.status == 200
           File.open(path, "wb") do |f|
@@ -71,6 +71,7 @@ class W3DHub
       # Create a new connection due to some weirdness somewhere in Excon
       response = Excon.post(
         "#{Api::ENDPOINT}/apis/launcher/1/get-package",
+        tcp_nodelay: true,
         headers: Api::DEFAULT_HEADERS.merge(headers),
         body: "data=#{JSON.dump({ category: package.category, subcategory: package.subcategory, name: package.name, version: package.version })}",
         chunk_size: 4_000_000,

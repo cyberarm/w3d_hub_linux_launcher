@@ -135,7 +135,7 @@ class W3DHub
     class Reader
       attr_reader :package
 
-      def initialize(file_path:, ignore_crc_mismatches: false, eager_load: false, metadata_only: false, buffer_size: 32_000_000)
+      def initialize(file_path:, ignore_crc_mismatches: false, metadata_only: false, buffer_size: 32_000_000)
         @package = Package.new
 
         @buffer = MemoryBuffer.new(file_path: file_path, mode: "r", buffer_size: buffer_size)
@@ -275,7 +275,7 @@ class W3DHub
     # after that is done, replace target file with temp file
     class Patcher
       def initialize(patch_file:, target_file:, temp_file:, buffer_size: 32_000_000)
-        @patch_file = Reader.new(file_path: patch_file, eager_load: true)
+        @patch_file = Reader.new(file_path: patch_file)
         @target_file = File.open(target_file)
         @temp_file = File.open(temp_file, "a+b")
         @buffer_size = buffer_size
