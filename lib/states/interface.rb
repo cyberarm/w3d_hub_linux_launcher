@@ -217,7 +217,15 @@ class W3DHub
 
           name_.value = operation.label if operation.label
           status_.value = operation.value if operation.value
-          progress_.value = operation.progress.clamp(0.0, 1.0) if operation.progress
+
+          if operation.progress
+            if operation.progress == Float::INFINITY
+              progress_.type = :marquee unless progress_.type == :marquee
+            else
+              progress_.type = :linear unless progress_.type == :linear
+              progress_.value = operation.progress.clamp(0.0, 1.0)
+            end
+          end
         end
       end
     end

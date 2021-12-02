@@ -260,7 +260,7 @@ class W3DHub
             operation = @status.operations[:"#{pkg.checksum}"]
 
             if verify_package(pkg)
-              operation.value = "Verified."
+              operation.value = "Verified"
               operation.progress = 1.0
             else
               @packages_to_download << pkg
@@ -333,12 +333,14 @@ class W3DHub
 
           status = if package.custom_is_patch
             @status.operations[:"#{package.checksum}"].value = "Patching..."
+            @status.operations[:"#{package.checksum}"].progress = Float::INFINITY
             @status.progress = i.to_f / packages.count
             update_interface_task_status
 
             apply_patch(package, path)
           else
             @status.operations[:"#{package.checksum}"].value = "Unpacking..."
+            @status.operations[:"#{package.checksum}"].progress = Float::INFINITY
             @status.progress = i.to_f / packages.count
             update_interface_task_status
 
@@ -348,7 +350,7 @@ class W3DHub
           repair_windows_case_insensitive(package, path)
 
           if status
-            @status.operations[:"#{package.checksum}"].value = "Unpacked"
+            @status.operations[:"#{package.checksum}"].value = package.custom_is_patch ? "Patched" : "Unpacked"
             @status.operations[:"#{package.checksum}"].progress = 1.0
 
             update_interface_task_status
