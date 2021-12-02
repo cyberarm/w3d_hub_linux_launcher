@@ -10,7 +10,9 @@ class W3DHub
 
     class MemoryBuffer
       def initialize(file_path:, mode:, buffer_size:)
-        @file = File.open(file_path, mode)
+        @mode = mode
+
+        @file = File.open(file_path, mode == :read ? "rb" : "wb")
         @file.pos = 0
         @file_size = File.size(file_path)
 
@@ -20,7 +22,7 @@ class W3DHub
         @max_chunks = @file_size / @buffer_size
         @last_cached_chunk = nil
 
-        @buffer = StringIO.new(@file.read(@buffer_size))
+        @buffer = @mode == :read ? StringIO.new(@file.read(@buffer_size)) : StringIO.new
         @last_buffer_pos = 0
 
         # Cache frequently accessed chunks to reduce disk hits
@@ -32,20 +34,66 @@ class W3DHub
       end
 
       def pos=(offset)
+        last_chunk = @chunk
         @chunk = offset / @buffer_size
 
-        fetch_chunk(@chunk)
+        if @mode == :write
+          raise "No backsies! #{offset} (#{@chunk}/#{last_chunk})" if @chunk < last_chunk
+        end
+
+        fetch_chunk(@chunk) if @mode == :read
 
         @buffer.pos = offset % @buffer_size
       end
 
-      def write(string)
-        # TODO: write to disk and reset buffer to an empty string
-        #       when buffer exceeds @buffer_size
+      # argument is a string but named bytes to prevent method name conflict with #string
+      def write(bytes)
+        length = bytes.length
+
+        # Crossing buffer boundry
+        if @buffer.pos + length > @buffer_size
+
+          edge_size = @buffer_size - @buffer.pos
+          buffer_edge = bytes[0..edge_size]
+
+          bytes_to_write = bytes.length - buffer_edge.length
+          chunks_to_write = (bytes_to_write / @buffer_size.to_f).ceil
+          bytes_written = buffer_edge.length
+
+          @buffer.write(buffer_edge)
+          flush_chunk
+
+          chunks_to_write.times do |i|
+            i += 1
+
+            @buffer.write(bytes[bytes_written..@buffer_size])
+            bytes_written += @buffer_size
+
+            flush_chunk if string.length == @buffer_size
+          end
+        else
+          @buffer.write(bytes)
+        end
+
+        bytes
       end
 
-      def read(bytes = 0)
-        raise ArgumentError, "Cannot read whole file" if bytes.nil? || bytes.zero?
+      def write_header(data_offset:, name_offset:)
+        flush_chunk
+
+        @file.pos = 4
+        write_i32(data_offset)
+        write_i32(name_offset)
+
+        @file.pos = 0
+      end
+
+      def write_i32(int)
+        @file.write([int].pack("l"))
+      end
+
+      def read(bytes = nil)
+        raise ArgumentError, "Cannot read whole file" if bytes.nil?
         raise ArgumentError, "Cannot under read buffer" if bytes.negative?
 
         # Long read, need to fetch next chunk while reading, mostly defeats this class...?
@@ -55,7 +103,7 @@ class W3DHub
           bytes_to_read = bytes - buff.length
           chunks_to_read = (bytes_to_read / @buffer_size.to_f).ceil
 
-          (chunks_to_read).times do |i|
+          chunks_to_read.times do |i|
             i += 1
 
             fetch_chunk(@chunk + 1)
@@ -119,6 +167,17 @@ class W3DHub
         @buffer.pos = last_buffer_pos
       end
 
+      # TODO: Write chunk to file
+      def flush_chunk
+        @last_chunk = @chunk
+        @chunk = @chunk + 1
+
+        @file.pos = @last_chunk * @buffer_size
+        @file.write(string)
+
+        @buffer.string = ""
+      end
+
       def string
         @buffer.string
       end
@@ -138,7 +197,7 @@ class W3DHub
       def initialize(file_path:, ignore_crc_mismatches: false, metadata_only: false, buffer_size: 32_000_000)
         @package = Package.new
 
-        @buffer = MemoryBuffer.new(file_path: file_path, mode: "r", buffer_size: buffer_size)
+        @buffer = MemoryBuffer.new(file_path: file_path, mode: :read, buffer_size: buffer_size)
 
         @buffer.pos = 0
 
@@ -211,24 +270,24 @@ class W3DHub
       def initialize(file_path:, package:, memory_buffer: false, buffer_size: 32_000_000)
         @package = package
 
-        @file = memory_buffer ? StringIO.new : File.open(file_path, "wb")
-        @file.pos = 0
+        @buffer = MemoryBuffer.new(file_path: file_path, mode: :write, buffer_size: buffer_size)
+        @buffer.pos = 0
 
-        @file.write("MIX1")
+        @buffer.write("MIX1")
 
         files = @package.files.sort { |a, b| a.file_crc <=> b.file_crc }
 
-        @file.pos = 16
+        @buffer.pos = 16
 
         files.each do |file|
-          file.content_offset = @file.pos
+          file.content_offset = @buffer.pos
           file.content_length = file.data.length
-          @file.write(file.data)
+          @buffer.write(file.data)
 
-          @file.pos += -@file.pos & 7
+          @buffer.pos += -@buffer.pos & 7
         end
 
-        file_data_offset = @file.pos
+        file_data_offset = @buffer.pos
         write_i32(files.count)
 
         files.each do |file|
@@ -237,35 +296,29 @@ class W3DHub
           write_u32(file.content_length)
         end
 
-        file_name_offset = @file.pos
+        file_name_offset = @buffer.pos
         write_i32(files.count)
 
         files.each do |file|
           write_byte(file.name.length + 1)
-          @file.write("#{file.name}\0")
+          @buffer.write("#{file.name}\0")
         end
 
-        @file.pos = 4
-        write_i32(file_data_offset)
-        write_i32(file_name_offset)
-
-        @file.pos = 0
-
-        File.write(file_path, @file.string) if memory_buffer
+        @buffer.write_header(data_offset: file_data_offset, name_offset: file_name_offset)
       ensure
-        @file&.close
+        @buffer&.close
       end
 
       def write_i32(int)
-        @file.write([int].pack("l"))
+        @buffer.write([int].pack("l"))
       end
 
       def write_u32(uint)
-        @file.write([uint].pack("L"))
+        @buffer.write([uint].pack("L"))
       end
 
       def write_byte(byte)
-        @file.write([byte].pack("c"))
+        @buffer.write([byte].pack("c"))
       end
     end
 

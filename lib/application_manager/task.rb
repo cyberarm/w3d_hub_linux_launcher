@@ -490,7 +490,7 @@ class W3DHub
 
             if Digest::SHA256.new.hexdigest(chunk).upcase == checksum.upcase
               valid_at = chunk_start + read_length
-              puts "    Passed chunk: #{chunk_start}"
+              # puts "    Passed chunk: #{chunk_start}"
               # package.partially_valid_at_bytes = valid_at
               package.partially_valid_at_bytes = chunk_start
             else
