@@ -525,7 +525,7 @@ class W3DHub
         system("#{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{temp_path}\"")
 
         puts "      Loading #{temp_path}/#{manifest_file.name}.patch..."
-        patch_mix = W3DHub::Mixer::Reader.new(file_path: "#{temp_path}/#{manifest_file.name}.patch", ignore_crc_mismatches: true)
+        patch_mix = W3DHub::Mixer::Reader.new(file_path: "#{temp_path}/#{manifest_file.name}.patch", ignore_crc_mismatches: false)
         patch_info = JSON.parse(patch_mix.package.files.find { |f| f.name == ".w3dhub.patch" || f.name == ".bhppatch" }.data, symbolize_names: true)
 
         repaired_path = "#{path}/#{manifest_file.name}"
@@ -533,7 +533,7 @@ class W3DHub
         repaired_path = "#{path}/#{manifest_file.name.sub('data', 'Data')}" unless File.exist?(repaired_path) && path
 
         puts "      Loading #{repaired_path}..."
-        target_mix = W3DHub::Mixer::Reader.new(file_path: repaired_path, ignore_crc_mismatches: true)
+        target_mix = W3DHub::Mixer::Reader.new(file_path: repaired_path, ignore_crc_mismatches: false)
 
         puts "      Removing files..." if patch_info[:removedFiles].size.positive?
         patch_info[:removedFiles].each do |file|

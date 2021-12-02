@@ -162,7 +162,7 @@ class W3DHub
           file_count.times do |i|
             file = @package.files[i]
 
-            file.mix_crc = read_u32.to_s(16)
+            file.mix_crc = read_u32.to_s(16).rjust(8, "0")
             file.content_offset = read_u32
             file.content_length = read_u32
 
@@ -301,6 +301,8 @@ class W3DHub
         end
 
         def file_crc
+          return "e6fe46b8" if @name.downcase == ".w3dhub.patch"
+
           Digest::CRC32.hexdigest(@name.upcase)
         end
 
