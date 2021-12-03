@@ -143,9 +143,7 @@ class W3DHub
 
     def run(app_id, channel, *args)
       if (app_data = installed?(app_id, channel))
-        application_exe = W3DHub.unix? ? "\"#{app_data[:install_path]}\"" : app_data[:install_path]
-
-        pid = Process.spawn("#{wine_command(app_id, channel)}#{application_exe} #{args.join(' ')}")
+        pid = Process.spawn("#{wine_command(app_id, channel)}\"#{app_data[:install_path]}\" #{args.join(' ')}")
         Process.detach(pid)
       end
     end
