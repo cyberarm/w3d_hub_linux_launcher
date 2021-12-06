@@ -33,7 +33,9 @@ class W3DHub
               background game.color if selected
 
               flow(width: 1.0, height: 48) do
-                stack(width: 0.3)
+                stack(width: 0.3) do
+                  image "#{GAME_ROOT_PATH}/media/ui_icons/return.png", width: 1.0, color: Gosu::Color::GRAY if Store.application_manager.updateable?(game.id, game.channels.first.id)
+                end
                 image "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png", height: 48, color: Store.application_manager.installed?(game.id, game.channels.first.id) ? 0xff_ffffff : 0xee_444444
               end
               inscription game.name, width: 1.0, text_align: :center
