@@ -26,6 +26,16 @@ class W3DHub
       @tasks.push(installer)
     end
 
+    def update(app_id, channel)
+      puts "Update Request: #{app_id}-#{channel}"
+
+      return false unless installed?(app_id, channel)
+
+      updater = Updater.new(app_id, channel)
+
+      @tasks.push(updater)
+    end
+
     def import(app_id, channel, path)
       puts "Import Request: #{app_id}-#{channel} -> #{path}"
 

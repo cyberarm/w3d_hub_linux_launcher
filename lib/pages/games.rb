@@ -79,14 +79,6 @@ class W3DHub
             stack(width: 0.25, height: 1.0, padding: 8) do
               # background 0xff_550055
 
-              # TODO: Show links for managing game install
-              # game.menu_items.each do |item|
-              #   flow(width: 1.0, height: 22, margin_bottom: 8) do
-              #     image item.image, width: 0.11
-              #     link item.label, text_size: 18
-              #   end
-              # end
-
               if Store.application_manager.installed?(game.id, channel.id)
                 Hash.new.tap { |hash|
                   hash[I18n.t(:"games.game_settings")] = { icon: "gear", block: proc { Store.application_manager.settings(game.id, channel.id) } }
@@ -132,7 +124,7 @@ class W3DHub
             if Store.application_manager.installed?(game.id, channel.id)
               if Store.application_manager.updateable?(game.id, channel.id)
                 button "<b>#{I18n.t(:"interface.update_now")}</b>", margin_left: 24, background: 0xff_ffac00 do
-                  # Store.application_manager.update(game.id, channel.id)
+                  Store.application_manager.update(game.id, channel.id)
                 end
               else
                 button "<b>#{I18n.t(:"interface.play_now")}</b>", margin_left: 24 do
