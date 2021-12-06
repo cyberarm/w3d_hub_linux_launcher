@@ -88,7 +88,7 @@ class W3DHub
 
       return false if !installed?(app_id, channel) || installing?(app_id, channel)
 
-      return false unless (game = Store.applications.games.find { |g| g.id == app_id})
+      return false unless (game = Store.applications.games.find { |g| g.id == app_id })
 
       push_state(
         States::ConfirmDialog,
@@ -253,6 +253,25 @@ class W3DHub
 
     def installing?(app_id, channel)
       @tasks.find { |t| t.is_a?(Installer) && t.app_id == app_id && t.release_channel == channel }
+    end
+
+    def updateable?(app_id, channel)
+      installed_app = installed?(app_id, channel)
+
+      return false unless installed_app
+
+      listed_app = Store.applications.games.find { |g| g.id == app_id }
+
+      return false unless listed_app
+
+      listed_app_channel = listed_app&.channels&.find { |c| c.id == channel }
+
+      return false unless listed_app_channel
+
+      current_version = Gem::Version.new(installed_app[:installed_version])
+      listed_version  = Gem::Version.new(listed_app_channel.current_version)
+
+      listed_version > current_version
     end
 
     # No application tasks are being done

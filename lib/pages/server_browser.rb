@@ -204,8 +204,9 @@ class W3DHub
 
               stack(width: 1.0, height: 0.25) do
                 game_installed = Store.application_manager.installed?(server.game, Store.applications.games.find { |g| g.id == server.game }.channels.first.id)
+                game_updated = Store.application_manager.updateable?(server.game, Store.applications.games.find { |g| g.id == server.game }.channels.first.id)
 
-                button "<b>#{I18n.t(:"server_browser.join_server")}</b>", enabled: !game_installed.nil? do
+                button "<b>#{I18n.t(:"server_browser.join_server")}</b>", enabled: (game_installed && !game_updated) do
                   # Check for nickname
                   #   prompt for nickname
                   # !abort unless nickname set

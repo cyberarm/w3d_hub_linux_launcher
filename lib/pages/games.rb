@@ -128,8 +128,14 @@ class W3DHub
             # background 0xff_551100
 
             if Store.application_manager.installed?(game.id, channel.id)
-              button "<b>#{I18n.t(:"interface.play_now")}</b>", margin_left: 24 do
-                Store.application_manager.play_now(game.id, channel.id)
+              if Store.application_manager.updateable?(game.id, channel.id)
+                button "<b>#{I18n.t(:"interface.update_now")}</b>", margin_left: 24, background: 0xff_ffac00 do
+                  # Store.application_manager.update(game.id, channel.id)
+                end
+              else
+                button "<b>#{I18n.t(:"interface.play_now")}</b>", margin_left: 24 do
+                  Store.application_manager.play_now(game.id, channel.id)
+                end
               end
 
               button "<b>#{I18n.t(:"interface.single_player")}</b>", margin_left: 24 do
