@@ -19,7 +19,7 @@ class W3DHub
 
           stack(width: 1.0, height: 0.78, padding: 16) do
             para @options[:message], width: 1.0
-            @prompt_entry = edit_line @options[:prefill].to_s, margin_top: 24, width: 1.0, focus: true, type: @options[:input_type] == :password ? :password : :text
+            @prompt_entry = edit_line @options[:prefill].to_s, margin_top: 24, width: 1.0, autofocus: true, focus: true, type: @options[:input_type] == :password ? :password : :text
           end
 
           flow(width: 1.0, height: 0.1, padding: 8) do

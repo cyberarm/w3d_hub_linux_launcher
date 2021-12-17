@@ -17,7 +17,7 @@ class W3DHub
 
               flow(width: 1.0) do
                 tagline "Username", width: 0.25, text_align: :right
-                @username = edit_line "", width: 0.75, focus: true
+                @username = edit_line "", width: 0.75, autofocus: true, focus: true
               end
 
               flow(width: 1.0) do
@@ -94,6 +94,7 @@ class W3DHub
       def depopulate_account_info
         Store.settings[:account][:refresh_token] = nil
         Store.settings.save_settings
+        Store.account = nil
 
         @host.instance_variable_get(:"@account_container").clear do
           stack(width: 0.7, height: 1.0) do
