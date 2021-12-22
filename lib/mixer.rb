@@ -5,11 +5,13 @@ class W3DHub
 
   # https://github.com/TheUnstoppable/MixLibrary used for reference
   class Mixer
+    DEFAULT_BUFFER_SIZE = 32_000_000
+
     class MixParserException < RuntimeError; end
     class MixFormatException < RuntimeError; end
 
     class MemoryBuffer
-      def initialize(file_path:, mode:, buffer_size:)
+      def initialize(file_path:, mode:, buffer_size:, encoding: Encoding::ASCII_8BIT)
         @mode = mode
 
         @file = File.open(file_path, mode == :read ? "rb" : "wb")
@@ -22,8 +24,11 @@ class W3DHub
         @max_chunks = @file_size / @buffer_size
         @last_cached_chunk = nil
 
-        @buffer = @mode == :read ? StringIO.new(@file.read(@buffer_size)) : StringIO.new
+        @encoding = encoding
+
         @last_buffer_pos = 0
+        @buffer = @mode == :read ? StringIO.new(@file.read(@buffer_size)) : StringIO.new
+        @buffer.set_encoding(encoding)
 
         # Cache frequently accessed chunks to reduce disk hits
         @cache = {}
@@ -37,16 +42,14 @@ class W3DHub
         last_chunk = @chunk
         @chunk = offset / @buffer_size
 
-        if @mode == :write
-          raise "No backsies! #{offset} (#{@chunk}/#{last_chunk})" if @chunk < last_chunk
-        end
+        raise "No backsies! #{offset} (#{@chunk}/#{last_chunk})" if @mode == :write && @chunk < last_chunk
 
         fetch_chunk(@chunk) if @mode == :read
 
         @buffer.pos = offset % @buffer_size
       end
 
-      # argument is a string but named bytes to prevent method name conflict with #string
+      # string of bytes
       def write(bytes)
         length = bytes.length
 
@@ -54,7 +57,7 @@ class W3DHub
         if @buffer.pos + length > @buffer_size
 
           edge_size = @buffer_size - @buffer.pos
-          buffer_edge = bytes[0..edge_size]
+          buffer_edge = bytes[0...edge_size]
 
           bytes_to_write = bytes.length - buffer_edge.length
           chunks_to_write = (bytes_to_write / @buffer_size.to_f).ceil
@@ -66,7 +69,7 @@ class W3DHub
           chunks_to_write.times do |i|
             i += 1
 
-            @buffer.write(bytes[bytes_written..@buffer_size])
+            @buffer.write(bytes[bytes_written...bytes_written + @buffer_size])
             bytes_written += @buffer_size
 
             flush_chunk if string.length == @buffer_size
@@ -167,10 +170,9 @@ class W3DHub
         @buffer.pos = last_buffer_pos
       end
 
-      # TODO: Write chunk to file
       def flush_chunk
         @last_chunk = @chunk
-        @chunk = @chunk + 1
+        @chunk += 1
 
         @file.pos = @last_chunk * @buffer_size
         @file.write(string)
@@ -194,7 +196,7 @@ class W3DHub
     class Reader
       attr_reader :package
 
-      def initialize(file_path:, ignore_crc_mismatches: false, metadata_only: false, buffer_size: 32_000_000)
+      def initialize(file_path:, ignore_crc_mismatches: false, metadata_only: false, buffer_size: DEFAULT_BUFFER_SIZE)
         @package = Package.new
 
         @buffer = MemoryBuffer.new(file_path: file_path, mode: :read, buffer_size: buffer_size)
@@ -267,7 +269,7 @@ class W3DHub
     class Writer
       attr_reader :package
 
-      def initialize(file_path:, package:, memory_buffer: false, buffer_size: 32_000_000)
+      def initialize(file_path:, package:, memory_buffer: false, buffer_size: DEFAULT_BUFFER_SIZE)
         @package = package
 
         @buffer = MemoryBuffer.new(file_path: file_path, mode: :write, buffer_size: buffer_size)
@@ -327,8 +329,8 @@ class W3DHub
     # build ordered file list and stream patched files and target file chunks into temp file,
     # after that is done, replace target file with temp file
     class Patcher
-      def initialize(patch_file:, target_file:, temp_file:, buffer_size: 32_000_000)
-        @patch_file = Reader.new(file_path: patch_file)
+      def initialize(patch_files:, target_file:, temp_file:, buffer_size: DEFAULT_BUFFER_SIZE)
+        @patch_files = patch_files.to_a.map { |f| Reader.new(file_path: f) }
         @target_file = File.open(target_file)
         @temp_file = File.open(temp_file, "a+b")
         @buffer_size = buffer_size
