@@ -42,7 +42,10 @@ class W3DHub
     end
 
     def manage_update_interval
+      return # Wait for #gain/lose_focus callbacks to be merged into Gosu
+
       @last_interaction = Gosu.milliseconds if @last_mouse_position.x != mouse_x || @last_mouse_position.y != mouse_y
+      @last_interaction = Gosu.milliseconds if mouse_x.between?(0, width) && mouse_y.between?(0, height)
 
       self.update_interval = if Gosu.milliseconds - @last_interaction >= 1_000
                                1000.0 / 10

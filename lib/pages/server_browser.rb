@@ -140,8 +140,8 @@ class W3DHub
                 inscription "<b>#{server&.status&.name}</b>"
 
                 flow(width: 1.0, height: 1.0) do
-                  inscription "Release", margin_right: 64, text_size: 14
-                  inscription "#{server.region}", text_size: 14
+                  inscription server.channel, margin_right: 64, text_size: 14
+                  inscription server.region, text_size: 14
                 end
               end
 
@@ -203,8 +203,8 @@ class W3DHub
               end
 
               stack(width: 1.0, height: 0.25) do
-                game_installed = Store.application_manager.installed?(server.game, Store.applications.games.find { |g| g.id == server.game }.channels.first.id)
-                game_updatable = Store.application_manager.updateable?(server.game, Store.applications.games.find { |g| g.id == server.game }.channels.first.id)
+                game_installed = Store.application_manager.installed?(server.game, Store.applications.games.find { |g| g.id == server.game }&.channels&.find { |c| c.id == server.channel }&.id)
+                game_updatable = Store.application_manager.updateable?(server.game, Store.applications.games.find { |g| g.id == server.game }&.channels&.find { |c| c.id == server.channel }&.id)
 
                 button "<b>#{I18n.t(:"server_browser.join_server")}</b>", enabled: (game_installed && !game_updatable) do
                   # Check for nickname
@@ -248,7 +248,7 @@ class W3DHub
               stack(width: 1.0, height: 0.55, margin_top: 16) do
                 flow(width: 1.0, height: 0.33) do
                   inscription "<b>#{I18n.t(:"server_browser.game")}</b>", width: 0.28, text_wrap: :none
-                  inscription "#{game_name(server.game)} (branch)", width: 0.71, text_wrap: :none
+                  inscription "#{game_name(server.game)} (#{server.channel})", width: 0.71, text_wrap: :none
                 end
 
                 flow(width: 1.0, height: 0.33) do

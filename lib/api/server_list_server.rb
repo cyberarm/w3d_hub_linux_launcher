@@ -1,7 +1,7 @@
 class W3DHub
   class Api
     class ServerListServer
-      attr_reader :id, :game, :address, :port, :region, :status
+      attr_reader :id, :game, :address, :port, :region, :channel, :status
 
       def initialize(hash)
         @data = hash
@@ -11,6 +11,7 @@ class W3DHub
         @address = @data[:address]
         @port    = @data[:port]
         @region  = @data[:region]
+        @channel = @data[:channel] || "release"
 
         @status  = @data[:status] ? Status.new(@data[:status]) : nil
       end
