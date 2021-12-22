@@ -30,7 +30,7 @@ class W3DHub
               flow(width: 0.70, height: 1.0) do
                 @application_image = image "#{GAME_ROOT_PATH}/media/icons/#{task.app_id}.png", height: 1.0
 
-                stack(margin_left: 8) do
+                stack(margin_left: 8, width: 0.75) do
                   @application_name_label = tagline "#{task.application.name}"
                   @application_version_label = inscription "Version: #{task.channel.current_version} (#{task.channel.id})"
                 end
