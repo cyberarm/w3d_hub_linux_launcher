@@ -13,7 +13,9 @@ class W3DHub
         server_list_region: "Any",
         account: {},
         applications: {},
-        games: {}
+        games: {},
+        last_selected_app: "ren",
+        last_selected_channel: "release"
       }
     end
 

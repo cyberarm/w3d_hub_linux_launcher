@@ -3,7 +3,8 @@ class W3DHub
     class Games < Page
       def setup
         @game_news ||= {}
-        @focused_game ||= Store.applications.games.first
+        @focused_game ||= Store.applications.games.find { |g| g.id == Store.settings[:last_selected_app] }
+        @focused_channel ||= @focused_game.channels.find { |c| c.id == Store.settings[:last_selected_channel] }
 
         body.clear do
           # Games List
@@ -15,7 +16,7 @@ class W3DHub
           end
         end
 
-        populate_game_page(@focused_game, @focused_game.channels.first)
+        populate_game_page(@focused_game, @focused_channel)
         populate_games_list
       end
 
@@ -35,8 +36,9 @@ class W3DHub
               flow(width: 1.0, height: 48) do
                 stack(width: 0.3) do
                   image "#{GAME_ROOT_PATH}/media/ui_icons/return.png", width: 1.0, color: Gosu::Color::GRAY if Store.application_manager.updateable?(game.id, game.channels.first.id)
+                  image "#{GAME_ROOT_PATH}/media/ui_icons/import.png", width: 0.5, color: 0x88_ffffff unless Store.application_manager.installed?(game.id, game.channels.first.id)
                 end
-                image "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png", height: 48, color: Store.application_manager.installed?(game.id, game.channels.first.id) ? 0xff_ffffff : 0xee_444444
+                image "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png", height: 48, color: Store.application_manager.installed?(game.id, game.channels.first.id) ? 0xff_ffffff : 0x88_ffffff
               end
               inscription game.name, width: 1.0, text_align: :center
             end
@@ -55,6 +57,10 @@ class W3DHub
 
       def populate_game_page(game, channel)
         @focused_game = game
+        @focused_channel = channel
+
+        Store.settings[:last_selected_app] = game.id
+        Store.settings[:last_selected_channel] = channel.id
 
         @game_page_container.clear do
           background game.color
@@ -123,7 +129,7 @@ class W3DHub
 
             if Store.application_manager.installed?(game.id, channel.id)
               if Store.application_manager.updateable?(game.id, channel.id)
-                button "<b>#{I18n.t(:"interface.update_now")}</b>", margin_left: 24, background: 0xff_ffac00 do
+                button "<b>#{I18n.t(:"interface.install_update")}</b>", margin_left: 24, **UPDATE_BUTTON do
                   Store.application_manager.update(game.id, channel.id)
                 end
               else

@@ -128,6 +128,7 @@ class W3DHub
           Store.server_list.each do |server|
             next unless @filters[server.game.to_sym]
             next unless server.region == @filter_region || @filter_region == "Any"
+            next unless server.channel == "release"
 
             i += 1
 
@@ -203,10 +204,11 @@ class W3DHub
               end
 
               stack(width: 1.0, height: 0.25) do
-                game_installed = Store.application_manager.installed?(server.game, Store.applications.games.find { |g| g.id == server.game }&.channels&.find { |c| c.id == server.channel }&.id)
-                game_updatable = Store.application_manager.updateable?(server.game, Store.applications.games.find { |g| g.id == server.game }&.channels&.find { |c| c.id == server.channel }&.id)
+                game_installed = Store.application_manager.installed?(server.game, server.channel)
+                game_updatable = Store.application_manager.updateable?(server.game, server.channel)
+                style = server.channel != "release" ? TESTING_BUTTON : {}
 
-                button "<b>#{I18n.t(:"server_browser.join_server")}</b>", enabled: (game_installed && !game_updatable) do
+                button "<b>#{I18n.t(:"server_browser.join_server")}</b>", enabled: (game_installed && !game_updatable), **style do
                   # Check for nickname
                   #   prompt for nickname
                   # !abort unless nickname set
@@ -427,7 +429,7 @@ class W3DHub
 
           Store.application_manager.join_server(
             server.game,
-            Store.applications.games.find { |g| g.id == server.game }.channels.first.id, server, password
+            server.channel, server, password
           )
         else
           window.push_state(W3DHub::States::MessageDialog, type: "?", title: "?", message: "?")

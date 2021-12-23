@@ -2,6 +2,18 @@ class W3DHub
   REGULAR_FONT = "#{GAME_ROOT_PATH}/media/fonts/NotoSans-Regular.ttf"
   BOLD_FONT = "#{GAME_ROOT_PATH}/media/fonts/NotoSans-Bold.ttf"
 
+  TESTING_BUTTON = {
+    background: 0xff_ff8800,
+    hover: {
+      background: 0xff_ffaa00
+    },
+    active: {
+      background: 0xff_ffec00
+    }
+  }
+
+  UPDATE_BUTTON = TESTING_BUTTON
+
   THEME = {
     ToolTip: {
       background: 0xff_dedede,
