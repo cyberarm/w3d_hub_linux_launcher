@@ -55,9 +55,9 @@ class W3DHub
 
       create_directories(path)
 
-      file = File.open(path, "ab")
-      if (start_from_bytes > 0)
-        headers["Range"] = "bytes=#{start_from_bytes}-#{package.size}"
+      file = File.open(path, start_from_bytes.positive? ? "r+b" : "wb")
+      if (start_from_bytes.positive?)
+        headers["Range"] = "bytes=#{start_from_bytes}-"
         file.pos = start_from_bytes
       end
 

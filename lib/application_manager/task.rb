@@ -281,23 +281,29 @@ class W3DHub
           @total_bytes_to_download = @packages_to_download.sum { |pkg| pkg.size - pkg.custom_partially_valid_at_bytes }
           @bytes_downloaded = 0
 
+          pool = Pool.new(workers: Store.settings[:parallel_downloads])
+
           @packages_to_download.each do |pkg|
-            package_bytes_downloaded = pkg.custom_partially_valid_at_bytes
+            pool.add_job Pool::Job.new( proc {
+              package_bytes_downloaded = pkg.custom_partially_valid_at_bytes
 
-            package_fetch(pkg) do |chunk, remaining_bytes, total_bytes|
-              @bytes_downloaded += chunk.to_s.length
-              package_bytes_downloaded += chunk.to_s.length
+              package_fetch(pkg) do |chunk, remaining_bytes, total_bytes|
+                @bytes_downloaded += chunk.to_s.length
+                package_bytes_downloaded += chunk.to_s.length
 
-              @status.value = "#{W3DHub.format_size(@bytes_downloaded)} / #{W3DHub.format_size(@total_bytes_to_download)}"
-              @status.progress = @bytes_downloaded.to_f / @total_bytes_to_download
+                @status.value = "#{W3DHub.format_size(@bytes_downloaded)} / #{W3DHub.format_size(@total_bytes_to_download)}"
+                @status.progress = @bytes_downloaded.to_f / @total_bytes_to_download
 
-              operation = @status.operations[:"#{pkg.checksum}"]
-              operation.value = "#{W3DHub.format_size(package_bytes_downloaded)} / #{W3DHub.format_size(pkg.size)}"
-              operation.progress = package_bytes_downloaded.to_f / total_bytes
+                operation = @status.operations[:"#{pkg.checksum}"]
+                operation.value = "#{W3DHub.format_size(package_bytes_downloaded)} / #{W3DHub.format_size(pkg.size)}"
+                operation.progress = package_bytes_downloaded.to_f / pkg.size # total_bytes
 
-              update_interface_task_status
-            end
+                update_interface_task_status
+              end
+            })
           end
+
+          pool.manage_pool
         else
           puts "FAILED!"
           pp package_details
@@ -318,6 +324,7 @@ class W3DHub
         @status.progress = 0.0
 
         packages.each do |pkg|
+          # FIXME: can't add a new key into hash during iteration (RuntimeError)
           @status.operations[:"#{pkg.checksum}"] = Status::Operation.new(
             label: pkg.name,
             value: "Pending...",

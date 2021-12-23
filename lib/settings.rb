@@ -5,6 +5,7 @@ class W3DHub
         language: Gosu.user_languages.first.split("_").first,
         app_install_dir: default_app_install_dir,
         package_cache_dir: default_package_cache_dir,
+        parallel_downloads: 4,
         wine_command: "wine",
         create_wine_prefixes: true,
         allow_diagnostic_reports: false,
