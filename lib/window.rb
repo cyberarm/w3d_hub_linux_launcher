@@ -38,7 +38,19 @@ class W3DHub
     def close
       Store.settings.save_settings
 
-      super if Store.application_manager.idle?
+      current_state_options = current_state&.instance_variable_get(:@options)
+
+      if Store.application_manager.idle? || current_state_options&.dig(:tag_as) == :closer
+        super
+      else
+        push_state(
+          States::ConfirmDialog,
+          tag_as: :closer,
+          title: I18n.t(:app_name),
+          message: "An application management task is currently running, are you sure you want to exit?",
+          accept_callback: method(:close!)
+        )
+      end
     end
 
     def manage_update_interval
