@@ -5,14 +5,22 @@ class W3DHub
         :repairer
       end
 
-      def exec_task
-        # fetch manifests
-        # load manifests
-        # run presence and checksum checks
-        # extract and re/place broken/missing files
-        #   if a large number of files are missing from a single package
-        #     simply reextract the whole thing
-        # mark application as installed/repaired
+      def execute_task
+        fail_fast
+        return false if failed?
+
+        manifests = fetch_manifests
+        return false if failed?
+
+        packages = build_package_list(manifests)
+        return false if failed?
+
+        verify_files(manifests, packages)
+        return false if failed?
+
+        # pp packages.select { |pkg| pkg.name == "misc" }
+
+        true
       end
     end
   end

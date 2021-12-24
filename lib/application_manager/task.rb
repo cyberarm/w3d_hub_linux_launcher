@@ -405,28 +405,41 @@ class W3DHub
         puts "#{@app_id} has been installed."
       end
 
-      def verify_files(_)
-        # TODO: Check extracted game files or just re-extract everything?
+      def verify_files(manifests, packages)
+        path = Cache.install_path(@application, @channel)
+        accepted_files = {}
+        rejected_files = []
 
-        # Zip.on_exists_proc = true # Overwrite existing files
-        # zip_file = Zip::InputStream.new(File.open(package_path))
-        # while (entry = zip_file.get_next_entry)
+        manifests.each do |manifest|
+          manifest.files.each do |file|
+            file_path = "#{path}/#{file.name.gsub('\\', '/')}"
 
-        #   extract_path = "#{path}/#{entry.name}"
-        #   manifest_file = @files["#{entry.name}:#{package.version}"]
+            unless File.exists?(file_path)
+              rejected_files << file
+              puts "[#{manifest.version}] File missing: #{file_path}"
+              next
+            end
 
-        #   if manifest_file.removed?
-        #     puts "      !skipped: #{extract_path}"
-        #   else
-        #     target_file_exits = File.exist?(extract_path)
-        #     next if target_file_exits # && Digest::SHA256.new.hexdigest(File.read(extract_path)) == manifest_file.checksum
+            next if accepted_files.key?(file.name)
 
-        #     puts "      #{path}/#{extract_path}"
-        #     Cache.create_directories(extract_path) unless target_file_exits
+            digest = Digest::SHA256.new
+            f = File.open(file_path)
 
-        #     entry.extract(extract_path)
-        #   end
-        # end
+            while (chunk = f.read(32_000_000))
+              digest.update(chunk)
+            end
+
+            f.close
+
+            if digest.hexdigest.upcase == file.checksum.upcase
+              accepted_files[file.name] = manifest.version
+              puts "[#{manifest.version}] Verified file: #{file_path}"
+            else
+              rejected_files << file
+              puts "[#{manifest.version}] File failed Verification: #{file_path}"
+            end
+          end
+        end
       end
 
       #############
