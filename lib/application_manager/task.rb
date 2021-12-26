@@ -48,7 +48,7 @@ class W3DHub
       def start
         @task_state = :running
 
-        Thread.new do
+        Async do
           status = execute_task
 
           # Force free some bytes
@@ -221,7 +221,8 @@ class W3DHub
           }
         end
 
-        package_details = Api.package_details(hashes)
+        internet = Async::HTTP::Internet.instance
+        package_details = Api.package_details(internet, hashes)
 
         if package_details
           @packages = [package_details].flatten
@@ -427,6 +428,8 @@ class W3DHub
 
             while (chunk = f.read(32_000_000))
               digest.update(chunk)
+              current = Async::Task.current?
+              current&.yield
             end
 
             f.close
@@ -448,7 +451,9 @@ class W3DHub
 
       def fetch_manifest(category, subcategory, name, version, &block)
         # Check for and integrity of local manifest
-        package = Api.package_details([{ category: category, subcategory: subcategory, name: name, version: version }])
+        internet = Async::HTTP::Internet.instance
+
+        package = Api.package_details(internet, [{ category: category, subcategory: subcategory, name: name, version: version }])
 
         if File.exist?(Cache.package_path(category, subcategory, name, version))
           verified = verify_package(package)
@@ -465,7 +470,9 @@ class W3DHub
       def package_fetch(package, &block)
         puts "Downloading: #{package.category}:#{package.subcategory}:#{package.name}-#{package.version}"
 
-        Api.package(package) do |chunk, remaining_bytes, total_bytes|
+        internet = Async::HTTP::Internet.instance
+
+        Api.package(internet, package) do |chunk, remaining_bytes, total_bytes|
           # Store progress somewhere
           # Kernel.puts "#{name}-#{version}: #{(remaining_bytes.to_f / total_bytes).round}%"
 

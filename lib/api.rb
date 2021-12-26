@@ -126,15 +126,12 @@ class W3DHub
 
     # /apis/launcher/1/get-package-details
     # client requests package details: data={"packages":[{"category":"games","name":"apb.ico","subcategory":"apb","version":""}]}
-    def self.package_details(packages)
-      response = Excon.post(
-        "#{ENDPOINT}/apis/launcher/1/get-package-details",
-        headers: DEFAULT_HEADERS.merge({"Content-Type": "application/x-www-form-urlencoded"}),
-        body: "data=#{JSON.dump({ packages: packages })}"
-      )
+    def self.package_details(internet, packages)
+      body = "data=#{JSON.dump({ packages: packages })}"
+      response = internet.post("#{ENDPOINT}/apis/launcher/1/get-package-details", FORM_ENCODED_HEADERS, body)
 
-      if response.status == 200
-        hash = JSON.parse(response.body, symbolize_names: true)
+      if response.success?
+        hash = JSON.parse(response.read, symbolize_names: true)
         packages = hash[:packages].map { |pkg| Package.new(pkg) }
         return packages.first if packages.size == 1
         return packages
@@ -147,8 +144,8 @@ class W3DHub
     # client requests package: data={"category":"games","name":"ECW_Asteroids.zip","subcategory":"ecw","version":"1.0.0.0"}
     #
     # server responds with download bytes, probably supports chunked download and resume
-    def self.package(package, &block)
-      Cache.fetch_package(package, block)
+    def self.package(internet, package, &block)
+      Cache.fetch_package(internet, package, block)
     end
 
     #! === Server List API === !#

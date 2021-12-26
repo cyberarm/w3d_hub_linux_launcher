@@ -29,7 +29,7 @@ class W3DHub
           @die = false
           @job = nil
 
-          Thread.new do
+          Async do
             until (@die)
               @job.process if @job && @job.waiting?
               @job = nil

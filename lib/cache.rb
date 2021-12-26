@@ -44,7 +44,7 @@ class W3DHub
     end
 
     # Download a W3D Hub package
-    def self.fetch_package(package, block)
+    def self.fetch_package(internet, package, block)
       path = package_path(package.category, package.subcategory, package.name, package.version)
       headers = { "Content-Type": "application/x-www-form-urlencoded" }
       start_from_bytes = package.custom_partially_valid_at_bytes
