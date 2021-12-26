@@ -28,6 +28,16 @@ class W3DHub
             inscription "#{I18n.t(:app_name)} #{W3DHub::VERSION}", width: 0.5, text_align: :right
           end
         end
+
+        Async do
+          internet = Async::HTTP::Internet.instance
+
+          @tasks.keys.each do |key|
+            Sync do
+              send(key, internet)
+            end
+          end
+        end
       end
 
       def draw
@@ -52,86 +62,70 @@ class W3DHub
           push_state(States::Interface)
         end
 
-        if @tasks.dig(@tasks.keys[@task_index], :started) == false
-          @tasks[@tasks.keys[@task_index]][:started] = true
-
-          send(:"#{@tasks.keys[@task_index]}")
-        end
-
         @task_index += 1 if @tasks.dig(@tasks.keys[@task_index], :complete)
       end
 
-      def refresh_user_token
+      def refresh_user_token(internet)
         if Store.settings[:account, :refresh_token]
-          Thread.new do
-            @account = Api.refresh_user_login(Store.settings[:account, :refresh_token])
+          @account = Api.refresh_user_login(internet, Store.settings[:account, :refresh_token])
 
-            if @account
-              Store.settings[:account][:refresh_token] = @account.refresh_token
-            else
-              Store.settings[:account][:refresh_token] = nil
-            end
-
-            Store.settings.save_settings
-
-            @tasks[:refresh_user_token][:complete] = true
+          if @account
+            Store.settings[:account][:refresh_token] = @account.refresh_token
+          else
+            Store.settings[:account][:refresh_token] = nil
           end
+
+          Store.settings.save_settings
+
+          @tasks[:refresh_user_token][:complete] = true
         else
           @tasks[:refresh_user_token][:complete] = true
         end
       end
 
-      def service_status
-        Thread.new do
-          @service_status = Api.service_status
+      def service_status(internet)
+        @service_status = Api.service_status(internet)
 
-          if @service_status
-            if !@service_status.authentication? || !@service_status.package_download?
-              # FIXME: MAIN THREAD!
-              @status_label.value = "Authentication is #{@service_status.authentication? ? 'Okay' : 'Down'}. Package Download is #{@service_status.package_download? ? 'Okay' : 'Down'}."
-            end
-
-            @tasks[:service_status][:complete] = true
-          else
-            # FIXME: MAIN THREAD!
-            @status_label.value = I18n.t(:"boot.w3dhub_service_is_down")
+        if @service_status
+          if !@service_status.authentication? || !@service_status.package_download?
+            @status_label.value = "Authentication is #{@service_status.authentication? ? 'Okay' : 'Down'}. Package Download is #{@service_status.package_download? ? 'Okay' : 'Down'}."
           end
+
+          @tasks[:service_status][:complete] = true
+        else
+          @status_label.value = I18n.t(:"boot.w3dhub_service_is_down")
         end
       end
 
-      def applications
+      def applications(internet)
         @status_label.value = I18n.t(:"boot.checking_for_updates")
 
-        Thread.new do
-          @applications = Api.applications
+        @applications = Api.applications(internet)
 
-          if @applications
-            @tasks[:applications][:complete] = true
-          else
-            # FIXME: Failed to retreive!
-          end
+        if @applications
+          @tasks[:applications][:complete] = true
+        else
+          # FIXME: Failed to retreive!
         end
       end
 
-      def server_list
+      def server_list(internet)
         @status_label.value = I18n.t(:"server_browser.fetching_server_list")
 
-        Thread.new do
-          begin
-            list = Api.server_list(2)
+        begin
+          list = Api.server_list(internet, 2)
 
-            if list
-              Store.server_list = list.sort_by! { |s| s&.status&.players&.size }.reverse
-            end
-
-            Store.server_list_last_fetch = Gosu.milliseconds
-
-            @tasks[:server_list][:complete] = true
-          rescue => e
-            # Something went wrong!
-            pp e
-            Store.server_list = []
+          if list
+            Store.server_list = list.sort_by! { |s| s&.status&.players&.size }.reverse
           end
+
+          Store.server_list_last_fetch = Gosu.milliseconds
+
+          @tasks[:server_list][:complete] = true
+        rescue => e
+          # Something went wrong!
+          pp e
+          Store.server_list = []
         end
       end
     end

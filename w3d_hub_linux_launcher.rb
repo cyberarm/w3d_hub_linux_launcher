@@ -13,6 +13,11 @@ require "rexml"
 require "i18n"
 require "launchy"
 
+require "async"
+require "async/barrier"
+require "async/semaphore"
+require "async/http/internet/instance"
+
 I18n.load_path << Dir[File.expand_path("locales") + "/*.yml"]
 I18n.default_locale = :en
 
@@ -66,4 +71,6 @@ require_relative "lib/pages/login"
 require_relative "lib/pages/settings"
 require_relative "lib/pages/download_manager"
 
-W3DHub::Window.new(width: 980, height: 720, borderless: false).show
+Async do
+  W3DHub::Window.new(width: 980, height: 720, borderless: false).show
+end

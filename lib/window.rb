@@ -27,6 +27,9 @@ class W3DHub
 
       Store.application_manager.start_next_available_task if Store.application_manager.idle?
       manage_update_interval
+
+      current = Async::Task.current?
+      current&.yield
     end
 
     def button_down(id)

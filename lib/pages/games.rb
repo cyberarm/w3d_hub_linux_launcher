@@ -159,23 +159,25 @@ class W3DHub
         if @game_news[game.id]
           populate_game_news(game)
         else
-          Thread.new do
-            fetch_game_news(game)
-            main_thread_queue << proc { populate_game_news(game) }
-          end
-
           @game_news_container.clear do
             title I18n.t(:"games.fetching_news"), padding: 8
+          end
+
+          Async do
+            internet = Async::HTTP::Internet.instance
+
+            fetch_game_news(internet, game)
+            populate_game_news(game)
           end
         end
       end
 
-      def fetch_game_news(game)
-        news = Api.news(game.id)
+      def fetch_game_news(internet, game)
+        news = Api.news(internet, game.id)
 
         if news
           news.items[0..9].each do |item|
-            Cache.fetch(item.image)
+            Cache.fetch(internet, item.image)
           end
 
           @game_news[game.id] = news

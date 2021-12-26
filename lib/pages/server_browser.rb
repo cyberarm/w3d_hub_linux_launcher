@@ -318,9 +318,11 @@ class W3DHub
           return
         end
 
-        Thread.new do
+        Async do
+          internet = Async::HTTP::Internet.instance
+
           begin
-            list = Api.server_list(2)
+            list = Api.server_list(internet, 2)
 
             if list
               Store.server_list = list.sort_by! { |s| s&.status&.players&.size }.reverse

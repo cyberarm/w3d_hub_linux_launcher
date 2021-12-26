@@ -1,14 +1,18 @@
 class W3DHub
   class Api
-    USER_AGENT = "Cyberarm's Linux Friendly W3D Hub Launcher v#{W3DHub::VERSION}"
-    DEFAULT_HEADERS = {
-      "User-Agent": USER_AGENT
-    }
+    USER_AGENT = "Cyberarm's Linux Friendly W3D Hub Launcher v#{W3DHub::VERSION}".freeze
+    DEFAULT_HEADERS = [
+      ["User-Agent", USER_AGENT]
+    ].freeze
+    FORM_ENCODED_HEADERS = (
+      DEFAULT_HEADERS + [["Content-Type", "application/x-www-form-urlencoded"]]
+    ).freeze
 
     #! === W3D Hub API === !#
 
-    ENDPOINT = "https://secure.w3dhub.com"
-    W3DHUB_API_CONNECTION = Excon.new(ENDPOINT, persistent: true, connect_timeout: 15, tcp_nodelay: true)
+    ENDPOINT = "https://secure.w3dhub.com".freeze
+    # W3DHUB_API_CONNECTION = Excon.new(ENDPOINT, persistent: true, connect_timeout: 15, tcp_nodelay: true)
+
     # Method: POST
     # FORMAT: JSON
 
@@ -24,26 +28,20 @@ class W3DHub
     #
     # On a failed login the service responds with:
     # {"error":"login-failed"}
-    def self.refresh_user_login(refresh_token)
-      response = W3DHUB_API_CONNECTION.post(
-        path: "apis/launcher/1/user-login",
-        headers: DEFAULT_HEADERS.merge({"Content-Type": "application/x-www-form-urlencoded"}),
-        body: "data=#{JSON.dump({refreshToken: refresh_token})}"
-      )
+    def self.refresh_user_login(internet, refresh_token)
+      body = "data=#{JSON.dump({refreshToken: refresh_token})}"
+      response = internet.post("#{ENDPOINT}/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body)
 
-      if response.status == 200
-        user_data = JSON.parse(response.body, symbolize_names: true)
+      if response.success?#status == 200
+        user_data = JSON.parse(response.read, symbolize_names: true)
 
         return false if user_data[:error]
 
-        user_details = W3DHUB_API_CONNECTION.post(
-          path: "apis/w3dhub/1/get-user-details",
-          headers: DEFAULT_HEADERS.merge({"Content-Type": "application/x-www-form-urlencoded"}),
-          body: "data=#{JSON.dump({ id: user_data[:userid] })}"
-        )
+        body = "data=#{JSON.dump({ id: user_data[:userid] })}"
+        user_details = internet.post("#{ENDPOINT}/apis/w3dhub/1/get-user-details", FORM_ENCODED_HEADERS, body)
 
-        if user_details.status == 200
-          user_details_data = JSON.parse(user_details.body, symbolize_names: true)
+        if user_details.success?
+          user_details_data = JSON.parse(user_details.read, symbolize_names: true)
         end
 
         return Account.new(user_data, user_details_data)
@@ -53,26 +51,20 @@ class W3DHub
     end
 
     # See #user_refresh_token
-    def self.user_login(username, password)
-      response = W3DHUB_API_CONNECTION.post(
-        path: "apis/launcher/1/user-login",
-        headers: DEFAULT_HEADERS.merge({"Content-Type": "application/x-www-form-urlencoded"}),
-        body: "data=#{JSON.dump({username: username, password: password})}"
-      )
+    def self.user_login(internet, username, password)
+      body = "data=#{JSON.dump({username: username, password: password})}"
+      response = internet.post("#{ENDPOINT}/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body)
 
-      if response.status == 200
-        user_data = JSON.parse(response.body, symbolize_names: true)
+      if response.success?
+        user_data = JSON.parse(response.read, symbolize_names: true)
 
         return false if user_data[:error]
 
-        user_details = W3DHUB_API_CONNECTION.post(
-          path: "apis/w3dhub/1/get-user-details",
-          headers: DEFAULT_HEADERS.merge({"Content-Type": "application/x-www-form-urlencoded"}),
-          body: "data=#{JSON.dump({ id: user_data[:userid] })}"
-        )
+        body = "data=#{JSON.dump({ id: user_data[:userid] })}"
+        user_details = internet.post("#{ENDPOINT}/apis/w3dhub/1/get-user-details", FORM_ENCODED_HEADERS, body)
 
-        if user_details.status == 200
-          user_details_data = JSON.parse(user_details.body, symbolize_names: true)
+        if user_details.success?
+          user_details_data = JSON.parse(user_details.read, symbolize_names: true)
         end
 
         return Account.new(user_data, user_details_data)
@@ -85,20 +77,17 @@ class W3DHub
     # Client sends an Authorization header bearer token which is received from logging in (Required?)
     #
     # Response: avatar-uri (Image download uri), id, username
-    def self.user_details(id)
+    def self.user_details(internetn, id)
     end
 
     # /apis/w3dhub/1/get-service-status
     # Service response:
     # {"services":{"authentication":true,"packageDownload":true}}
-    def self.service_status
-      response = W3DHUB_API_CONNECTION.post(
-        path: "apis/w3dhub/1/get-service-status",
-        headers: DEFAULT_HEADERS
-      )
+    def self.service_status(internet)
+      response = internet.post("#{ENDPOINT}/apis/w3dhub/1/get-service-status", DEFAULT_HEADERS)
 
-      if response.status == 200
-        ServiceStatus.new(response.body)
+      if response.success?
+        ServiceStatus.new(response.read)
       else
         false
       end
@@ -108,14 +97,11 @@ class W3DHub
     # Client sends an Authorization header bearer token which is received from logging in (Optional)
     # Launcher sends an empty data request: data={}
     # Response is a list of applications/games
-    def self.applications
-      response = W3DHUB_API_CONNECTION.post(
-        path: "apis/launcher/1/get-applications",
-        headers: DEFAULT_HEADERS
-      )
+    def self.applications(internet)
+      response = internet.post("#{ENDPOINT}/apis/launcher/1/get-applications", DEFAULT_HEADERS)
 
-      if response.status == 200
-        Applications.new(response.body)
+      if response.success?
+        Applications.new(response.read)
       else
         false
       end
@@ -125,15 +111,12 @@ class W3DHub
     # Client sends an Authorization header bearer token which is received from logging in (Optional)
     # Client requests news for a specific application/game e.g.: data={"category":"ia"} ("launcher-home" retrieves the weekly hub updates)
     # Response is a JSON hash with a "highlighted" and "news" keys; the "news" one seems to be the desired one
-    def self.news(category)
-      response = W3DHUB_API_CONNECTION.post(
-        path: "apis/w3dhub/1/get-news",
-        headers: DEFAULT_HEADERS.merge({"Content-Type": "application/x-www-form-urlencoded"}),
-        body: "data=#{JSON.dump({category: category})}"
-      )
+    def self.news(internet, category)
+      body = "data=#{JSON.dump({category: category})}"
+      response = internet.post("#{ENDPOINT}/apis/w3dhub/1/get-news", FORM_ENCODED_HEADERS, body)
 
-      if response.status == 200
-        News.new(response.body)
+      if response.success?#status == 200
+        News.new(response.read)
       else
         false
       end
@@ -170,8 +153,9 @@ class W3DHub
 
     #! === Server List API === !#
 
-    SERVER_LIST_ENDPOINT = "https://gsh.w3dhub.com"
-    SERVER_LIST_CONNECTION = Excon.new(SERVER_LIST_ENDPOINT, persistent: true, connect_timeout: 15, tcp_nodelay: true)
+    SERVER_LIST_ENDPOINT = "https://gsh.w3dhub.com".freeze
+    # SERVER_LIST_CONNECTION = Excon.new(SERVER_LIST_ENDPOINT, persistent: true, connect_timeout: 15, tcp_nodelay: true)
+
     # Method: GET
     # FORMAT: JSON
 
@@ -189,14 +173,11 @@ class W3DHub
     #     id, name, score, kills, deaths
     #   ...players[]:
     #     nick, team (index of teams array), score, kills, deaths
-    def self.server_list(level = 1)
-      response = SERVER_LIST_CONNECTION.get(
-        path: "listings/getAll/v2?statusLevel=#{level}",
-        headers: DEFAULT_HEADERS
-      )
+    def self.server_list(internet, level = 1)
+      response = internet.get("#{SERVER_LIST_ENDPOINT}/listings/getAll/v2?statusLevel=#{level}", DEFAULT_HEADERS)
 
-      if response.status == 200
-        data = JSON.parse(response.body, symbolize_names: true)
+      if response.success?
+        data = JSON.parse(response.read, symbolize_names: true)
         return data.map { |hash| ServerListServer.new(hash) }
       end
 
@@ -214,7 +195,7 @@ class W3DHub
     #     id, name, score, kills, deaths
     #   ...players[]:
     #     nick, team (index of teams array), score, kills, deaths
-    def self.server_details(id, level)
+    def self.server_details(internet, id, level)
     end
 
     # /listings/push/v2/negotiate?negotiateVersion=1

@@ -7,18 +7,16 @@ class W3DHub
     end
 
     # Fetch a generic uri
-    def self.fetch(uri)
+    def self.fetch(internet, uri)
       path = path(uri)
 
       if File.exist?(path)
         path
       else
-        response = Excon.get(uri, tcp_nodelay: true)
+        response = internet.get(uri, [["user-agent", W3DHub::Api::USER_AGENT]])
 
-        if response.status == 200
-          File.open(path, "wb") do |f|
-            f.write(response.body)
-          end
+        if response.success?#status == 200
+          response.save(path)
 
           path
         end

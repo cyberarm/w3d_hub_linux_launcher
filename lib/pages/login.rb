@@ -36,27 +36,27 @@ class W3DHub
 
                   # Do network stuff
 
-                  Thread.new do
-                    account = Api.user_login(@username.value, @password.value)
+                  Async do
+                    internet = Async::HTTP::Internet.instance
+
+                    account = Api.user_login(internet, @username.value, @password.value)
 
                     if account
                       Store.account = account
                       Store.settings[:account][:refresh_token] = account.refresh_token
                       Store.settings.save_settings
 
-                      Cache.fetch(account.avatar_uri)
+                      Cache.fetch(internet, account.avatar_uri)
 
-                      main_thread_queue << proc { populate_account_info; page(W3DHub::Pages::Games) }
+                      populate_account_info; page(W3DHub::Pages::Games)
                     else
                       # An error occurred, enable  account entry
                       # NOTE: Too many incorrect entries causes lock out (Unknown duration)
-                      main_thread_queue << proc do
-                        @username.enabled = true
-                        @password.enabled = true
-                        btn.enabled = true
+                      @username.enabled = true
+                      @password.enabled = true
+                      btn.enabled = true
 
-                        @error_label.value = "Incorrect username or password.\nOr too many failed login attempts."
-                      end
+                      @error_label.value = "Incorrect username or password.\nOr too many failed login attempts, try again in a few minutes."
                     end
                   end
                 end
