@@ -13,7 +13,7 @@ class W3DHub
         end
 
         def write(object)
-          super(dump(object) + "\x1e")
+          super("#{dump(object)}\x1e")
         end
       end
 
@@ -37,9 +37,12 @@ class W3DHub
           Async::WebSocket::Client.connect(endpoint, headers: headers, handler: WSS::Connection) do |connection|
             connection.write({ protocol: "json", version: 1 })
             connection.flush
-            pp connection.read
+            # Should be an empty hash for protocol agreement
+            connection.read
+            # Write keep alive?
             connection.write({ "type": 6 })
 
+            # Subscribe to server changes
             servers.each_with_index do |server, i|
               i += 1
               out = { "type": 1, "invocationId": "#{i}", "target": "SubscribeToServerStatusUpdates", "arguments": [server[:id], 2] }
@@ -47,6 +50,7 @@ class W3DHub
             end
 
             while (message = connection.read)
+              # Keep alive?
               connection.write({ type: 6 }) if message.first[:type] == 6
 
               # TODO: process messages (of type 3?)
