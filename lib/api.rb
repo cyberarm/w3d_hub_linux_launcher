@@ -11,7 +11,6 @@ class W3DHub
     #! === W3D Hub API === !#
 
     ENDPOINT = "https://secure.w3dhub.com".freeze
-    # W3DHUB_API_CONNECTION = Excon.new(ENDPOINT, persistent: true, connect_timeout: 15, tcp_nodelay: true)
 
     # Method: POST
     # FORMAT: JSON
@@ -151,7 +150,6 @@ class W3DHub
     #! === Server List API === !#
 
     SERVER_LIST_ENDPOINT = "https://gsh.w3dhub.com".freeze
-    # SERVER_LIST_CONNECTION = Excon.new(SERVER_LIST_ENDPOINT, persistent: true, connect_timeout: 15, tcp_nodelay: true)
 
     # Method: GET
     # FORMAT: JSON

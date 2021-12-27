@@ -46,39 +46,58 @@ class W3DHub
     # Download a W3D Hub package
     def self.fetch_package(internet, package, block)
       path = package_path(package.category, package.subcategory, package.name, package.version)
-      headers = { "Content-Type": "application/x-www-form-urlencoded" }
       start_from_bytes = package.custom_partially_valid_at_bytes
 
       puts "    Start from bytes: #{start_from_bytes}"
 
       create_directories(path)
 
-      file = File.open(path, start_from_bytes.positive? ? "r+b" : "wb")
-      if (start_from_bytes.positive?)
-        headers["Range"] = "bytes=#{start_from_bytes}-"
-        file.pos = start_from_bytes
+      offset = start_from_bytes
+      parts = []
+      chunk_size = 4_000_000
+      workers = 4
+
+      file = File.open(path, offset.positive? ? "r+b" : "wb")
+
+      amount_written = 0
+
+      while (offset < package.size)
+        byte_range_start = offset
+        byte_range_end   = [offset + chunk_size, package.size].min
+        parts << (byte_range_start...byte_range_end)
+
+        offset += chunk_size
       end
 
-      streamer = lambda do |chunk, remaining_bytes, total_bytes|
-        file.write(chunk)
+      semaphore = Async::Semaphore.new(workers)
+      barrier   = Async::Barrier.new(parent: semaphore)
 
-        block.call(chunk, remaining_bytes, total_bytes)
-        puts "    Remaining: #{((remaining_bytes.to_f / total_bytes) * 100.0).round}% (#{W3DHub::format_size(total_bytes - remaining_bytes)} / #{W3DHub::format_size(total_bytes)})"
+      while !parts.empty?
+        barrier.async do
+          part = parts.shift
+
+          range_header = [["range", "bytes=#{part.min}-#{part.max}"]]
+
+          body = "data=#{JSON.dump({ category: package.category, subcategory: package.subcategory, name: package.name, version: package.version })}"
+          response = internet.post("#{Api::ENDPOINT}/apis/launcher/1/get-package", W3DHub::Api::FORM_ENCODED_HEADERS + range_header, body)
+
+          if response.success?
+            chunk = response.read
+            written = file.pwrite(chunk, part.min)
+
+            amount_written += written
+            remaining_bytes = package.size - amount_written
+            total_bytes = package.size
+
+            block.call(chunk, remaining_bytes, total_bytes)
+            # puts "    Remaining: #{((remaining_bytes.to_f / total_bytes) * 100.0).round}% (#{W3DHub::format_size(total_bytes - remaining_bytes)} / #{W3DHub::format_size(total_bytes)})"
+          end
+        end
+
+        barrier.wait
       end
-
-      # Create a new connection due to some weirdness somewhere in Excon
-      response = Excon.post(
-        "#{Api::ENDPOINT}/apis/launcher/1/get-package",
-        tcp_nodelay: true,
-        headers: Api::DEFAULT_HEADERS.merge(headers),
-        body: "data=#{JSON.dump({ category: package.category, subcategory: package.subcategory, name: package.name, version: package.version })}",
-        chunk_size: 4_000_000,
-        response_block: streamer
-      )
-
-      file.close
-
-      response.status == 200 || response.status == 206
+    ensure
+      file&.close
     end
   end
 end

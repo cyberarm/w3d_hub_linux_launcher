@@ -473,9 +473,6 @@ class W3DHub
         internet = Async::HTTP::Internet.instance
 
         Api.package(internet, package) do |chunk, remaining_bytes, total_bytes|
-          # Store progress somewhere
-          # Kernel.puts "#{name}-#{version}: #{(remaining_bytes.to_f / total_bytes).round}%"
-
           block&.call(chunk, remaining_bytes, total_bytes)
         end
       end
