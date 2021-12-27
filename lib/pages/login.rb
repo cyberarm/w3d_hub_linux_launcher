@@ -46,7 +46,7 @@ class W3DHub
                       Store.settings[:account][:refresh_token] = account.refresh_token
                       Store.settings.save_settings
 
-                      Cache.fetch(internet, account.avatar_uri)
+                      Cache.fetch(internet, account.avatar_uri, true)
 
                       populate_account_info
                       page(W3DHub::Pages::Games)

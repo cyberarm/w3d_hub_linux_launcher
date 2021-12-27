@@ -7,18 +7,18 @@ class W3DHub
     end
 
     # Fetch a generic uri
-    def self.fetch(internet, uri)
+    def self.fetch(internet, uri, force_fetch = false)
       path = path(uri)
 
-      if File.exist?(path)
+      if !force_fetch && File.exist?(path)
         path
       else
-        response = internet.get(uri, [["user-agent", W3DHub::Api::USER_AGENT]])
+        response = internet.get(uri, W3DHub::Api::DEFAULT_HEADERS)
 
         if response.success?
           response.save(path, "wb")
 
-          path
+          return path
         end
 
         false

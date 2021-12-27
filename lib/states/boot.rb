@@ -71,6 +71,7 @@ class W3DHub
 
           if @account
             Store.settings[:account][:refresh_token] = @account.refresh_token
+            Cache.fetch(internet, @account.avatar_uri, true)
           else
             Store.settings[:account][:refresh_token] = nil
           end
