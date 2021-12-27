@@ -17,6 +17,9 @@ require "async"
 require "async/barrier"
 require "async/semaphore"
 require "async/http/internet/instance"
+require "async/http/endpoint"
+require "async/websocket/client"
+require "protocol/websocket/connection"
 
 I18n.load_path << Dir[File.expand_path("locales") + "/*.yml"]
 I18n.default_locale = :en
@@ -60,6 +63,7 @@ require_relative "lib/api/service_status"
 require_relative "lib/api/applications"
 require_relative "lib/api/news"
 require_relative "lib/api/server_list_server"
+require_relative "lib/api/server_list_updater"
 require_relative "lib/api/account"
 require_relative "lib/api/package"
 

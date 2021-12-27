@@ -15,8 +15,8 @@ class W3DHub
       else
         response = internet.get(uri, [["user-agent", W3DHub::Api::USER_AGENT]])
 
-        if response.success?#status == 200
-          response.save(path)
+        if response.success?
+          response.save(path, "wb")
 
           path
         end

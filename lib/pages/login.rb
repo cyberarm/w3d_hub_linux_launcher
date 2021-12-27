@@ -48,9 +48,10 @@ class W3DHub
 
                       Cache.fetch(internet, account.avatar_uri)
 
-                      populate_account_info; page(W3DHub::Pages::Games)
+                      populate_account_info
+                      page(W3DHub::Pages::Games)
                     else
-                      # An error occurred, enable  account entry
+                      # An error occurred, enable account entry
                       # NOTE: Too many incorrect entries causes lock out (Unknown duration)
                       @username.enabled = true
                       @password.enabled = true
@@ -68,8 +69,13 @@ class W3DHub
         end
 
         if Store.account
-          populate_account_info
-          page(W3DHub::Pages::Games)
+          Async do
+            internet = Async::HTTP::Internet.instance
+            Cache.fetch(internet, Store.account.avatar_uri)
+
+            populate_account_info
+            page(W3DHub::Pages::Games)
+          end
         end
       end
 
