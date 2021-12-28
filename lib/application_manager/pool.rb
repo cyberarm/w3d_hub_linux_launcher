@@ -11,7 +11,7 @@ class W3DHub
       end
 
       def manage_pool
-        while (@jobs.size.positive? || @workers.any?(&:busy?))
+        while @jobs.size.positive? || @workers.any?(&:busy?)
           feed_pool unless @jobs.size.zero?
 
           sleep 0.1
@@ -29,9 +29,9 @@ class W3DHub
           @die = false
           @job = nil
 
-          Async do
+          Thread.new do
             until (@die)
-              @job.process if @job && @job.waiting?
+              @job.process if @job&.waiting?
               @job = nil
               sleep 0.1
             end

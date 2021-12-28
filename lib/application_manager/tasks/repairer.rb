@@ -1,27 +1,27 @@
 class W3DHub
   class ApplicationManager
-    class Repairer < Task
+    class Repairer < Installer
       def type
         :repairer
       end
 
-      def execute_task
-        fail_fast
-        return false if failed?
+      # def execute_task
+      #   fail_fast
+      #   return false if failed?
 
-        manifests = fetch_manifests
-        return false if failed?
+      #   manifests = fetch_manifests
+      #   return false if failed?
 
-        packages = build_package_list(manifests)
-        return false if failed?
+      #   packages = build_package_list(manifests)
+      #   return false if failed?
 
-        verify_files(manifests, packages)
-        return false if failed?
+      #   verify_files(manifests, packages)
+      #   return false if failed?
 
-        # pp packages.select { |pkg| pkg.name == "misc" }
+      #   # pp packages.select { |pkg| pkg.name == "misc" }
 
-        true
-      end
+      #   true
+      # end
     end
   end
 end

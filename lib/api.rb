@@ -2,7 +2,8 @@ class W3DHub
   class Api
     USER_AGENT = "Cyberarm's Linux Friendly W3D Hub Launcher v#{W3DHub::VERSION}".freeze
     DEFAULT_HEADERS = [
-      ["User-Agent", USER_AGENT]
+      ["User-Agent", USER_AGENT],
+      ["Accept", "application/json"]
     ].freeze
     FORM_ENCODED_HEADERS = (
       DEFAULT_HEADERS + [["Content-Type", "application/x-www-form-urlencoded"]]
@@ -126,15 +127,14 @@ class W3DHub
     # /apis/launcher/1/get-package-details
     # client requests package details: data={"packages":[{"category":"games","name":"apb.ico","subcategory":"apb","version":""}]}
     def self.package_details(internet, packages)
-      body = "data=#{JSON.dump({ packages: packages })}"
+      body = URI.encode_www_form("data": JSON.dump({ packages: packages }))
       response = internet.post("#{ENDPOINT}/apis/launcher/1/get-package-details", FORM_ENCODED_HEADERS, body)
 
       if response.success?
         hash = JSON.parse(response.read, symbolize_names: true)
-        packages = hash[:packages].map { |pkg| Package.new(pkg) }
-        return packages.first if packages.size == 1
-        return packages
+        hash[:packages].map { |pkg| Package.new(pkg) }
       else
+        pp response, body
         false
       end
     end

@@ -2,6 +2,8 @@ class W3DHub
   class States
     class Boot < CyberarmEngine::GuiState
       def setup
+        window.show_cursor = true
+
         theme(W3DHub::THEME)
 
         background 0xff_252525

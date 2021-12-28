@@ -37,7 +37,7 @@ class W3DHub
                 stack(width: 0.75, height: 1.0) do
                   title "<b>#{I18n.t(:"app_name")}</b>", height: 0.5
                   flow(width: 1.0, height: 0.5) do
-                    @application_taskbar_container = stack(width: 1.0, height: 1.0, margin_left: 16) do
+                    @application_taskbar_container = stack(width: 1.0, height: 1.0, margin_left: 16, margin_right: 16) do
                       flow(width: 1.0, height: 0.65) do
                         @application_taskbar_label = inscription "", width: 0.60, text_wrap: :none
                         @application_taskbar_status_label = inscription "", width: 0.40, text_align: :right, text_wrap: :none
@@ -168,7 +168,7 @@ class W3DHub
         show_application_taskbar
 
         @application_taskbar_label.value = task.status.label
-        @application_taskbar_status_label.value = task.status.value
+        @application_taskbar_status_label.value = "#{task.status.value} (#{format("%.2f%%", task.status.progress.clamp(0.0, 1.0) * 100.0)})"
         @application_taskbar_progressbar.value = task.status.progress.clamp(0.0, 1.0)
 
         return unless @page.is_a?(Pages::DownloadManager)

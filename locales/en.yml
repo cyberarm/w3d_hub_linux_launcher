@@ -25,6 +25,7 @@ en:
   games:
     game_settings: Game Settings
     wine_configuration: Wine Configuration
+    game_modifications: Game Modifications
     repair_installation: Repair Installation
     uninstall_game: Uninstall Game
     install_folder: Install Folder

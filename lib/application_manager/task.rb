@@ -43,23 +43,30 @@ class W3DHub
 
       # Start task, inside its own thread
       # FIXME: Ruby 3 has parallelism now: Use a Ractor to do work on a seperate core to
-      #        prevent the UI for locking up while doing computation heavy work, i.e building
+      #        prevent the UI from locking up while doing computation heavy work, i.e building
       #        list of packages to download
       def start
         @task_state = :running
 
-        Async do
-          status = execute_task
+        Thread.new do
+          Sync do
+            begin
+              status = execute_task
+            rescue RuntimeError => e
+              status = false
+              @task_failure_reason = e.message[0..512]
+            end
 
-          # Force free some bytes
-          GC.compact if GC.respond_to?(:compact)
-          GC.start
+            # Force free some bytes
+            GC.compact if GC.respond_to?(:compact)
+            GC.start
 
-          @task_state = :failed unless status
-          @task_state = :complete unless @task_state == :failed
+            @task_state = :failed unless status
+            @task_state = :complete unless @task_state == :failed
 
-          hide_application_taskbar if @task_state == :failed
-          send_message_dialog(:failure, "Task #{type.inspect} failed for #{@application.name}", @task_failure_reason) if @task_state == :failed
+            hide_application_taskbar if @task_state == :failed
+            send_message_dialog(:failure, "Task #{type.inspect} failed for #{@application.name}", @task_failure_reason) if @task_state == :failed && !@fail_silently
+          end
         end
       end
 
@@ -98,6 +105,10 @@ class W3DHub
       def fail!(reason = "")
         @task_state = :failed
         @task_failure_reason = reason.to_s
+      end
+
+      def fail_silently!
+        @fail_silently = true
       end
 
       # Quick checks before network and computational work starts
@@ -211,6 +222,89 @@ class W3DHub
         packages
       end
 
+      def verify_files(manifests, packages)
+        @status.operations.clear
+        @status.label = "Downloading #{@application.name}..."
+        @status.value = "Verifying installed files..."
+        @status.progress = 0.0
+
+        @status.step = :verify_files
+
+        path = Cache.install_path(@application, @channel)
+        accepted_files = {}
+        rejected_files = []
+
+        file_count = manifests.map { |m| m.files.count }.sum
+        processed_files = 0
+
+        manifests.each do |manifest|
+          manifest.files.each do |file|
+            safe_file_name = file.name.gsub("\\", "/")
+            # Fix borked data -> Data 'cause Windows don't care about capitalization
+            safe_file_name.sub!("data/", "Data/") unless File.exist?("#{path}/#{safe_file_name}")
+
+            file_path = "#{path}/#{safe_file_name}"
+
+            processed_files += 1
+            @status.progress = processed_files.to_f / file_count
+
+            next if file.removed_since
+            next if accepted_files.key?(safe_file_name)
+
+            unless File.exist?(file_path)
+              rejected_files << { file: file, manifest_version: manifest.version }
+              puts "[#{manifest.version}] File missing: #{file_path}"
+              next
+            end
+
+            digest = Digest::SHA256.new
+            f = File.open(file_path)
+
+            while (chunk = f.read(32_000_000))
+              digest.update(chunk)
+            end
+
+            f.close
+
+            pp file if file.checksum.nil?
+
+            if digest.hexdigest.upcase == file.checksum.upcase
+              accepted_files[safe_file_name] = manifest.version
+              # puts "[#{manifest.version}] Verified file: #{file_path}"
+            else
+              rejected_files << { file: file, manifest_version: manifest.version }
+              puts "[#{manifest.version}] File failed Verification: #{file_path}"
+            end
+          end
+        end
+
+        puts "#{rejected_files.count} missing or corrupt files"
+
+        # TODO: Filter packages to only the required ones
+        selected_packages = []
+        selected_packages_hash = {}
+
+        rejected_files.each do |hash|
+          next if selected_packages_hash["#{hash[:file].package}_#{hash[:manifest_version]}"]
+
+          package = packages.find { |pkg| pkg.name == hash[:file].package && pkg.version == hash[:manifest_version] }
+
+          if package
+            selected_packages_hash["#{hash[:file].package}_#{hash[:manifest_version]}"] = true
+            selected_packages << package
+          else
+            raise "missing package: #{hash[:file].package}:#{hash[:manifest_version]} in fetched packages list!"
+          end
+        end
+
+        # FIXME: Order `selected_packages` like `packages`
+
+        # Removed packages that don't need to be fetched or processed
+        packages.delete_if { |package| !selected_packages.find { |pkg| pkg == package } }
+
+        packages
+      end
+
       def fetch_packages(packages)
         hashes = packages.map do |pkg|
           {
@@ -306,8 +400,7 @@ class W3DHub
 
           pool.manage_pool
         else
-          puts "FAILED!"
-          pp package_details
+          fail!("Failed to fetch package details")
         end
       end
 
@@ -406,45 +499,6 @@ class W3DHub
         puts "#{@app_id} has been installed."
       end
 
-      def verify_files(manifests, packages)
-        path = Cache.install_path(@application, @channel)
-        accepted_files = {}
-        rejected_files = []
-
-        manifests.each do |manifest|
-          manifest.files.each do |file|
-            file_path = "#{path}/#{file.name.gsub('\\', '/')}"
-
-            unless File.exists?(file_path)
-              rejected_files << file
-              puts "[#{manifest.version}] File missing: #{file_path}"
-              next
-            end
-
-            next if accepted_files.key?(file.name)
-
-            digest = Digest::SHA256.new
-            f = File.open(file_path)
-
-            while (chunk = f.read(32_000_000))
-              digest.update(chunk)
-              current = Async::Task.current?
-              current&.yield
-            end
-
-            f.close
-
-            if digest.hexdigest.upcase == file.checksum.upcase
-              accepted_files[file.name] = manifest.version
-              puts "[#{manifest.version}] Verified file: #{file_path}"
-            else
-              rejected_files << file
-              puts "[#{manifest.version}] File failed Verification: #{file_path}"
-            end
-          end
-        end
-      end
-
       #############
       # Functions #
       #############
@@ -453,7 +507,7 @@ class W3DHub
         # Check for and integrity of local manifest
         internet = Async::HTTP::Internet.instance
 
-        package = Api.package_details(internet, [{ category: category, subcategory: subcategory, name: name, version: version }])
+        package = Api.package_details(internet, [{ category: category, subcategory: subcategory, name: name, version: version }]).first
 
         if File.exist?(Cache.package_path(category, subcategory, name, version))
           verified = verify_package(package)

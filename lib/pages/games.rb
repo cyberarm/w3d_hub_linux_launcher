@@ -89,6 +89,7 @@ class W3DHub
                 Hash.new.tap { |hash|
                   hash[I18n.t(:"games.game_settings")] = { icon: "gear", block: proc { Store.application_manager.settings(game.id, channel.id) } }
                   hash[I18n.t(:"games.wine_configuration")] = { icon: "gear", block: proc { Store.application_manager.wine_configuration(game.id, channel.id) } } if W3DHub.unix?
+                  hash[I18n.t(:"games.game_modifications")] = { icon: "gear", enabled: false, block: proc { puts "Coming Soon!" } }
                   if game.id != "ren"
                     hash[I18n.t(:"games.repair_installation")] = { icon: "wrench", block: proc { Store.application_manager.repair(game.id, channel.id) } }
                     hash[I18n.t(:"games.uninstall_game")] = { icon: "trashCan", block: proc { Store.application_manager.uninstall(game.id, channel.id) } }
@@ -100,7 +101,7 @@ class W3DHub
                   flow(width: 1.0, height: 22, margin_bottom: 8) do
                     image "#{GAME_ROOT_PATH}/media/ui_icons/#{hash[:icon]}.png", width: 0.11 if hash[:icon]
                     image EMPTY_IMAGE, width: 0.11 unless hash[:icon]
-                    link key, text_size: 18 do
+                    link key, text_size: 18, enabled: hash.key?(:enabled) ? hash[:enabled] : true do
                       hash[:block]&.call
                     end
                   end
@@ -142,15 +143,18 @@ class W3DHub
                 Store.application_manager.run(game.id, channel.id)
               end
             else
+              installing = Store.application_manager.task?(:installer, game.id, channel.id)
+
               unless game.id == "ren"
-                button "<b>#{I18n.t(:"interface.install")}</b>", margin_left: 24, enabled: !Store.application_manager.task?(:installer, game.id, channel.id) do |button|
+                button "<b>#{I18n.t(:"interface.install")}</b>", margin_left: 24, enabled: !installing do |button|
                   button.enabled = false
+                  @import_button.enabled = false
                   Store.application_manager.install(game.id, channel.id)
                 end
               end
 
-              button "<b>#{I18n.t(:"interface.import")}</b>", margin_left: 24, enabled: false do
-                Store.application_manager.import(game.id, channel.id, "?")
+              @import_button = button "<b>#{I18n.t(:"interface.import")}</b>", margin_left: 24, enabled: !installing do
+                Store.application_manager.import(game.id, channel.id)
               end
             end
           end

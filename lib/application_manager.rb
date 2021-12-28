@@ -36,14 +36,14 @@ class W3DHub
       @tasks.push(updater)
     end
 
-    def import(app_id, channel, path)
-      puts "Import Request: #{app_id}-#{channel} -> #{path}"
+    def import(app_id, channel)
+      puts "Import Request: #{app_id}-#{channel}"
 
       # Check registry for auto-import if windows
       # if auto-import fails ask user for path to game exe
       # mark app as imported/installed
 
-      @tasks.push(Importer.new(app_id, channel, path))
+      @tasks.push(Importer.new(app_id, channel))
     end
 
     def settings(app_id, channel)
@@ -236,6 +236,19 @@ class W3DHub
 
         false
       end
+    end
+
+    def imported!(task, exe_path)
+      application_data = {
+        install_directory: File.basename(exe_path),
+        installed_version: task.channel.current_version,
+        install_path: exe_path,
+        wine_prefix: task.wine_prefix
+      }
+
+      Store.settings[:games] ||= {}
+      Store.settings[:games][:"#{task.app_id}_#{task.release_channel}"] = application_data
+      Store.settings.save_settings
     end
 
     def installed!(task)
