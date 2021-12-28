@@ -165,8 +165,6 @@ class W3DHub
       end
 
       def page(klass, options = {})
-        # @menu_bar.clear
-        # @status_bar.clear
         body.clear
 
         @page.blur if @page
@@ -177,6 +175,12 @@ class W3DHub
         @page.options = options
         @page.setup
         @page.focus
+      end
+
+      def update_server_browser(server)
+        return unless @page.is_a?(Pages::ServerBrowser)
+
+        @page.refresh_server_list(server)
       end
 
       def show_application_taskbar

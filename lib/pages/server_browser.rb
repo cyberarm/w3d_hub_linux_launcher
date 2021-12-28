@@ -5,6 +5,7 @@ class W3DHub
         @server_locked_icons = {}
 
         @selected_server ||= nil
+        @selected_server_container ||= nil
         @selected_color = 0xff_666655
 
         @filters = Store.settings[:server_list_filters] || {}
@@ -119,6 +120,28 @@ class W3DHub
         end
       end
 
+      def update
+        super
+
+        populate_server_list if @refresh_server_list
+        @refresh_server_list = false
+      end
+
+      def refresh_server_list(server)
+        populate_server_info(server) if @selected_server&.id == server.id
+        @refresh_server_list = true
+      end
+
+      def stylize_selected_server(server_container)
+        server_container.style.server_item_background = server_container.style.default[:background]
+        server_container.style.server_item_hover_background = server_container.style.hover[:background]
+        server_container.style.server_item_active_background = server_container.style.active[:background]
+        server_container.style.background = @selected_color
+        server_container.style.default[:background] = @selected_color
+        server_container.style.hover[:background] = @selected_color
+        server_container.style.active[:background] = @selected_color
+      end
+
       def populate_server_list
         @server_list_container.scroll_top = 0
 
@@ -171,25 +194,23 @@ class W3DHub
             end
 
             server_container.subscribe(:clicked_left_mouse_button) do
-              if @selected_server
-                @selected_server.style.background = @selected_server.style.server_item_background
-                @selected_server.style.default[:background] = @selected_server.style.server_item_background
-                @selected_server.style.hover[:background] = @selected_server.style.server_item_hover_background
-                @selected_server.style.active[:background] = @selected_server.style.server_item_active_background
+              if @selected_server_container
+                @selected_server_container.style.background = @selected_server_container.style.server_item_background
+                @selected_server_container.style.default[:background] = @selected_server_container.style.server_item_background
+                @selected_server_container.style.hover[:background] = @selected_server_container.style.server_item_hover_background
+                @selected_server_container.style.active[:background] = @selected_server_container.style.server_item_active_background
               end
 
-              server_container.style.server_item_background = server_container.style.default[:background]
-              server_container.style.server_item_hover_background = server_container.style.hover[:background]
-              server_container.style.server_item_active_background = server_container.style.active[:background]
-              server_container.style.background = @selected_color
-              server_container.style.default[:background] = @selected_color
-              server_container.style.hover[:background] = @selected_color
-              server_container.style.active[:background] = @selected_color
+              stylize_selected_server(server_container)
 
-              @selected_server = server_container
+              @selected_server_container = server_container
+
+              @selected_server = server
 
               populate_server_info(server)
             end
+
+            stylize_selected_server(server_container) if server.id == @selected_server&.id
           end
         end
       end
@@ -313,7 +334,7 @@ class W3DHub
       end
 
       def fetch_server_list
-        unless Gosu.milliseconds - Store.server_list_last_fetch >= 30_000 # 30 seconds
+        unless Gosu.milliseconds - Store.server_list_last_fetch >= 3_000 # 3 seconds
           populate_server_list # Fake it
           return
         end

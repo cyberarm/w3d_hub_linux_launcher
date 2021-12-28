@@ -16,6 +16,18 @@ class W3DHub
         @status  = @data[:status] ? Status.new(@data[:status]) : nil
       end
 
+      def update(hash)
+        if @status
+          @status.instance_variable_set(:@name, hash[:name])
+          @status.instance_variable_set(:@password, hash[:password] || false)
+          @status.instance_variable_set(:@map, hash[:map])
+          @status.instance_variable_set(:@max_players, hash[:maxplayers])
+          @status.instance_variable_set(:@player_count, hash[:numplayers] || 0)
+          @status.instance_variable_set(:@started, hash[:started])
+          @status.instance_variable_set(:@remaining, hash[:remaining])
+        end
+      end
+
       class Status
         attr_reader :name, :password, :map, :max_players, :player_count, :started, :remaining, :teams, :players
 

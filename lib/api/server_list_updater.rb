@@ -1,6 +1,8 @@
 class W3DHub
   class Api
     class ServerListUpdater
+      include CyberarmEngine::Common
+
       ##!!! When this breaks update from: https://github.com/socketry/async-websocket/blob/master/lib/async/websocket/connection.rb
       # refinements preserves super... 😢
       class PatchedConnection < ::Protocol::WebSocket::Connection
@@ -71,7 +73,6 @@ class W3DHub
         run
       end
 
-      # TODO: Properly start up and monitor for updates to server list
       def run
         Async do |task|
           internet = Async::HTTP::Internet.instance
@@ -88,12 +89,10 @@ class W3DHub
             pp connection.read
             connection.write({ "type": 6 })
 
-            puts "servers: #{Store.server_list&.count}"
-
             Store.server_list.each_with_index do |server, i|
               i += 1
               mode = 1 # 2 full details, 1 basic details
-              out = { "type": 1, "invocationId": "#{i}", "target": "SubscribeToServerStatusUpdates", "arguments": [server.id, 1] }
+              out = { "type": 1, "invocationId": "#{i}", "target": "SubscribeToServerStatusUpdates", "arguments": [server.id, mode] }
               connection.write(out)
             end
 
@@ -105,10 +104,10 @@ class W3DHub
                   next unless rpc[:target] == "ServerStatusChanged"
 
                   id, data = rpc[:arguments]
-                  pp [id, data.length, data]
-                  server = Api::ServerListServer.new(data)
-
-                  pp [server.player_count, server.max_players]
+                  server = Store.server_list.find { |s| s.id == id }
+                  server&.update(data)
+                  state = window.current_state
+                  state.update_server_browser(server) if state.is_a?(States::Interface) && server
                 end
               end
             end
