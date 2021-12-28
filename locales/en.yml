@@ -14,12 +14,14 @@ en:
     server_browser: Server Browser
     community: Community
     download_manager: Download Manager
+    downloads: Downloads
     play_now: Play Now
     install_update: Install Update
     single_player: Single Player
     import: Import
     install: Install
     app_settings_tip: W3D Hub Launcher Settings
+    settings: Settings
   games:
     game_settings: Game Settings
     wine_configuration: Wine Configuration

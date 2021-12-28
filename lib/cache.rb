@@ -38,9 +38,11 @@ class W3DHub
     end
 
     def self.install_path(application, channel)
-      app_install_dir = Store.settings[:app_install_dir]
+      game_data = Store.settings[:games]&.dig(:"#{application.id}_#{channel.id}")
 
-      "#{app_install_dir}/#{application.category}/#{application.id}/#{channel.id}"
+      return game_data[:install_directory] if game_data && game_data[:install_directory]
+
+      "#{Store.settings[:app_install_dir]}/#{application.category}/#{application.id}/#{channel.id}"
     end
 
     # Download a W3D Hub package
@@ -83,7 +85,14 @@ class W3DHub
 
           if response.success?
             chunk = response.read
-            written = file.pwrite(chunk, part.min)
+            written = 0
+            if W3DHub.unix?
+              written = file.pwrite(chunk, part.min)
+            else
+              # probably not "thread safe"
+              file.pos = part.min
+              written = file.write(chunk)
+            end
 
             amount_written += written
             remaining_bytes = package.size - amount_written

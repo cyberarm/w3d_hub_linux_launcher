@@ -37,38 +37,10 @@ class W3DHub
                 stack(width: 0.75, height: 1.0) do
                   title "<b>#{I18n.t(:"app_name")}</b>", height: 0.5
                   flow(width: 1.0, height: 0.5) do
-                    flow(width: 0.18, height: 1.0) do
-                      button(
-                        get_image("#{GAME_ROOT_PATH}/media/ui_icons/gear.png"),
-                        tip: I18n.t(:"interface.app_settings_tip"),
-                        image_height: 1.0,
-                        padding_left: 4,
-                        padding_top: 4,
-                        padding_right: 4,
-                        padding_bottom: 4,
-                        margin_left: 32
-                      ) do
-                        page(W3DHub::Pages::Settings)
-                      end
-
-                      button(
-                        get_image("#{GAME_ROOT_PATH}/media/ui_icons/import.png"),
-                        tip: I18n.t(:"interface.download_manager"),
-                        image_height: 1.0,
-                        padding_left: 4,
-                        padding_top: 4,
-                        padding_right: 4,
-                        padding_bottom: 4,
-                        margin_left: 4
-                      ) do
-                        page(W3DHub::Pages::DownloadManager)
-                      end
-                    end
-
-                    @application_taskbar_container = stack(width: 0.77, height: 1.0, margin_left: 16) do
+                    @application_taskbar_container = stack(width: 1.0, height: 1.0, margin_left: 16) do
                       flow(width: 1.0, height: 0.65) do
-                        @application_taskbar_label = inscription "", width: 0.65, text_wrap: :none
-                        @application_taskbar_status_label = inscription "", width: 0.35, text_align: :right, text_wrap: :none
+                        @application_taskbar_label = inscription "", width: 0.60, text_wrap: :none
+                        @application_taskbar_status_label = inscription "", width: 0.40, text_align: :right, text_wrap: :none
                       end
 
                       @application_taskbar_progressbar = progress fraction: 0.0, height: 2, width: 1.0
@@ -93,11 +65,7 @@ class W3DHub
 
               @navigation_container = flow(width: 1.0, height: 0.35) do
                 # background 0xff_666666
-
-                flow(width: 0.20, height: 1.0) do
-                end
-
-                flow(width: 0.55, height: 1.0) do
+                flow(width: 1.0, height: 1.0, padding_left: 75) do
                   link I18n.t(:"interface.games") do
                     page(W3DHub::Pages::Games)
                   end
@@ -109,9 +77,14 @@ class W3DHub
                   link I18n.t(:"interface.community"), margin_left: 18 do
                     page(W3DHub::Pages::Community)
                   end
-                end
 
-                flow(width: 0.20, height: 1.0) do
+                  link I18n.t(:"interface.downloads"), margin_left: 18 do
+                    page(W3DHub::Pages::DownloadManager)
+                  end
+
+                  link I18n.t(:"interface.settings"), margin_left: 18 do
+                    page(W3DHub::Pages::Settings)
+                  end
                 end
               end
             end
