@@ -122,6 +122,8 @@ class W3DHub
 
           Store.server_list_last_fetch = Gosu.milliseconds
 
+          Api::ServerListUpdater.instance
+
           @tasks[:server_list][:complete] = true
         rescue => e
           # Something went wrong!
