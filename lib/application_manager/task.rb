@@ -507,7 +507,14 @@ class W3DHub
         # Check for and integrity of local manifest
         internet = Async::HTTP::Internet.instance
 
-        package = Api.package_details(internet, [{ category: category, subcategory: subcategory, name: name, version: version }]).first
+        package = nil
+        array = Api.package_details(internet, [{ category: category, subcategory: subcategory, name: name, version: version }])
+        if array.is_a?(Array)
+          package = array.first
+        else
+          fail!("Failed to fetch manifest package details!")
+          return
+        end
 
         if File.exist?(Cache.package_path(category, subcategory, name, version))
           verified = verify_package(package)

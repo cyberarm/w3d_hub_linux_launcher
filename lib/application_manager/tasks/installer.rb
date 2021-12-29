@@ -15,8 +15,8 @@ class W3DHub
         packages = build_package_list(manifests)
         return false if failed?
 
-        # verify_files(manifests, packages)
-        # return false if failed?
+        verify_files(manifests, packages)
+        return false if failed?
 
         fetch_packages(packages)
         return false if failed?

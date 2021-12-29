@@ -128,13 +128,14 @@ class W3DHub
     # client requests package details: data={"packages":[{"category":"games","name":"apb.ico","subcategory":"apb","version":""}]}
     def self.package_details(internet, packages)
       body = URI.encode_www_form("data": JSON.dump({ packages: packages }))
-      response = internet.post("#{ENDPOINT}/apis/launcher/1/get-package-details", FORM_ENCODED_HEADERS, body)
+      endpoint = Async::HTTP::Endpoint.parse("#{ENDPOINT}/apis/launcher/1/get-package-details", protocol: Async::HTTP::Protocol::HTTP10)
+      client = Async::HTTP::Client.new(endpoint)
+      response = client.post("#{ENDPOINT}/apis/launcher/1/get-package-details", FORM_ENCODED_HEADERS, body)
 
       if response.success?
         hash = JSON.parse(response.read, symbolize_names: true)
         hash[:packages].map { |pkg| Package.new(pkg) }
       else
-        pp response, body
         false
       end
     end
