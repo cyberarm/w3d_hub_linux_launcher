@@ -94,7 +94,7 @@ class W3DHub
     end
 
     def uninstall(app_id, channel)
-      puts "Uninstall Request: #{app_id} #{channel}"
+      puts "Uninstall Request: #{app_id}-#{channel}"
 
       return false if !installed?(app_id, channel) || installing?(app_id, channel)
 
@@ -297,6 +297,11 @@ class W3DHub
       listed_version > current_version
     end
 
+    def uninstalled!(task)
+      Store.settings[:games].delete(:"#{task.app_id}_#{task.release_channel}")
+      Store.settings.save_settings
+    end
+
     # No application tasks are being done
     def idle?
       !busy?
@@ -313,6 +318,8 @@ class W3DHub
 
     def start_next_available_task
       return unless idle?
+
+      @tasks.delete_if { |t| t.state == :complete || t.state == :halted || t.state == :failed }
 
       task = @tasks.find { |t| t.state == :not_started }
       task&.start

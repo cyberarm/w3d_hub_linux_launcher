@@ -89,7 +89,7 @@ class W3DHub
                 Hash.new.tap { |hash|
                   hash[I18n.t(:"games.game_settings")] = { icon: "gear", block: proc { Store.application_manager.settings(game.id, channel.id) } }
                   hash[I18n.t(:"games.wine_configuration")] = { icon: "gear", block: proc { Store.application_manager.wine_configuration(game.id, channel.id) } } if W3DHub.unix?
-                  hash[I18n.t(:"games.game_modifications")] = { icon: "gear", enabled: false, block: proc { puts "Coming Soon!" } }
+                  hash[I18n.t(:"games.game_modifications")] = { icon: "gear", enabled: true, block: proc { populate_game_modifications(game, channel) } }
                   if game.id != "ren"
                     hash[I18n.t(:"games.repair_installation")] = { icon: "wrench", block: proc { Store.application_manager.repair(game.id, channel.id) } }
                     hash[I18n.t(:"games.uninstall_game")] = { icon: "trashCan", block: proc { Store.application_manager.uninstall(game.id, channel.id) } }
@@ -219,6 +219,46 @@ class W3DHub
                       Launchy.open(item.uri)
                     end
                   end
+                end
+              end
+            end
+          end
+        end
+      end
+
+      def populate_game_modifications(application, channel)
+        @game_news_container.clear do
+          ([
+            {
+              id: "4E4CB0548029FF234E289B4B8B3E357A",
+              name: "HD Purchase Terminal Icons",
+              author: "username",
+              description: "Replaces them blurry low res icons with juicy hi-res ones.",
+              icon: nil,
+              type: "Textures",
+              subtype: "Purchase Terminal",
+              multiplayer_approved: true,
+              games: ["ren", "ia"],
+              versions: ["0.0.1", "0.0.2", "0.1.0"],
+              url: "https://w3dhub.com/mods/username/hd_purchase_terminal_icons"
+            }
+          ] * 10).flatten.each do |mod|
+            flow(width: 1.0, height: 128, margin: 4, border_bottom_thickness: 1, border_bottom_color: 0xff_ffffff) do
+              stack(width: 128, height: 128, padding: 4) do
+                image BLACK_IMAGE, height: 1.0
+              end
+
+              stack(width: 0.75, height: 1.0) do
+                stack(width: 1.0, height: 128 - 28) do
+                  link(mod[:name]) { Launchy.open(mod[:url]) }
+                  inscription "Author: #{mod[:author]} | #{mod[:type]} | #{mod[:subtype]}"
+                  para mod[:description][0..180]
+                end
+
+                flow(width: 1.0, height: 28, padding: 4) do
+                  inscription "Version", width: 0.25, text_align: :center
+                  list_box items: mod[:versions], width: 0.5, enabled: mod[:versions].size > 1, padding_top: 0, padding_bottom: 0
+                  button "Install", width: 0.25, padding_top: 0, padding_bottom: 0
                 end
               end
             end

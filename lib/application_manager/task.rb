@@ -105,6 +105,8 @@ class W3DHub
       def fail!(reason = "")
         @task_state = :failed
         @task_failure_reason = reason.to_s
+
+        hide_application_taskbar
       end
 
       def fail_silently!
@@ -138,7 +140,15 @@ class W3DHub
       def update_interface_task_status
         run_on_main_thread(
           proc do
-            window.current_state.interface_task_update_pending = self
+            States::Interface.instance&.interface_task_update_pending = self
+          end
+        )
+      end
+
+      def show_application_taskbar
+        run_on_main_thread(
+          proc do
+            States::Interface.instance&.show_application_taskbar
           end
         )
       end
@@ -146,7 +156,7 @@ class W3DHub
       def hide_application_taskbar
         run_on_main_thread(
           proc do
-            window.current_state.hide_application_taskbar
+            States::Interface.instance&.hide_application_taskbar
           end
         )
       end

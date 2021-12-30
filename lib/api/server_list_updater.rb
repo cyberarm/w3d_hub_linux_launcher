@@ -105,9 +105,8 @@ class W3DHub
 
                   id, data = rpc[:arguments]
                   server = Store.server_list.find { |s| s.id == id }
-                  server&.update(data)
-                  state = window.current_state
-                  state.update_server_browser(server) if state.is_a?(States::Interface) && server
+                  server_updated = server&.update(data)
+                  States::Interface.instance&.update_server_browser(server) if server_updated
                 end
               end
             end

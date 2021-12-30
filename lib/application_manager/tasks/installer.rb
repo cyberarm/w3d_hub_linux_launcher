@@ -6,6 +6,8 @@ class W3DHub
       end
 
       def execute_task
+        show_application_taskbar
+
         fail_fast
         return false if failed?
 
@@ -26,20 +28,17 @@ class W3DHub
 
         unpack_packages(packages)
         return false if failed?
-        sleep 1
 
         create_wine_prefix
         return false if failed?
-        sleep 1
 
         install_dependencies(packages)
         return false if failed?
-        sleep 1
 
         mark_application_installed
         return false if failed?
 
-        sleep 5
+        sleep 1
         hide_application_taskbar
 
         true

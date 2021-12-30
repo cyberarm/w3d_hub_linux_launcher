@@ -25,7 +25,11 @@ class W3DHub
           @status.instance_variable_set(:@player_count, hash[:numplayers] || 0)
           @status.instance_variable_set(:@started, hash[:started])
           @status.instance_variable_set(:@remaining, hash[:remaining])
+
+          return true
         end
+
+        false
       end
 
       class Status

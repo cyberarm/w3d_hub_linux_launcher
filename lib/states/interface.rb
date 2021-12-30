@@ -4,7 +4,15 @@ class W3DHub
       attr_reader :main_thread_queue
       attr_accessor :interface_task_update_pending
 
+      @@instance = nil
+
+      def self.instance
+        @@instance
+      end
+
       def setup
+        @@instance = self
+
         window.show_cursor = true
 
         @account = @options[:account]
@@ -165,8 +173,6 @@ class W3DHub
       end
 
       def update_interface_task_status(task)
-        show_application_taskbar
-
         @application_taskbar_label.value = task.status.label
         @application_taskbar_status_label.value = "#{task.status.value} (#{format("%.2f%%", task.status.progress.clamp(0.0, 1.0) * 100.0)})"
         @application_taskbar_progressbar.value = task.status.progress.clamp(0.0, 1.0)

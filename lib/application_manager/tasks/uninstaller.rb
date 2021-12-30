@@ -5,7 +5,7 @@ class W3DHub
         :uninstaller
       end
 
-      def exec_task
+      def execute_task
         # TODO: cherrypick or nuke installation folder
         # A:
         #   fetch manifests
@@ -15,6 +15,43 @@ class W3DHub
         # B:
         #   Nuke installation folder
         # mark application as uninstalled
+
+        show_application_taskbar
+
+        remove_installation_directory
+        mark_application_uninstalled
+
+        sleep 1
+        hide_application_taskbar
+
+        true
+      end
+
+      def remove_installation_directory
+        @status.operations.clear
+        @status.label = "Uninstalling #{@application.name}"
+        @status.value = "Purging installation folder..."
+        @status.progress = Float::INFINITY
+
+        path = Cache.install_path(@application, @channel)
+
+        puts path
+        # TODO: Do some sanity checking, i.e. DO NOT start launcher if `whoami` returns root, path makes sense,
+        #       we're not on Windows trying to uninstall a game likely installed by the official launcher
+        FileUtils.remove_dir(path)
+      end
+
+      def mark_application_uninstalled
+        Store.application_manager.uninstalled!(self)
+
+        @status.operations.clear
+        @status.label = "Uninstalled #{@application.name}"
+        @status.value = ""
+        @status.progress = 1.0
+
+        @status.step = :mark_application_uninstalled
+
+        puts "#{@app_id} has been uninstalled."
       end
     end
   end
