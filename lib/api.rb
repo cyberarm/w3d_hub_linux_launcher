@@ -177,7 +177,7 @@ class W3DHub
         return data.map { |hash| ServerListServer.new(hash) }
       end
 
-      pp response
+      false
     end
 
     # /listings/getStatus/v2/:id?statusLevel=#{0-2}
@@ -192,6 +192,14 @@ class W3DHub
     #   ...players[]:
     #     nick, team (index of teams array), score, kills, deaths
     def self.server_details(internet, id, level)
+      response = internet.get("#{SERVER_LIST_ENDPOINT}/listings/getStatus/v2/#{id}?statusLevel=#{level}", DEFAULT_HEADERS)
+
+      if response.success?
+        hash = JSON.parse(response.read, symbolize_names: true)
+        return hash
+      end
+
+      false
     end
 
     # /listings/push/v2/negotiate?negotiateVersion=1

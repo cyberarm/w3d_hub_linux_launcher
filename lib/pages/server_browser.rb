@@ -3,6 +3,8 @@ class W3DHub
     class ServerBrowser < Page
       def setup
         @server_locked_icons = {}
+        @refresh_server_list = false
+        refresh_server = false
 
         @selected_server ||= nil
         @selected_server_container ||= nil
@@ -52,9 +54,9 @@ class W3DHub
                   populate_server_list
                 end
 
-                button get_image("#{GAME_ROOT_PATH}/media/ui_icons/return.png"), tip: I18n.t(:"server_browser.refresh"), image_height: 1.0, margin_left: 16, padding_left: 2, padding_right: 2, padding_top: 2, padding_bottom: 2 do
-                  fetch_server_list
-                end
+                # button get_image("#{GAME_ROOT_PATH}/media/ui_icons/return.png"), tip: I18n.t(:"server_browser.refresh"), image_height: 1.0, margin_left: 16, padding_left: 2, padding_right: 2, padding_top: 2, padding_bottom: 2 do
+                #   fetch_server_list
+                # end
               end
 
               flow(width: 0.249, height: 1.0) do
@@ -113,37 +115,48 @@ class W3DHub
           end
         end
 
-        if Store.server_list.empty?
-          fetch_server_list
-        else
-          populate_server_list
-        end
+        populate_server_list
+        populate_server_info(@selected_server) if @selected_server
       end
 
       def update
         super
 
-        populate_server_list if @refresh_server_list
-        @refresh_server_list = false
+        if @refresh_server_list && Gosu.milliseconds >= @refresh_server_list
+          @refresh_server_list = nil
+
+          populate_server_list
+
+          if @selected_server&.id == @refresh_server&.id
+            Async do
+              fetch_server_details(@refresh_server) if @refresh_server
+              populate_server_info(@refresh_server) if @refresh_server && @refresh_server == @selected_server
+
+              @refresh_server = nil
+            end
+          end
+        end
       end
 
       def refresh_server_list(server)
-        populate_server_info(server) if @selected_server&.id == server.id
-        @refresh_server_list = true
+        @refresh_server_list = Gosu.milliseconds + 3_000
+        @refresh_server = server if @selected_server&.id == server.id
       end
 
       def stylize_selected_server(server_container)
         server_container.style.server_item_background = server_container.style.default[:background]
         server_container.style.server_item_hover_background = server_container.style.hover[:background]
         server_container.style.server_item_active_background = server_container.style.active[:background]
+
         server_container.style.background = @selected_color
+
         server_container.style.default[:background] = @selected_color
         server_container.style.hover[:background] = @selected_color
         server_container.style.active[:background] = @selected_color
       end
 
       def populate_server_list
-        @server_list_container.scroll_top = 0
+        Store.server_list = Store.server_list.sort_by! { |s| [s&.status&.player_count, s&.id] }.reverse if Store.server_list
 
         @server_list_container.clear do
           i = -1
@@ -207,7 +220,10 @@ class W3DHub
 
               @selected_server = server
 
-              populate_server_info(server)
+              Async do
+                fetch_server_details(server)
+                populate_server_info(server) if server == @selected_server
+              end
             end
 
             stylize_selected_server(server_container) if server.id == @selected_server&.id
@@ -333,29 +349,12 @@ class W3DHub
         end
       end
 
-      def fetch_server_list
-        unless Gosu.milliseconds - Store.server_list_last_fetch >= 3_000 # 3 seconds
-          populate_server_list # Fake it
-          return
-        end
-
+      def fetch_server_details(server)
         Async do
           internet = Async::HTTP::Internet.instance
 
-          begin
-            list = Api.server_list(internet, 2)
-
-            if list
-              Store.server_list = list.sort_by! { |s| s&.status&.players&.size }.reverse
-              Store.server_list_last_fetch = Gosu.milliseconds
-
-              main_thread_queue << proc { populate_server_list }
-            end
-          rescue => e
-            # Something went wrong!
-            pp e
-            Store.server_list = []
-          end
+          server_data = Api.server_details(internet, server.id, 2)
+          server.update(server_data) if server_data
         end
       end
 

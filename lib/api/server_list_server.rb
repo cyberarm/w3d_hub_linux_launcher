@@ -26,6 +26,9 @@ class W3DHub
           @status.instance_variable_set(:@started, hash[:started])
           @status.instance_variable_set(:@remaining, hash[:remaining])
 
+          @status.instance_variable_set(:@teams, hash[:teams]&.map { |t| Team.new(t) }) if hash[:teams]
+          @status.instance_variable_set(:@players, hash[:players]&.select { |t| t[:nick] != "Nod" && t[:nick] != "GDI" }&.map { |t| Player.new(t) }) if hash[:players]
+
           return true
         end
 

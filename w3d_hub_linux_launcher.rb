@@ -78,5 +78,5 @@ require_relative "lib/pages/download_manager"
 Async do
   W3DHub::Window.new(width: 980, height: 720, borderless: false).show
 
-  raise Async::Stop # ensure reactor is shutdown when window is closed
+  exit # ensure reactor is shutdown when window is closed
 end
