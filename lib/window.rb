@@ -15,9 +15,6 @@ class W3DHub
         I18n.locale = :en
       end
 
-      @last_interaction = Gosu.milliseconds
-      @last_mouse_position = CyberarmEngine::Vector.new(mouse_x, mouse_y)
-
       # push_state(W3DHub::States::DemoInputDelay)
       push_state(W3DHub::States::Boot)
     end
@@ -26,16 +23,17 @@ class W3DHub
       super
 
       Store.application_manager.start_next_available_task if Store.application_manager.idle?
-      manage_update_interval
 
       current = Async::Task.current?
       current&.yield
     end
 
-    def button_down(id)
-      super
+    def gain_focus
+      self.update_interval = 1000.0 / 60
+    end
 
-      @last_interaction = Gosu.milliseconds
+    def lose_focus
+      self.update_interval = 1000.0 / 10
     end
 
     def close
@@ -54,22 +52,6 @@ class W3DHub
           accept_callback: method(:close!)
         )
       end
-    end
-
-    def manage_update_interval
-      return # Wait for #gain/lose_focus callbacks to be merged into Gosu
-
-      @last_interaction = Gosu.milliseconds if @last_mouse_position.x != mouse_x || @last_mouse_position.y != mouse_y
-      @last_interaction = Gosu.milliseconds if mouse_x.between?(0, width) && mouse_y.between?(0, height)
-
-      self.update_interval = if Gosu.milliseconds - @last_interaction >= 1_000
-                               1000.0 / 10
-                             else
-                               1000.0 / 60
-                             end
-
-      @last_mouse_position.x = mouse_x
-      @last_mouse_position.y = mouse_y
     end
 
     def main_thread_queue
