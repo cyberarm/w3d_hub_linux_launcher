@@ -8,7 +8,7 @@ class W3DHub
 
         body.clear do
           # Games List
-          @games_list_container = stack(width: 0.15, height: 1.0) do
+          @games_list_container = stack(width: 0.15, height: 1.0, scroll: true) do
           end
 
           # Game Menu
@@ -82,7 +82,7 @@ class W3DHub
             # background 0xff_9999ff
 
             # Game options
-            stack(width: 0.25, height: 1.0, padding: 8) do
+            stack(width: 0.25, height: 1.0, padding: 8, scroll: true) do
               # background 0xff_550055
 
               if Store.application_manager.installed?(game.id, channel.id)

@@ -1,3 +1,5 @@
+ENV["SDL_VIDEO_ALLOW_SCREENSAVER"] = "1"
+
 begin
   require_relative "../cyberarm_engine/lib/cyberarm_engine"
 rescue LoadError => e
