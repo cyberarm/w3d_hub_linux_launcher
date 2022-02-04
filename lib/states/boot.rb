@@ -32,11 +32,9 @@ class W3DHub
         end
 
         Async do
-          internet = Async::HTTP::Internet.instance
-
           @tasks.keys.each do |key|
             Sync do
-              send(key, internet)
+              send(key)
             end
           end
         end
@@ -56,26 +54,29 @@ class W3DHub
 
         @progressbar.value = @fraction
 
-        if @progressbar.value >= 1.0 && @task_index == @tasks.size
-          Store.account = @account
-          Store.service_status = @service_status
-          Store.applications = @applications
-
-          push_state(States::Interface)
-        end
+        push_state(States::Interface) if @progressbar.value >= 1.0 && @task_index == @tasks.size
 
         @task_index += 1 if @tasks.dig(@tasks.keys[@task_index], :complete)
       end
 
-      def refresh_user_token(internet)
-        if Store.settings[:account, :refresh_token]
-          @account = Api.refresh_user_login(internet, Store.settings[:account, :refresh_token])
+      def refresh_user_token
+        if Store.settings[:account, :data]
+          account = Api::Account.new(Store.settings[:account, :data], {})
+
+          if (Time.now.to_i - account.access_token_expiry.to_i) >= 60 * 3 # Older than 3 hours then refresh
+            @account = Api.refresh_user_login(account.refresh_token)
+          else
+            @account = account
+          end
 
           if @account
-            Store.settings[:account][:refresh_token] = @account.refresh_token
-            Cache.fetch(internet, @account.avatar_uri, true)
+            Store.account = @account
+
+            Store.settings[:account][:data] = @account
+
+            Cache.fetch(@account.avatar_uri, true)
           else
-            Store.settings[:account][:refresh_token] = nil
+            Store.settings[:account] = {}
           end
 
           Store.settings.save_settings
@@ -86,10 +87,12 @@ class W3DHub
         end
       end
 
-      def service_status(internet)
-        @service_status = Api.service_status(internet)
+      def service_status
+        @service_status = Api.service_status
 
         if @service_status
+          Store.service_status = @service_status
+
           if !@service_status.authentication? || !@service_status.package_download?
             @status_label.value = "Authentication is #{@service_status.authentication? ? 'Okay' : 'Down'}. Package Download is #{@service_status.package_download? ? 'Okay' : 'Down'}."
           end
@@ -100,22 +103,26 @@ class W3DHub
         end
       end
 
-      def applications(internet)
+      def applications
         @status_label.value = I18n.t(:"boot.checking_for_updates")
 
-        @applications = Api.applications(internet)
+        @applications = Api.applications
 
         if @applications
+          Store.applications = @applications
+
           @tasks[:applications][:complete] = true
         else
           # FIXME: Failed to retreive!
         end
       end
 
-      def server_list(internet)
+      def server_list
         @status_label.value = I18n.t(:"server_browser.fetching_server_list")
 
         begin
+          internet = Async::HTTP::Internet.instance
+
           list = Api.server_list(internet, 2)
 
           if list

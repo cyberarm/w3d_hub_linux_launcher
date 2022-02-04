@@ -37,18 +37,20 @@ class W3DHub
                   # Do network stuff
 
                   Async do
-                    internet = Async::HTTP::Internet.instance
-
-                    account = Api.user_login(internet, @username.value, @password.value)
+                    account = Api.user_login(@username.value, @password.value)
 
                     if account
                       Store.account = account
-                      Store.settings[:account][:refresh_token] = account.refresh_token
+                      Store.settings[:account][:data] = account
                       Store.settings.save_settings
 
-                      Cache.fetch(internet, account.avatar_uri, true)
+                      internet = Async::HTTP::Internet.instance
+                      Cache.fetch(account.avatar_uri, true)
 
                       populate_account_info
+                      applications = Api.applications
+                      Store.applications = applications if applications
+
                       page(W3DHub::Pages::Games)
                     else
                       # An error occurred, enable account entry
@@ -70,8 +72,7 @@ class W3DHub
 
         if Store.account
           Async do
-            internet = Async::HTTP::Internet.instance
-            Cache.fetch(internet, Store.account.avatar_uri)
+            Cache.fetch(Store.account.avatar_uri)
 
             populate_account_info
             page(W3DHub::Pages::Games)
@@ -98,9 +99,12 @@ class W3DHub
       end
 
       def depopulate_account_info
-        Store.settings[:account][:refresh_token] = nil
+        Store.settings[:account] = {}
         Store.settings.save_settings
         Store.account = nil
+
+        applications = Api.applications
+        Store.applications if applications
 
         @host.instance_variable_get(:"@account_container").clear do
           stack(width: 0.7, height: 1.0) do

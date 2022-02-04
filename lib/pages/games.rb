@@ -4,7 +4,9 @@ class W3DHub
       def setup
         @game_news ||= {}
         @focused_game ||= Store.applications.games.find { |g| g.id == Store.settings[:last_selected_app] }
+        @focused_game ||= Store.applications.games.find { |g| g.id == "ren" }
         @focused_channel ||= @focused_game.channels.find { |c| c.id == Store.settings[:last_selected_channel] }
+        @focused_channel ||= @focused_game.channels.first
 
         body.clear do
           # Games List
@@ -38,7 +40,9 @@ class W3DHub
                   image "#{GAME_ROOT_PATH}/media/ui_icons/return.png", width: 1.0, color: Gosu::Color::GRAY if Store.application_manager.updateable?(game.id, game.channels.first.id)
                   image "#{GAME_ROOT_PATH}/media/ui_icons/import.png", width: 0.5, color: 0x88_ffffff unless Store.application_manager.installed?(game.id, game.channels.first.id)
                 end
-                image "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png", height: 48, color: Store.application_manager.installed?(game.id, game.channels.first.id) ? 0xff_ffffff : 0x88_ffffff
+                image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{game.id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png" : "#{GAME_ROOT_PATH}/media/icons/app.png"
+
+                image image_path, height: 48, color: Store.application_manager.installed?(game.id, game.channels.first.id) ? 0xff_ffffff : 0x88_ffffff
               end
               inscription game.name, width: 1.0, text_align: :center
             end
@@ -168,20 +172,18 @@ class W3DHub
           end
 
           Async do
-            internet = Async::HTTP::Internet.instance
-
-            fetch_game_news(internet, game)
+            fetch_game_news(game)
             populate_game_news(game)
           end
         end
       end
 
-      def fetch_game_news(internet, game)
-        news = Api.news(internet, game.id)
+      def fetch_game_news(game)
+        news = Api.news(game.id)
 
         if news
           news.items[0..9].each do |item|
-            Cache.fetch(internet, item.image)
+            Cache.fetch(item.image)
           end
 
           @game_news[game.id] = news

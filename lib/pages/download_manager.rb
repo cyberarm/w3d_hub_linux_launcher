@@ -28,7 +28,8 @@ class W3DHub
               background task.application.color
 
               flow(width: 0.70, height: 1.0) do
-                @application_image = image "#{GAME_ROOT_PATH}/media/icons/#{task.app_id}.png", height: 1.0
+                image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{task.app_id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{task.app_id}.png" : "#{GAME_ROOT_PATH}/media/icons/app.png"
+                @application_image = image image_path, height: 1.0
 
                 stack(margin_left: 8, width: 0.75) do
                   @application_name_label = tagline "#{task.application.name}"

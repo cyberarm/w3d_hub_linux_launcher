@@ -2,3 +2,4 @@
 data/cache/*
 !data/cache/.gitkeep
 _*.*
+*.log

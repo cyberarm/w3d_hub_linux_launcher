@@ -26,9 +26,11 @@ class W3DHub
                 @filters.each do |app_id, enabled|
                   app = Store.applications.games.find { |a| a.id == app_id.to_s }
 
-                  image "#{GAME_ROOT_PATH}/media/icons/#{app_id}.png", tip: "#{app.name}", height: 1.0,
+                  image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{app_id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{app_id}.png" : "#{GAME_ROOT_PATH}/media/icons/app.png"
+
+                  image image_path, tip: "#{app.name}", height: 1.0,
                         border_thickness_bottom: 1, border_color_bottom: 0x00_000000,
-                        color: enabled ? 0xff_ffffff : 0xff_444444, hover: { border_color_bottom: 0xff_aaaaaa }, margin_right: 32 do |img|
+                        color: enabled ? 0xff_ffffff : 0xff_444444, hover: { border_color_bottom: 0xff_aaaaaa }, margin_right: 16 do |img|
                     @filters[app_id] = !@filters[app_id]
                     Store.settings[:server_list_filters] = @filters
                     Store.settings.save_settings
@@ -359,9 +361,11 @@ class W3DHub
       end
 
       def game_icon(server)
+        image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{server.game.nil? ? 'ren' : server.game}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{server.game.nil? ? 'ren' : server.game}.png" : "#{GAME_ROOT_PATH}/media/icons/app.png"
+
         if server.status.password
           @server_locked_icons[server.game] ||= Gosu.render(96, 96) do
-            i = get_image("#{GAME_ROOT_PATH}/media/icons/#{server.game.nil? ? 'ren' : server.game}.png")
+            i = get_image(image_path)
             lock = get_image("#{GAME_ROOT_PATH}/media/ui_icons/locked.png")
             scale = [96.0 / i.width, 96.0 / i.height].min
 
@@ -369,7 +373,7 @@ class W3DHub
             lock.draw(96 - lock.width * 0.5, 96 - lock.height * 0.5, 0, 0.5, 0.5, 0xff_ff8800)
           end
         else
-          "#{GAME_ROOT_PATH}/media/icons/#{server.game.nil? ? 'ren' : server.game}.png"
+          image_path
         end
       end
 

@@ -7,12 +7,14 @@ class W3DHub
     end
 
     # Fetch a generic uri
-    def self.fetch(internet, uri, force_fetch = false)
+    def self.fetch(uri, force_fetch = false)
       path = path(uri)
 
       if !force_fetch && File.exist?(path)
         path
       else
+        internet = Async::HTTP::Internet.instance
+
         response = internet.get(uri, W3DHub::Api::DEFAULT_HEADERS)
 
         if response.success?
@@ -46,9 +48,10 @@ class W3DHub
     end
 
     # Download a W3D Hub package
-    def self.fetch_package(internet, package, block)
+    def self.fetch_package(package, block)
       path = package_path(package.category, package.subcategory, package.name, package.version)
       headers = { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": Api::USER_AGENT }
+      headers["Authorization"] = "Bearer #{Store.account.access_token}" if Store.account
       start_from_bytes = package.custom_partially_valid_at_bytes
 
       puts "    Start from bytes: #{start_from_bytes} of #{package.size}"

@@ -325,8 +325,7 @@ class W3DHub
           }
         end
 
-        internet = Async::HTTP::Internet.instance
-        package_details = Api.package_details(internet, hashes)
+        package_details = Api.package_details(hashes)
 
         if package_details
           @packages = [package_details].flatten
@@ -515,10 +514,9 @@ class W3DHub
 
       def fetch_manifest(category, subcategory, name, version, &block)
         # Check for and integrity of local manifest
-        internet = Async::HTTP::Internet.instance
 
         package = nil
-        array = Api.package_details(internet, [{ category: category, subcategory: subcategory, name: name, version: version }])
+        array = Api.package_details([{ category: category, subcategory: subcategory, name: name, version: version }])
         if array.is_a?(Array)
           package = array.first
         else
@@ -543,7 +541,7 @@ class W3DHub
 
         internet = Async::HTTP::Internet.instance
 
-        Api.package(internet, package) do |chunk, remaining_bytes, total_bytes|
+        Api.package(package) do |chunk, remaining_bytes, total_bytes|
           block&.call(chunk, remaining_bytes, total_bytes)
         end
       end

@@ -63,18 +63,18 @@ class W3DHub
           Async do
             internet = Async::HTTP::Internet.instance
 
-            fetch_w3dhub_news(internet)
+            fetch_w3dhub_news
             populate_w3dhub_news
           end
         end
       end
 
-      def fetch_w3dhub_news(internet)
-        news = Api.news(internet, "launcher-home")
+      def fetch_w3dhub_news
+        news = Api.news("launcher-home")
 
         if news
           news.items[0..9].each do |item|
-            Cache.fetch(internet, item.image)
+            Cache.fetch(item.image)
           end
 
           @w3dhub_news = news

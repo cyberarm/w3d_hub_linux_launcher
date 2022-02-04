@@ -13,6 +13,20 @@ class W3DHub
 
     ENDPOINT = "https://secure.w3dhub.com".freeze
 
+    def self.post(url, headers = DEFAULT_HEADERS, body = nil)
+      @client ||= Async::HTTP::Client.new(Async::HTTP::Endpoint.parse(ENDPOINT, protocol: Async::HTTP::Protocol::HTTP10))
+
+      # TODO: Check if session has expired and attempt to refresh session before submitting request
+
+      # Inject Authorization header if account data is populated
+      if Store.account
+        headers = headers.dup
+        headers << ["Authorization", "Bearer #{Store.account.access_token}"]
+      end
+
+      @client.post(url, headers, body)
+    end
+
     # Method: POST
     # FORMAT: JSON
 
@@ -28,9 +42,9 @@ class W3DHub
     #
     # On a failed login the service responds with:
     # {"error":"login-failed"}
-    def self.refresh_user_login(internet, refresh_token)
+    def self.refresh_user_login(refresh_token)
       body = "data=#{JSON.dump({refreshToken: refresh_token})}"
-      response = internet.post("#{ENDPOINT}/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body)
+      response = post("#{ENDPOINT}/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body)
 
       if response.success?#status == 200
         user_data = JSON.parse(response.read, symbolize_names: true)
@@ -38,7 +52,7 @@ class W3DHub
         return false if user_data[:error]
 
         body = "data=#{JSON.dump({ id: user_data[:userid] })}"
-        user_details = internet.post("#{ENDPOINT}/apis/w3dhub/1/get-user-details", FORM_ENCODED_HEADERS, body)
+        user_details = post("#{ENDPOINT}/apis/w3dhub/1/get-user-details", FORM_ENCODED_HEADERS, body)
 
         if user_details.success?
           user_details_data = JSON.parse(user_details.read, symbolize_names: true)
@@ -51,9 +65,9 @@ class W3DHub
     end
 
     # See #user_refresh_token
-    def self.user_login(internet, username, password)
+    def self.user_login(username, password)
       body = "data=#{JSON.dump({username: username, password: password})}"
-      response = internet.post("#{ENDPOINT}/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body)
+      response = post("#{ENDPOINT}/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body)
 
       if response.success?
         user_data = JSON.parse(response.read, symbolize_names: true)
@@ -61,7 +75,7 @@ class W3DHub
         return false if user_data[:error]
 
         body = "data=#{JSON.dump({ id: user_data[:userid] })}"
-        user_details = internet.post("#{ENDPOINT}/apis/w3dhub/1/get-user-details", FORM_ENCODED_HEADERS, body)
+        user_details = post("#{ENDPOINT}/apis/w3dhub/1/get-user-details", FORM_ENCODED_HEADERS, body)
 
         if user_details.success?
           user_details_data = JSON.parse(user_details.read, symbolize_names: true)
@@ -77,14 +91,14 @@ class W3DHub
     # Client sends an Authorization header bearer token which is received from logging in (Required?)
     #
     # Response: avatar-uri (Image download uri), id, username
-    def self.user_details(internetn, id)
+    def self.user_details(id)
     end
 
     # /apis/w3dhub/1/get-service-status
     # Service response:
     # {"services":{"authentication":true,"packageDownload":true}}
-    def self.service_status(internet)
-      response = internet.post("#{ENDPOINT}/apis/w3dhub/1/get-service-status", DEFAULT_HEADERS)
+    def self.service_status
+      response = post("#{ENDPOINT}/apis/w3dhub/1/get-service-status", DEFAULT_HEADERS)
 
       if response.success?
         ServiceStatus.new(response.read)
@@ -97,8 +111,8 @@ class W3DHub
     # Client sends an Authorization header bearer token which is received from logging in (Optional)
     # Launcher sends an empty data request: data={}
     # Response is a list of applications/games
-    def self.applications(internet)
-      response = internet.post("#{ENDPOINT}/apis/launcher/1/get-applications", DEFAULT_HEADERS)
+    def self.applications
+      response = post("#{ENDPOINT}/apis/launcher/1/get-applications")
 
       if response.success?
         Applications.new(response.read)
@@ -111,11 +125,11 @@ class W3DHub
     # Client sends an Authorization header bearer token which is received from logging in (Optional)
     # Client requests news for a specific application/game e.g.: data={"category":"ia"} ("launcher-home" retrieves the weekly hub updates)
     # Response is a JSON hash with a "highlighted" and "news" keys; the "news" one seems to be the desired one
-    def self.news(internet, category)
+    def self.news(category)
       body = "data=#{JSON.dump({category: category})}"
-      response = internet.post("#{ENDPOINT}/apis/w3dhub/1/get-news", FORM_ENCODED_HEADERS, body)
+      response = post("#{ENDPOINT}/apis/w3dhub/1/get-news", FORM_ENCODED_HEADERS, body)
 
-      if response.success?#status == 200
+      if response.success?
         News.new(response.read)
       else
         false
@@ -126,11 +140,9 @@ class W3DHub
 
     # /apis/launcher/1/get-package-details
     # client requests package details: data={"packages":[{"category":"games","name":"apb.ico","subcategory":"apb","version":""}]}
-    def self.package_details(internet, packages)
+    def self.package_details(packages)
       body = URI.encode_www_form("data": JSON.dump({ packages: packages }))
-      endpoint = Async::HTTP::Endpoint.parse("#{ENDPOINT}/apis/launcher/1/get-package-details", protocol: Async::HTTP::Protocol::HTTP10)
-      client = Async::HTTP::Client.new(endpoint)
-      response = client.post("#{ENDPOINT}/apis/launcher/1/get-package-details", FORM_ENCODED_HEADERS, body)
+      response = post("#{ENDPOINT}/apis/launcher/1/get-package-details", FORM_ENCODED_HEADERS, body)
 
       if response.success?
         hash = JSON.parse(response.read, symbolize_names: true)
@@ -144,8 +156,8 @@ class W3DHub
     # client requests package: data={"category":"games","name":"ECW_Asteroids.zip","subcategory":"ecw","version":"1.0.0.0"}
     #
     # server responds with download bytes, probably supports chunked download and resume
-    def self.package(internet, package, &block)
-      Cache.fetch_package(internet, package, block)
+    def self.package(package, &block)
+      Cache.fetch_package(package, block)
     end
 
     #! === Server List API === !#
