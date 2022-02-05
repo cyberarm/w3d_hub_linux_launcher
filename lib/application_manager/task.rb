@@ -115,10 +115,13 @@ class W3DHub
 
       # Quick checks before network and computational work starts
       def fail_fast
+        # Have enough disk space
+
         # tar present?
         bsdtar_present = system("#{W3DHub.tar_command} --help")
         fail!("FAIL FAST: `#{W3DHub.tar_command} --help` command failed, #{W3DHub.tar_command} is not installed. Will be unable to unpack packages.") unless bsdtar_present
 
+        # Wine present?
         if W3DHub.unix?
           wine_present = system("which #{Store.settings[:wine_command]}")
           fail!("FAIL FAST: `which #{Store.settings[:wine_command]}` command failed, wine is not installed. Will be unable to create prefixes or launch games.") unless wine_present

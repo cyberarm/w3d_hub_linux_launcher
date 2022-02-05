@@ -40,7 +40,7 @@ class W3DHub
                   image "#{GAME_ROOT_PATH}/media/ui_icons/return.png", width: 1.0, color: Gosu::Color::GRAY if Store.application_manager.updateable?(game.id, game.channels.first.id)
                   image "#{GAME_ROOT_PATH}/media/ui_icons/import.png", width: 0.5, color: 0x88_ffffff unless Store.application_manager.installed?(game.id, game.channels.first.id)
                 end
-                image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{game.id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png" : "#{GAME_ROOT_PATH}/media/icons/app.png"
+                image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{game.id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png" : "#{GAME_ROOT_PATH}/media/ui_icons/question.png"
 
                 image image_path, height: 48, color: Store.application_manager.installed?(game.id, game.channels.first.id) ? 0xff_ffffff : 0x88_ffffff
               end

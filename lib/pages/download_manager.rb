@@ -28,7 +28,7 @@ class W3DHub
               background task.application.color
 
               flow(width: 0.70, height: 1.0) do
-                image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{task.app_id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{task.app_id}.png" : "#{GAME_ROOT_PATH}/media/icons/app.png"
+                image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{task.app_id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{task.app_id}.png" : "#{GAME_ROOT_PATH}/media/ui_icons/question.png"
                 @application_image = image image_path, height: 1.0
 
                 stack(margin_left: 8, width: 0.75) do

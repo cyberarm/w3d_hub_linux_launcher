@@ -52,8 +52,15 @@ class W3DHub
       # open wwconfig.exe or config.exe for ecw
 
       if (app_data = installed?(app_id, channel))
-        config_exe = app_id == "ecw" ? "config.exe" : "wwconfig.exe"
-        exe = "#{app_data[:install_directory]}/#{config_exe}"
+        exe = if File.exist?("#{app_data[:install_directory]}/wwconfig.exe")
+                "#{app_data[:install_directory]}/wwconfig.exe"
+
+              elsif File.exist?("#{app_data[:install_directory]}/WWConfig.exe")
+                "#{app_data[:install_directory]}/WWConfig.exe"
+
+              elsif File.exist?("#{app_data[:install_directory]}/config.exe")
+                "#{app_data[:install_directory]}/config.exe"
+              end
 
         if File.exist?(exe)
           pid = Process.spawn("#{wine_command(app_id, channel)}\"#{exe}\"")

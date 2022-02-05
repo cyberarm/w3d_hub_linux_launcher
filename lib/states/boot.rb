@@ -63,7 +63,8 @@ class W3DHub
         if Store.settings[:account, :data]
           account = Api::Account.new(Store.settings[:account, :data], {})
 
-          if (Time.now.to_i - account.access_token_expiry.to_i) >= 60 * 3 # Older than 3 hours then refresh
+          if (account.access_token_expiry - Time.now) / 60 <= 60 * 3 # Refresh if token expires within 3 hours
+            puts "Refreshing user login..."
             @account = Api.refresh_user_login(account.refresh_token)
           else
             @account = account

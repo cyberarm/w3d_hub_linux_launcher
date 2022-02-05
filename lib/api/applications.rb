@@ -9,7 +9,7 @@ class W3DHub
         @games = []
 
         games.each { |hash| @games << Game.new(hash) }
-        @games.sort_by! { |a| a.slot }.reverse
+        @games.sort_by! { |a| a.name }.reverse
       end
 
       def games
@@ -17,12 +17,10 @@ class W3DHub
       end
 
       class Game
-        attr_reader :slot, :id, :name, :type, :category, :studio_id, :channels, :web_links, :color
+        attr_reader :id, :name, :type, :category, :studio_id, :channels, :web_links, :color
 
         def initialize(hash)
           @data = hash
-
-          @slot = slot_index(@data[:id])
 
           @id = @data[:id]
           @name = @data[:name]
@@ -38,23 +36,6 @@ class W3DHub
           color = @data[:"extended-data"].find { |h| h[:name] == "colour" }[:value].sub("#", "")
 
           @color = "ff#{color}".to_i(16)
-        end
-
-        private def slot_index(app_id)
-          case app_id
-          when "ren"
-            1
-          when "ecw"
-            2
-          when "ia"
-            3
-          when "apb"
-            4
-          when "tsr"
-            5
-          else
-            -10
-          end
         end
 
         class Channel
