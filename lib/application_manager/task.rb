@@ -662,6 +662,9 @@ class W3DHub
       def repair_windows_case_insensitive(package, path)
         return true if @app_id == "apb"
 
+        # Windows is just confused
+        return true if W3DHub.windows?
+
         # Force data/ to Data/
         return true unless File.exist?("#{path}/data") && File.directory?("#{path}/data")
 
