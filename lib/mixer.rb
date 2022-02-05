@@ -177,7 +177,7 @@ class W3DHub
         @file.pos = @last_chunk * @buffer_size
         @file.write(string)
 
-        @buffer.string = ""
+        @buffer.string = "".force_encoding(@encoding)
       end
 
       def string
