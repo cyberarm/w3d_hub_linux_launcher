@@ -2,6 +2,8 @@ require "stringio"
 
 class W3DHub
   class ICO
+    PNG_IDENT = "\211PNG\r\n\032\n".force_encoding("ASCII-8BIT").freeze
+
     IconDirectory = Struct.new(:reserved, :type, :image_count)
 
     IconDirectoryEntity = Struct.new(
@@ -50,6 +52,9 @@ class W3DHub
           read_u32,
           read_u32
         )
+
+        @images.last.width  = 256 if @images.last.width == 0
+        @images.last.height = 256 if @images.last.height == 0
       end
     end
 
@@ -65,26 +70,56 @@ class W3DHub
       @file.read(4).unpack1("V")
     end
 
-    def to_rgba32_blob(image)
-      @file.pos = image.image_offset
-      buf = @file.read(image.image_size)
-
-      File.write("TEMP.bmp", buf)
-    end
-
     def select_pngs
       @images.select do |image|
-        @file.pos = image.image_offset
-        buf = @file.read(8).unpack1("a*")
-        buf == "\211PNG\r\n\032\n".force_encoding("ASCII-8BIT")
+        image_png?(image)
       end
     end
 
+    def image_png?(image)
+      @file.pos = image.image_offset
+      buf = @file.read(8).unpack1("a*")
+
+      buf == PNG_IDENT
+    end
+
     def select_bmps
+      @images.select do |image|
+        image_bmp?(image)
+      end
+    end
+
+    def image_bmp?(image)
+      !image_png?(image)
+    end
+
+    def to_rgba32_blob(image)
+      @file.pos = image.image_offset
+      buf = StringIO.new(@file.read(image.image_size))
+
+      raise NotImplementedError "Cannot parse png based icons!" unless image_bmp?(image)
+
+      raise NotImplementedError "Cannot parse #{image.bit_depth}" unless image.bit_depth == 32
+
+      blob = "".force_encoding("ASCII-8BIT")
+
+      image.height.times do |y|
+        image.width.times do |x|
+          buf.pos = ((image.height - y) * image.width + x) * 4
+
+          blue  = buf.read(1)
+          green = buf.read(1)
+          red   = buf.read(1)
+          alpha = buf.read(1)
+
+          blob << red
+          blob << green
+          blob << blue
+          blob << alpha
+        end
+      end
+
+      Gosu::Image.from_blob(image.width, image.height, blob)
     end
   end
 end
-
-data = W3DHub::ICO.new(file: "/home/cyberarm/Downloads/icos/ar.ico")
-pp data.select_pngs.size, data.images.size
-# data.to_rgba32_blob(data.images.first)
