@@ -134,7 +134,7 @@ class W3DHub
       if image_bmp?(image)
         to_rgba32_blob(image).save(filename)
       else
-        File.write(filename, image_data(image))
+        File.open(filename, "wb") { |f| f.write(image_data(image)) }
       end
     end
   end
