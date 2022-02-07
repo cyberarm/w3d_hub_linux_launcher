@@ -148,6 +148,7 @@ class W3DHub
         hash = JSON.parse(response.read, symbolize_names: true)
         hash[:packages].map { |pkg| Package.new(pkg) }
       else
+        pp response
         false
       end
     end

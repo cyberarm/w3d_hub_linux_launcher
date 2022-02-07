@@ -247,7 +247,7 @@ class W3DHub
 
     def imported!(task, exe_path)
       application_data = {
-        install_directory: File.basename(exe_path),
+        install_directory: File.dirname(exe_path),
         installed_version: task.channel.current_version,
         install_path: exe_path,
         wine_prefix: task.wine_prefix

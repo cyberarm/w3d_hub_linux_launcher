@@ -14,6 +14,7 @@ class W3DHub
           refresh_user_token: { started: false, complete: false },
           service_status: { started: false, complete: false },
           applications: { started: false, complete: false },
+          app_icons: { started: false, complete: false },
           server_list: { started: false, complete: false }
         }
 
@@ -116,6 +117,41 @@ class W3DHub
         else
           # FIXME: Failed to retreive!
         end
+      end
+
+      def app_icons
+        return unless Store.applications
+
+        packages = []
+        Store.applications.games.each do |app|
+          packages << { category: app.category, subcategory: app.id, name: "#{app.id}.ico", version: "" }
+        end
+
+        if (package_details = Api.package_details(packages))
+          package_details.each do |package|
+            path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
+            generated_icon_path = "#{GAME_ROOT_PATH}/media/icons/#{package.subcategory}.png"
+
+            regenerate = false
+
+            if File.exist?(path)
+              regenerate = Digest::SHA256.new.hexdigest(File.binread(path)).upcase != package.checksum.upcase
+              regenerate ||= !File.exist?(generated_icon_path)
+            else
+              Cache.fetch_package(package, proc {})
+              regenerate = true
+            end
+
+            if regenerate
+              ico = ICO.new(file: path)
+              image = ico.images.sort_by(&:width).last
+
+              ico.save(image, generated_icon_path)
+            end
+          end
+        end
+
+        @tasks[:app_icons][:complete] = true
       end
 
       def server_list

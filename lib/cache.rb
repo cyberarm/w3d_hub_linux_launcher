@@ -36,7 +36,11 @@ class W3DHub
     def self.package_path(category, subcategory, name, version)
       package_cache_dir = Store.settings[:package_cache_dir]
 
-      "#{package_cache_dir}/#{category}/#{subcategory}/#{version}/#{name}.package"
+      if version.to_s.length.zero?
+        "#{package_cache_dir}/#{category}/#{subcategory}/#{name}.package"
+      else
+        "#{package_cache_dir}/#{category}/#{subcategory}/#{version}/#{name}.package"
+      end
     end
 
     def self.install_path(application, channel)

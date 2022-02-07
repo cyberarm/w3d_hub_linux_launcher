@@ -85,7 +85,7 @@ class W3DHub
 
     def select_bmps
       @images.select do |image|
-        image_bmp?(image)
+        image_bmp?(image) && image.palette_size == 0 && image.bit_depth == 32
       end
     end
 
@@ -103,9 +103,12 @@ class W3DHub
 
       blob = "".force_encoding("ASCII-8BIT")
 
+      width  = image.width
+      height = image.height - 1
+
       image.height.times do |y|
         image.width.times do |x|
-          buf.pos = ((image.height - y) * image.width + x) * 4
+          buf.pos = ((height - y) * width + x + 10) * 4
 
           blue  = buf.read(1)
           green = buf.read(1)
@@ -120,6 +123,19 @@ class W3DHub
       end
 
       Gosu::Image.from_blob(image.width, image.height, blob)
+    end
+
+    def image_data(image)
+      @file.pos = image.image_offset
+      StringIO.new(@file.read(image.image_size)).string
+    end
+
+    def save(image, filename)
+      if image_bmp?(image)
+        to_rgba32_blob(image).save(filename)
+      else
+        File.write(filename, image_data(image))
+      end
     end
   end
 end
