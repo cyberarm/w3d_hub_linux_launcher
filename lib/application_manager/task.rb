@@ -542,8 +542,6 @@ class W3DHub
       def package_fetch(package, &block)
         puts "Downloading: #{package.category}:#{package.subcategory}:#{package.name}-#{package.version}"
 
-        internet = Async::HTTP::Internet.instance
-
         Api.package(package) do |chunk, remaining_bytes, total_bytes|
           block&.call(chunk, remaining_bytes, total_bytes)
         end

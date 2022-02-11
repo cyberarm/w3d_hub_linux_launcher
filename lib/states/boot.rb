@@ -134,9 +134,10 @@ class W3DHub
 
             regenerate = false
 
-            if File.exist?(path)
-              regenerate = Digest::SHA256.new.hexdigest(File.binread(path)).upcase != package.checksum.upcase
-              regenerate ||= !File.exist?(generated_icon_path)
+            broken_or_out_dated_icon = Digest::SHA256.new.hexdigest(File.binread(path)).upcase != package.checksum.upcase if File.exist?(path)
+
+            if File.exist?(path) && !broken_or_out_dated_icon
+              regenerate = !File.exist?(generated_icon_path)
             else
               Cache.fetch_package(package, proc {})
               regenerate = true

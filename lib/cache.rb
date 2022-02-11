@@ -52,6 +52,44 @@ class W3DHub
     end
 
     # Download a W3D Hub package
+    # TODO: More work needed to make this work reliably
+    def self._async_fetch_package(package, block)
+      path = package_path(package.category, package.subcategory, package.name, package.version)
+      headers = Api::FORM_ENCODED_HEADERS
+      start_from_bytes = package.custom_partially_valid_at_bytes
+
+      puts "    Start from bytes: #{start_from_bytes} of #{package.size}"
+
+      create_directories(path)
+
+      file = File.open(path, start_from_bytes.positive? ? "r+b" : "wb")
+
+      if start_from_bytes.positive?
+        headers = Api::FORM_ENCODED_HEADERS + [["Range", "bytes=#{start_from_bytes}-"]]
+        file.pos = start_from_bytes
+      end
+
+      body = "data=#{JSON.dump({ category: package.category, subcategory: package.subcategory, name: package.name, version: package.version })}"
+
+      response = Api.post("#{Api::ENDPOINT}/apis/launcher/1/get-package", headers, body)
+
+      total_bytes = package.size
+      remaining_bytes = total_bytes - start_from_bytes
+
+      response.each do |chunk|
+        file.write(chunk)
+
+        remaining_bytes -= chunk.size
+
+        block.call(chunk, remaining_bytes, total_bytes)
+      end
+
+      response.success?
+    ensure
+      file&.close
+    end
+
+    # Download a W3D Hub package
     def self.fetch_package(package, block)
       path = package_path(package.category, package.subcategory, package.name, package.version)
       headers = { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": Api::USER_AGENT }
@@ -73,7 +111,6 @@ class W3DHub
         file.write(chunk)
 
         block.call(chunk, remaining_bytes, total_bytes)
-        # puts "    Remaining: #{((remaining_bytes.to_f / total_bytes) * 100.0).round}% (#{W3DHub::format_size(total_bytes - remaining_bytes)} / #{W3DHub::format_size(total_bytes)})"
       end
 
       # Create a new connection due to some weirdness somewhere in Excon
