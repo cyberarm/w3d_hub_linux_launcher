@@ -33,9 +33,11 @@ class W3DHub
         @status.value = "Purging installation folder..."
         @status.progress = Float::INFINITY
 
+        @status.step = :uninstalling_application
+
         path = Cache.install_path(@application, @channel)
 
-        puts path
+        log path
         # TODO: Do some sanity checking, i.e. DO NOT start launcher if `whoami` returns root, path makes sense,
         #       we're not on Windows trying to uninstall a game likely installed by the official launcher
         FileUtils.remove_dir(path)
@@ -51,7 +53,7 @@ class W3DHub
 
         @status.step = :mark_application_uninstalled
 
-        puts "#{@app_id} has been uninstalled."
+        log "#{@app_id} has been uninstalled."
       end
     end
   end

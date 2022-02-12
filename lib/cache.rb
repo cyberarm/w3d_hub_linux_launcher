@@ -112,7 +112,7 @@ class W3DHub
         tcp_nodelay: true,
         headers: headers,
         body: "data=#{JSON.dump({ category: package.category, subcategory: package.subcategory, name: package.name, version: package.version })}",
-        chunk_size: 4_000_000,
+        chunk_size: 50_000,
         response_block: streamer
       )
 

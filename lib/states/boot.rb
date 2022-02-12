@@ -34,7 +34,7 @@ class W3DHub
       end
 
       def draw
-        Gosu.draw_circle(window.width / 2, window.height / 2, @w3dhub_logo.width * Gosu.milliseconds / 1000.0 % 500, 128, 0x44_000000, 32)
+        Gosu.draw_circle(window.width / 2, window.height / 2, @w3dhub_logo.width * (0.6 + Math.cos(Gosu.milliseconds / 1000.0 * Math::PI).abs * 0.05), 128, 0x44_000000, 32)
         @w3dhub_logo.draw_rot(window.width / 2, window.height / 2, 32)
 
         super
@@ -43,7 +43,6 @@ class W3DHub
       def update
         super
 
-        # @fraction += 1.0 * window.dt
         @fraction = 1.0 / (@tasks.size / @task_index.to_f)
 
         @progressbar.value = @fraction
@@ -61,8 +60,6 @@ class W3DHub
       end
 
       def refresh_user_token
-        p :refresh_user_token
-
         if Store.settings[:account, :data]
           account = Api::Account.new(Store.settings[:account, :data], {})
 
@@ -99,8 +96,6 @@ class W3DHub
       end
 
       def service_status
-        p :service_status
-
         Api.on_fiber(:service_status) do |service_status|
           @service_status = service_status
 
@@ -119,8 +114,6 @@ class W3DHub
       end
 
       def applications
-        p :applications
-
         @status_label.value = I18n.t(:"boot.checking_for_updates")
 
         Api.on_fiber(:applications) do |applications|
@@ -136,8 +129,6 @@ class W3DHub
       end
 
       def app_icons
-        puts :app_icons
-
         return unless Store.applications
 
         packages = []
@@ -146,8 +137,6 @@ class W3DHub
         end
 
         Api.on_fiber(:package_details, packages) do |package_details|
-          puts "Got response?"
-
           package_details&.each do |package|
             path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
             generated_icon_path = "#{GAME_ROOT_PATH}/media/icons/#{package.subcategory}.png"
@@ -176,8 +165,6 @@ class W3DHub
       end
 
       def server_list
-        puts :server_list
-
         @status_label.value = I18n.t(:"server_browser.fetching_server_list")
 
         Api.on_fiber(:server_list, 2) do |list|

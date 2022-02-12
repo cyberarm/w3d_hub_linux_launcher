@@ -27,6 +27,8 @@ I18n.load_path << Dir[File.expand_path("locales") + "/*.yml"]
 I18n.default_locale = :en
 
 class W3DHub
+  W3DHUB_DEBUG = ARGV.join.include?("--debug")
+
   GAME_ROOT_PATH = File.expand_path(".", __dir__)
   CACHE_PATH = "#{GAME_ROOT_PATH}/data/cache"
   SETTINGS_FILE_PATH = "#{GAME_ROOT_PATH}/data/settings.json"

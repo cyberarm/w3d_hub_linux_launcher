@@ -36,29 +36,41 @@ class W3DHub
 
                   # Do network stuff
 
-                  Api.on_fiber(:user_login, @username.value, @password.value) do |account|
-                    if account
-                      Store.account = account
-                      Store.settings[:account][:data] = account
-                      Store.settings.save_settings
+                  BackgroundWorker.foreground_job(
+                    lambda do
+                      account = Api.user_login(@username.value, @password.value)
+                      applications = nil
 
-                      Cache.fetch(account.avatar_uri, true)
+                      if account
+                        Store.account = account
+                        Store.settings[:account][:data] = account
+                        Store.settings.save_settings
 
-                      populate_account_info
-                      applications = Api.applications
-                      Store.applications = applications if applications
+                        Cache.fetch(account.avatar_uri, true) if account
+                        applications = Api.applications if account
+                      end
 
-                      page(W3DHub::Pages::Games)
-                    else
-                      # An error occurred, enable account entry
-                      # NOTE: Too many incorrect entries causes lock out (Unknown duration)
-                      @username.enabled = true
-                      @password.enabled = true
-                      btn.enabled = true
+                      [account, applications]
+                    end,
+                    lambda do |result|
+                      account, applications = result
 
-                      @error_label.value = "Incorrect username or password.\nOr too many failed login attempts, try again in a few minutes."
+                      if account
+                        populate_account_info
+                        Store.applications = applications if applications
+
+                        page(W3DHub::Pages::Games)
+                      else
+                        # An error occurred, enable account entry
+                        # NOTE: Too many incorrect entries causes lock out (Unknown duration)
+                        @username.enabled = true
+                        @password.enabled = true
+                        btn.enabled = true
+
+                        @error_label.value = "Incorrect username or password.\nOr too many failed login attempts, try again in a few minutes."
+                      end
                     end
-                  end
+                  )
                 end
 
                 @error_label = caption "", width: 1.0, text_align: :center, color: 0xff_800000
@@ -101,22 +113,30 @@ class W3DHub
         Store.settings.save_settings
         Store.account = nil
 
-        applications = Api.applications
-        Store.applications if applications
+        BackgroundWorker.foreground_job(
+          -> { Api.applications },
+          lambda do |applications|
+            if applications
+              Store.applications = applications
+              page(W3DHub::Pages::Games) if @host.current_page.is_a?(W3DHub::Pages::Games)
+              page(W3DHub::Pages::ServerBrowser) if @host.current_page.is_a?(W3DHub::Pages::ServerBrowser)
+            end
 
-        @host.instance_variable_get(:"@account_container").clear do
-          stack(width: 0.7, height: 1.0) do
-            # background 0xff_222222
-            tagline "<b>#{I18n.t(:"interface.not_logged_in")}</b>", text_wrap: :none
+            @host.instance_variable_get(:"@account_container").clear do
+              stack(width: 0.7, height: 1.0) do
+                # background 0xff_222222
+                tagline "<b>#{I18n.t(:"interface.not_logged_in")}</b>", text_wrap: :none
 
-            flow(width: 1.0) do
-              link(I18n.t(:"interface.log_in"), text_size: 16, width: 0.5) { page(W3DHub::Pages::Login) }
-              link I18n.t(:"interface.register"), text_size: 16, width: 0.49 do
-                Launchy.open("https://secure.w3dhub.com/forum/index.php?app=core&module=global&section=register")
+                flow(width: 1.0) do
+                  link(I18n.t(:"interface.log_in"), text_size: 16, width: 0.5) { page(W3DHub::Pages::Login) }
+                  link I18n.t(:"interface.register"), text_size: 16, width: 0.49 do
+                    Launchy.open("https://secure.w3dhub.com/forum/index.php?app=core&module=global&section=register")
+                  end
+                end
               end
             end
           end
-        end
+        )
       end
     end
   end

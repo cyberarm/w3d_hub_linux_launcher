@@ -25,6 +25,7 @@ class W3DHub
               flow(width: 0.75, height: 1.0) do
                 @filters.each do |app_id, enabled|
                   app = Store.applications.games.find { |a| a.id == app_id.to_s }
+                  next unless app
 
                   image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{app_id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{app_id}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
 

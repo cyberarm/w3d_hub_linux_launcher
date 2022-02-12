@@ -42,7 +42,11 @@ class W3DHub
       while BackgroundWorker.alive?
         job = @jobs.shift
 
-        job&.do
+        begin
+          job&.do
+        rescue => e
+          pp e
+        end
 
         sleep 0.1
       end

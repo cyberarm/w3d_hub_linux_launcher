@@ -41,6 +41,10 @@ class W3DHub
         @task_state
       end
 
+      def log(string)
+        log string if W3DHUB_DEBUG
+      end
+
       # Start task, inside its own thread
       # FIXME: Ruby 3 has parallelism now: Use a Ractor to do work on a seperate core to
       #        prevent the UI from locking up while doing computation heavy work, i.e building
@@ -201,7 +205,7 @@ class W3DHub
         packages = []
 
         manifests.reverse.each do |manifest|
-          puts "#{manifest.game}-#{manifest.type}: #{manifest.version} (#{manifest.base_version})"
+          log "#{manifest.game}-#{manifest.type}: #{manifest.version} (#{manifest.base_version})"
 
           manifest.files.each do |file|
             @files["#{file.name}:#{manifest.version}"] = file
@@ -250,7 +254,11 @@ class W3DHub
         file_count = manifests.map { |m| m.files.count }.sum
         processed_files = 0
 
+        folder_exists = File.directory?(path)
+
         manifests.each do |manifest|
+          break unless folder_exists
+
           manifest.files.each do |file|
             safe_file_name = file.name.gsub("\\", "/")
             # Fix borked data -> Data 'cause Windows don't care about capitalization
@@ -266,7 +274,7 @@ class W3DHub
 
             unless File.exist?(file_path)
               rejected_files << { file: file, manifest_version: manifest.version }
-              puts "[#{manifest.version}] File missing: #{file_path}"
+              log "[#{manifest.version}] File missing: #{file_path}"
               next
             end
 
@@ -279,21 +287,20 @@ class W3DHub
 
             f.close
 
-            pp file if file.checksum.nil?
+            log file.inspect if file.checksum.nil?
 
             if digest.hexdigest.upcase == file.checksum.upcase
               accepted_files[safe_file_name] = manifest.version
-              # puts "[#{manifest.version}] Verified file: #{file_path}"
+              log "[#{manifest.version}] Verified file: #{file_path}"
             else
               rejected_files << { file: file, manifest_version: manifest.version }
-              puts "[#{manifest.version}] File failed Verification: #{file_path}"
+              log "[#{manifest.version}] File failed Verification: #{file_path}"
             end
           end
         end
 
-        puts "#{rejected_files.count} missing or corrupt files"
+        log "#{rejected_files.count} missing or corrupt files"
 
-        # TODO: Filter packages to only the required ones
         selected_packages = []
         selected_packages_hash = {}
 
@@ -310,10 +317,8 @@ class W3DHub
           end
         end
 
-        # FIXME: Order `selected_packages` like `packages`
-
         # Removed packages that don't need to be fetched or processed
-        packages.delete_if { |package| !selected_packages.find { |pkg| pkg == package } }
+        packages.delete_if { |package| !selected_packages.find { |pkg| pkg == package } } if folder_exists
 
         packages
       end
@@ -421,7 +426,7 @@ class W3DHub
 
       def unpack_packages(packages)
         path = Cache.install_path(@application, @channel)
-        puts "Unpacking packages in '#{path}'..."
+        log "Unpacking packages in '#{path}'..."
         Cache.create_directories(path, true)
 
         @status.operations.clear
@@ -468,7 +473,7 @@ class W3DHub
 
             update_interface_task_status
           else
-            puts "COMMAND FAILED!"
+            log "COMMAND FAILED!"
             fail!("Failed to unpack #{package.name}")
 
             break
@@ -508,7 +513,7 @@ class W3DHub
 
         @status.step = :mark_application_installed
 
-        puts "#{@app_id} has been installed."
+        log "#{@app_id} has been installed."
       end
 
       #############
@@ -540,7 +545,7 @@ class W3DHub
       end
 
       def package_fetch(package, &block)
-        puts "Downloading: #{package.category}:#{package.subcategory}:#{package.name}-#{package.version}"
+        log "Downloading: #{package.category}:#{package.subcategory}:#{package.name}-#{package.version}"
 
         Api.package(package) do |chunk, remaining_bytes, total_bytes|
           block&.call(chunk, remaining_bytes, total_bytes)
@@ -548,7 +553,7 @@ class W3DHub
       end
 
       def verify_package(package, &block)
-        puts "Verifying: #{package.category}:#{package.subcategory}:#{package.name}-#{package.version}"
+        log "Verifying: #{package.category}:#{package.subcategory}:#{package.name}-#{package.version}"
 
         digest = Digest::SHA256.new
         path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
@@ -559,7 +564,7 @@ class W3DHub
           operation&.value = "Verifying..."
 
         file_size = File.size(path)
-        puts "    File size: #{file_size}"
+        log "    File size: #{file_size}"
         chunk_size = package.checksum_chunk_size
         chunks = package.checksum_chunks.size
 
@@ -584,11 +589,11 @@ class W3DHub
 
             if Digest::SHA256.new.hexdigest(chunk).upcase == checksum.upcase
               valid_at = chunk_start + read_length
-              # puts "    Passed chunk: #{chunk_start}"
+              # log "    Passed chunk: #{chunk_start}"
               # package.partially_valid_at_bytes = valid_at
               package.partially_valid_at_bytes = chunk_start
             else
-              puts "    FAILED chunk: #{chunk_start}"
+              log "    FAILED chunk: #{chunk_start}"
               break
             end
           end
@@ -602,25 +607,25 @@ class W3DHub
       end
 
       def unpack_package(package, path)
-        puts "    #{package.name}:#{package.version}"
+        log "    #{package.name}:#{package.version}"
         package_path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
 
-        puts "      Running #{W3DHub.tar_command} command: #{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{path}\""
+        log "      Running #{W3DHub.tar_command} command: #{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{path}\""
         return system("#{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{path}\"")
       end
 
       def apply_patch(package, path)
-        puts "    #{package.name}:#{package.version}"
+        log "    #{package.name}:#{package.version}"
         package_path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
         temp_path = "#{Store.settings[:package_cache_dir]}/temp"
         manifest_file = package.custom_is_patch
 
         Cache.create_directories(temp_path, true)
 
-        puts "      Running #{W3DHub.tar_command} command: #{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{temp_path}\""
+        log "      Running #{W3DHub.tar_command} command: #{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{temp_path}\""
         system("#{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{temp_path}\"")
 
-        puts "      Loading #{temp_path}/#{manifest_file.name}.patch..."
+        log "      Loading #{temp_path}/#{manifest_file.name}.patch..."
         patch_mix = W3DHub::Mixer::Reader.new(file_path: "#{temp_path}/#{manifest_file.name}.patch", ignore_crc_mismatches: false)
         patch_info = JSON.parse(patch_mix.package.files.find { |f| f.name == ".w3dhub.patch" || f.name == ".bhppatch" }.data, symbolize_names: true)
 
@@ -628,15 +633,15 @@ class W3DHub
         # Fix borked data -> Data 'cause Windows don't care about capitalization
         repaired_path = "#{path}/#{manifest_file.name.sub('data', 'Data')}" unless File.exist?(repaired_path) && path
 
-        puts "      Loading #{repaired_path}..."
+        log "      Loading #{repaired_path}..."
         target_mix = W3DHub::Mixer::Reader.new(file_path: repaired_path, ignore_crc_mismatches: false)
 
-        puts "      Removing files..." if patch_info[:removedFiles].size.positive?
+        log "      Removing files..." if patch_info[:removedFiles].size.positive?
         patch_info[:removedFiles].each do |file|
           target_mix.package.files.delete_if { |f| f.name == file }
         end
 
-        puts "      Adding/Updating files..." if patch_info[:updatedFiles].size.positive?
+        log "      Adding/Updating files..." if patch_info[:updatedFiles].size.positive?
         patch_info[:updatedFiles].each do |file|
           patch = patch_mix.package.files.find { |f| f.name == file }
           target = target_mix.package.files.find { |f| f.name == file }
@@ -649,7 +654,7 @@ class W3DHub
         end
 
 
-        puts "      Writing updated #{repaired_path}..." if patch_info[:updatedFiles].size.positive?
+        log "      Writing updated #{repaired_path}..." if patch_info[:updatedFiles].size.positive?
         W3DHub::Mixer::Writer.new(file_path: repaired_path, package: target_mix.package, memory_buffer: true)
 
         FileUtils.remove_dir(temp_path)
@@ -666,7 +671,7 @@ class W3DHub
         # Force data/ to Data/
         return true unless File.exist?("#{path}/data") && File.directory?("#{path}/data")
 
-        puts "      Moving #{path}/data/ to #{path}/Data/"
+        log "      Moving #{path}/data/ to #{path}/Data/"
 
         FileUtils.mv(Dir.glob("#{path}/data/**"), "#{path}/Data", force: true)
         FileUtils.remove_dir("#{path}/data", force: true)

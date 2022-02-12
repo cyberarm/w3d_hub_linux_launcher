@@ -158,6 +158,10 @@ class W3DHub
         @page.focus
       end
 
+      def current_page
+        @page
+      end
+
       def update_server_browser(server)
         return unless @page.is_a?(Pages::ServerBrowser)
 
