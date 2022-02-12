@@ -13,17 +13,10 @@ class W3DHub
       if !force_fetch && File.exist?(path)
         path
       else
-        internet = Async::HTTP::Internet.instance
-
-        response = internet.get(uri, W3DHub::Api::DEFAULT_HEADERS)
-
-        if response.success?
-          response.save(path, "wb")
-
-          return path
-        end
-
-        false
+        BackgroundWorker.job(
+          -> { Async::HTTP::Internet.instance.get(uri, W3DHub::Api::DEFAULT_HEADERS) },
+          ->(response) { response.save(path, "wb") if response.success? }
+        )
       end
     end
 

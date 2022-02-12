@@ -45,6 +45,7 @@ require_relative "lib/settings"
 require_relative "lib/mixer"
 require_relative "lib/ico"
 require_relative "lib/multicast_server"
+require_relative "lib/background_worker"
 require_relative "lib/application_manager"
 require_relative "lib/application_manager/manifest"
 require_relative "lib/application_manager/status"
@@ -79,8 +80,8 @@ require_relative "lib/pages/login"
 require_relative "lib/pages/settings"
 require_relative "lib/pages/download_manager"
 
-Async do
-  W3DHub::Window.new(width: 980, height: 720, borderless: false).show
-
-  exit # ensure reactor is shutdown when window is closed
+Thread.new do
+  W3DHub::BackgroundWorker.create
 end
+
+W3DHub::Window.new(width: 980, height: 720, borderless: false).show

@@ -130,11 +130,14 @@ class W3DHub
           populate_server_list
 
           if @selected_server&.id == @refresh_server&.id
-            Async do
-              fetch_server_details(@refresh_server) if @refresh_server
-              populate_server_info(@refresh_server) if @refresh_server && @refresh_server == @selected_server
-
-              @refresh_server = nil
+            if @refresh_server
+              BackgroundWorker.foreground_job(
+                -> { fetch_server_details(@refresh_server) },
+                ->(result) {
+                  populate_server_info(@refresh_server) if @refresh_server == @selected_server
+                  @refresh_server = nil
+                }
+              )
             end
           end
         end
@@ -222,10 +225,10 @@ class W3DHub
 
               @selected_server = server
 
-              Async do
-                fetch_server_details(server)
-                populate_server_info(server) if server == @selected_server
-              end
+              BackgroundWorker.foreground_job(
+                -> { fetch_server_details(server) },
+                ->(result) { populate_server_info(server) if server == @selected_server }
+              )
             end
 
             stylize_selected_server(server_container) if server.id == @selected_server&.id
@@ -352,12 +355,10 @@ class W3DHub
       end
 
       def fetch_server_details(server)
-        Async do
-          internet = Async::HTTP::Internet.instance
-
-          server_data = Api.server_details(internet, server.id, 2)
-          server.update(server_data) if server_data
-        end
+        BackgroundWorker.foreground_job(
+          -> { Api.server_details(server.id, 2) },
+          ->(server_data) { server.update(server_data) if server_data }
+        )
       end
 
       def game_icon(server)

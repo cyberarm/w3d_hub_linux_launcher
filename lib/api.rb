@@ -9,6 +9,10 @@ class W3DHub
       DEFAULT_HEADERS + [["Content-Type", "application/x-www-form-urlencoded"]]
     ).freeze
 
+    def self.on_fiber(method, *args, &callback)
+      BackgroundWorker.job(-> { Api.send(method, *args) }, callback)
+    end
+
     #! === W3D Hub API === !#
 
     ENDPOINT = "https://secure.w3dhub.com".freeze
@@ -165,6 +169,12 @@ class W3DHub
 
     SERVER_LIST_ENDPOINT = "https://gsh.w3dhub.com".freeze
 
+    def self.get(url, headers = DEFAULT_HEADERS, body = nil)
+      @client ||= Async::HTTP::Client.new(Async::HTTP::Endpoint.parse(SERVER_LIST_ENDPOINT, protocol: Async::HTTP::Protocol::HTTP10))
+
+      @client.get(url, headers, body)
+    end
+
     # Method: GET
     # FORMAT: JSON
 
@@ -182,8 +192,8 @@ class W3DHub
     #     id, name, score, kills, deaths
     #   ...players[]:
     #     nick, team (index of teams array), score, kills, deaths
-    def self.server_list(internet, level = 1)
-      response = internet.get("#{SERVER_LIST_ENDPOINT}/listings/getAll/v2?statusLevel=#{level}", DEFAULT_HEADERS)
+    def self.server_list(level = 1)
+      response = get("#{SERVER_LIST_ENDPOINT}/listings/getAll/v2?statusLevel=#{level}")
 
       if response.success?
         data = JSON.parse(response.read, symbolize_names: true)
@@ -204,8 +214,8 @@ class W3DHub
     #     id, name, score, kills, deaths
     #   ...players[]:
     #     nick, team (index of teams array), score, kills, deaths
-    def self.server_details(internet, id, level)
-      response = internet.get("#{SERVER_LIST_ENDPOINT}/listings/getStatus/v2/#{id}?statusLevel=#{level}", DEFAULT_HEADERS)
+    def self.server_details(id, level)
+      response = get("#{SERVER_LIST_ENDPOINT}/listings/getStatus/v2/#{id}?statusLevel=#{level}")
 
       if response.success?
         hash = JSON.parse(response.read, symbolize_names: true)

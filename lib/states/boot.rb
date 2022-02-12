@@ -31,17 +31,10 @@ class W3DHub
             inscription "#{I18n.t(:app_name)} #{W3DHub::VERSION}", width: 0.5, text_align: :right
           end
         end
-
-        Async do
-          @tasks.keys.each do |key|
-            Sync do
-              send(key)
-            end
-          end
-        end
       end
 
       def draw
+        Gosu.draw_circle(window.width / 2, window.height / 2, @w3dhub_logo.width * Gosu.milliseconds / 1000.0 % 500, 128, 0x44_000000, 32)
         @w3dhub_logo.draw_rot(window.width / 2, window.height / 2, 32)
 
         super
@@ -57,69 +50,94 @@ class W3DHub
 
         push_state(States::Interface) if @progressbar.value >= 1.0 && @task_index == @tasks.size
 
+        task = @tasks[@tasks.keys[@task_index]]
+
+        if task && !task[:started]
+          task[:started] = true
+          send(@tasks.keys[@task_index])
+        end
+
         @task_index += 1 if @tasks.dig(@tasks.keys[@task_index], :complete)
       end
 
       def refresh_user_token
+        p :refresh_user_token
+
         if Store.settings[:account, :data]
           account = Api::Account.new(Store.settings[:account, :data], {})
 
           if (account.access_token_expiry - Time.now) / 60 <= 60 * 3 # Refresh if token expires within 3 hours
             puts "Refreshing user login..."
-            @account = Api.refresh_user_login(account.refresh_token)
+
+            Api.on_fiber(:refresh_user_login, account.refresh_token) do |refreshed_account|
+              update_account_data(refreshed_account)
+            end
+
           else
-            @account = account
+            update_account_data(account)
           end
 
-          if @account
-            Store.account = @account
-
-            Store.settings[:account][:data] = @account
-
-            Cache.fetch(@account.avatar_uri, true)
-          else
-            Store.settings[:account] = {}
-          end
-
-          Store.settings.save_settings
-
-          @tasks[:refresh_user_token][:complete] = true
         else
           @tasks[:refresh_user_token][:complete] = true
         end
       end
 
-      def service_status
-        @service_status = Api.service_status
+      def update_account_data(account)
+        if account
+          Store.account = account
 
-        if @service_status
-          Store.service_status = @service_status
+          Store.settings[:account][:data] = account
 
-          if !@service_status.authentication? || !@service_status.package_download?
-            @status_label.value = "Authentication is #{@service_status.authentication? ? 'Okay' : 'Down'}. Package Download is #{@service_status.package_download? ? 'Okay' : 'Down'}."
-          end
-
-          @tasks[:service_status][:complete] = true
+          Cache.fetch(account.avatar_uri, true)
         else
-          @status_label.value = I18n.t(:"boot.w3dhub_service_is_down")
+          Store.settings[:account] = {}
+        end
+
+        Store.settings.save_settings
+
+        @tasks[:refresh_user_token][:complete] = true
+      end
+
+      def service_status
+        p :service_status
+
+        Api.on_fiber(:service_status) do |service_status|
+          @service_status = service_status
+
+          if @service_status
+            Store.service_status = @service_status
+
+            if !@service_status.authentication? || !@service_status.package_download?
+              @status_label.value = "Authentication is #{@service_status.authentication? ? 'Okay' : 'Down'}. Package Download is #{@service_status.package_download? ? 'Okay' : 'Down'}."
+            end
+
+            @tasks[:service_status][:complete] = true
+          else
+            @status_label.value = I18n.t(:"boot.w3dhub_service_is_down")
+          end
         end
       end
 
       def applications
+        p :applications
+
         @status_label.value = I18n.t(:"boot.checking_for_updates")
 
-        @applications = Api.applications
+        Api.on_fiber(:applications) do |applications|
+          if applications
+            Store.applications = applications
 
-        if @applications
-          Store.applications = @applications
-
-          @tasks[:applications][:complete] = true
-        else
-          # FIXME: Failed to retreive!
+            @tasks[:applications][:complete] = true
+          else
+            # FIXME: Failed to retreive!
+            @status_label.value = "FAILED TO RETREIVE APPS LIST"
+          end
         end
       end
 
       def app_icons
+        puts :app_icons
+
         return unless Store.applications
 
         packages = []
@@ -127,8 +145,10 @@ class W3DHub
           packages << { category: app.category, subcategory: app.id, name: "#{app.id}.ico", version: "" }
         end
 
-        if (package_details = Api.package_details(packages))
-          package_details.each do |package|
+        Api.on_fiber(:package_details, packages) do |package_details|
+          puts "Got response?"
+
+          package_details&.each do |package|
             path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
             generated_icon_path = "#{GAME_ROOT_PATH}/media/icons/#{package.subcategory}.png"
 
@@ -145,37 +165,29 @@ class W3DHub
 
             if regenerate
               ico = ICO.new(file: path)
-              image = ico.images.sort_by(&:width).last
+              image = ico.images.max_by(&:width)
 
               ico.save(image, generated_icon_path)
             end
           end
-        end
 
-        @tasks[:app_icons][:complete] = true
+          @tasks[:app_icons][:complete] = true
+        end
       end
 
       def server_list
+        puts :server_list
+
         @status_label.value = I18n.t(:"server_browser.fetching_server_list")
 
-        begin
-          internet = Async::HTTP::Internet.instance
-
-          list = Api.server_list(internet, 2)
-
-          if list
-            Store.server_list = list.sort_by! { |s| s&.status&.players&.size }.reverse
-          end
+        Api.on_fiber(:server_list, 2) do |list|
+          Store.server_list = list.sort_by! { |s| s&.status&.players&.size }.reverse if list
 
           Store.server_list_last_fetch = Gosu.milliseconds
 
           Api::ServerListUpdater.instance
 
           @tasks[:server_list][:complete] = true
-        rescue => e
-          # Something went wrong!
-          pp e
-          Store.server_list = []
         end
       end
     end

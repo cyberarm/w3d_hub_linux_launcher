@@ -171,23 +171,20 @@ class W3DHub
             title I18n.t(:"games.fetching_news"), padding: 8
           end
 
-          Async do
-            fetch_game_news(game)
-            populate_game_news(game)
-          end
+          BackgroundWorker.foreground_job(-> { fetch_game_news(game) }, ->(result) { populate_game_news(game) })
         end
       end
 
       def fetch_game_news(game)
         news = Api.news(game.id)
 
-        if news
-          news.items[0..9].each do |item|
-            Cache.fetch(item.image)
-          end
+        return unless news
 
-          @game_news[game.id] = news
+        news.items[0..9].each do |item|
+          Cache.fetch(item.image)
         end
+
+        @game_news[game.id] = news
       end
 
       def populate_game_news(game)

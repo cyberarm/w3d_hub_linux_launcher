@@ -36,15 +36,12 @@ class W3DHub
 
                   # Do network stuff
 
-                  Async do
-                    account = Api.user_login(@username.value, @password.value)
-
+                  Api.on_fiber(:user_login, @username.value, @password.value) do |account|
                     if account
                       Store.account = account
                       Store.settings[:account][:data] = account
                       Store.settings.save_settings
 
-                      internet = Async::HTTP::Internet.instance
                       Cache.fetch(account.avatar_uri, true)
 
                       populate_account_info
@@ -71,12 +68,13 @@ class W3DHub
         end
 
         if Store.account
-          Async do
-            Cache.fetch(Store.account.avatar_uri)
-
-            populate_account_info
-            page(W3DHub::Pages::Games)
-          end
+          BackgroundWorker.foreground_job(
+            -> { Cache.fetch(Store.account.avatar_uri) },
+            ->(result) {
+              populate_account_info
+              page(W3DHub::Pages::Games)
+            }
+          )
         end
       end
 

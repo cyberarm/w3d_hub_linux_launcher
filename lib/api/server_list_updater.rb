@@ -74,45 +74,47 @@ class W3DHub
       end
 
       def run
-        Async do |task|
-          internet = Async::HTTP::Internet.instance
+        Thread.new do
+          Async do |task|
+            internet = Async::HTTP::Internet.instance
 
-          response = internet.post("https://gsh.w3dhub.com/listings/push/v2/negotiate?negotiateVersion=1", Api::DEFAULT_HEADERS, [""])
-          data = JSON.parse(response.read, symbolize_names: true)
+            response = internet.post("https://gsh.w3dhub.com/listings/push/v2/negotiate?negotiateVersion=1", Api::DEFAULT_HEADERS, [""])
+            data = JSON.parse(response.read, symbolize_names: true)
 
-          id = data[:connectionToken]
-          endpoint = Async::HTTP::Endpoint.parse("https://gsh.w3dhub.com/listings/push/v2?id=#{id}", alpn_protocols: Async::HTTP::Protocol::HTTP11.names)
+            id = data[:connectionToken]
+            endpoint = Async::HTTP::Endpoint.parse("https://gsh.w3dhub.com/listings/push/v2?id=#{id}", alpn_protocols: Async::HTTP::Protocol::HTTP11.names)
 
-          Async::WebSocket::Client.connect(endpoint, headers: Api::DEFAULT_HEADERS, handler: PatchedConnection) do |connection|
-            connection.write({ protocol: "json", version: 1 })
-            connection.flush
-            pp connection.read
-            connection.write({ "type": 6 })
+            Async::WebSocket::Client.connect(endpoint, headers: Api::DEFAULT_HEADERS, handler: PatchedConnection) do |connection|
+              connection.write({ protocol: "json", version: 1 })
+              connection.flush
+              pp connection.read
+              connection.write({ "type": 6 })
 
-            Store.server_list.each_with_index do |server, i|
-              i += 1
-              mode = 1 # 2 full details, 1 basic details
-              out = { "type": 1, "invocationId": "#{i}", "target": "SubscribeToServerStatusUpdates", "arguments": [server.id, mode] }
-              connection.write(out)
-            end
+              Store.server_list.each_with_index do |server, i|
+                i += 1
+                mode = 1 # 2 full details, 1 basic details
+                out = { "type": 1, "invocationId": "#{i}", "target": "SubscribeToServerStatusUpdates", "arguments": [server.id, mode] }
+                connection.write(out)
+              end
 
-            while (message = connection.read)
-              connection.write({ type: 6 }) if message.first[:type] == 6
+              while (message = connection.read)
+                connection.write({ type: 6 }) if message.first[:type] == 6
 
-              if message&.first&.fetch(:type) == 1
-                message.each do |rpc|
-                  next unless rpc[:target] == "ServerStatusChanged"
+                if message&.first&.fetch(:type) == 1
+                  message.each do |rpc|
+                    next unless rpc[:target] == "ServerStatusChanged"
 
-                  id, data = rpc[:arguments]
-                  server = Store.server_list.find { |s| s.id == id }
-                  server_updated = server&.update(data)
-                  States::Interface.instance&.update_server_browser(server) if server_updated
+                    id, data = rpc[:arguments]
+                    server = Store.server_list.find { |s| s.id == id }
+                    server_updated = server&.update(data)
+                    States::Interface.instance&.update_server_browser(server) if server_updated
+                  end
                 end
               end
             end
+          ensure
+            @@instance = nil
           end
-        ensure
-          @@instance = nil
         end
       end
     end

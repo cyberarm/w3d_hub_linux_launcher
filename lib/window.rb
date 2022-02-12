@@ -23,9 +23,6 @@ class W3DHub
       super
 
       Store.application_manager.start_next_available_task if Store.application_manager.idle?
-
-      current = Async::Task.current?
-      current&.yield
     end
 
     def gain_focus

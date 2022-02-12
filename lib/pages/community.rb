@@ -60,25 +60,20 @@ class W3DHub
             para I18n.t(:"games.fetching_news"), padding: 8
           end
 
-          Async do
-            internet = Async::HTTP::Internet.instance
-
-            fetch_w3dhub_news
-            populate_w3dhub_news
-          end
+          BackgroundWorker.foreground_job(-> { fetch_w3dhub_news }, ->(result) { populate_w3dhub_news })
         end
       end
 
       def fetch_w3dhub_news
         news = Api.news("launcher-home")
 
-        if news
-          news.items[0..9].each do |item|
-            Cache.fetch(item.image)
-          end
+        return unless news
 
-          @w3dhub_news = news
+        news.items[0..9].each do |item|
+          Cache.fetch(item.image)
         end
+
+        @w3dhub_news = news
       end
 
       def populate_w3dhub_news
