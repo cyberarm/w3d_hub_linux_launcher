@@ -42,7 +42,7 @@ class W3DHub
       end
 
       def log(string)
-        log string if W3DHUB_DEBUG
+        puts string if W3DHUB_DEBUG
       end
 
       # Start task, inside its own thread
