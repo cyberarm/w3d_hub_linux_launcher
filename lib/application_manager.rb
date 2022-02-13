@@ -189,25 +189,19 @@ class W3DHub
     def auto_import
       return unless W3DHub.windows?
 
-      # Renegade
-      auto_import_win32_registry("ren", "release", 'SOFTWARE\Westwood\Renegade')
-
-      # Red Alert: A Path Beyond
-      auto_import_win32_registry("apb", "release")
-
-      # Expansive Civilian Warfare
-      auto_import_win32_registry("ecw", "release")
-
-      # Interim Apex
-      auto_import_win32_registry("ia", "release")
-
-      # Tiberian Sun: Reborn
-      auto_import_win32_registry("tsr", "release")
+      Store.applications.games.each do |game|
+        game.channels.each do |channel|
+          if game.id == "ren" && channel.id == "release"
+            auto_import_win32_registry(game.id, channel.id, 'SOFTWARE\Westwood\Renegade')
+          else
+            auto_import_win32_registry(game.id, channel.id)
+          end
+        end
+      end
     end
 
     def auto_import_win32_registry(app_id, channel_id, registry_path = nil)
       return unless W3DHub.windows?
-      return if installed?(app_id, channel_id)
 
       puts "Importing: #{app_id}-#{channel_id}"
 
@@ -239,7 +233,8 @@ class W3DHub
           end
         end
       rescue => e
-        puts e.message, e.backtrace
+        # puts e.class, e.message, e.backtrace
+        puts "    Failed to import #{app_id}-#{channel_id}" if e.is_a?(Win32::Registry::Error)
 
         false
       end
