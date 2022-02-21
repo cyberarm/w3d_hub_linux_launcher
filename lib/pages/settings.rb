@@ -5,18 +5,18 @@ class W3DHub
         body.clear do
           stack(width: 1.0, height: 1.0, padding: 16, scroll: true) do
             para "<b>Language</b>"
-            flow(width: 1.0) do
-              para "<b>Launcher Language</b>", width: 0.249
+            flow(width: 1.0, height: 0.12) do
+              para "<b>Launcher Language</b>", width: 0.249, margin_left: 32, margin_top: 12
               stack(width: 0.75) do
                 @language_menu = list_box items: I18n.available_locales.map { |l| expand_language_code(l.to_s) }, choose: expand_language_code(Store.settings[:language]), width: 1.0
-                inscription "Select the UI language you'd like to use in the W3D Hub Launcher. You should restart the launcher after changing this setting before the UI will update"
+                inscription "Select the UI language you'd like to use in the W3D Hub Launcher."
               end
             end
 
-            para "<b>Folder Paths</b>", margin_top: 32
-            stack(width: 1.0) do
-              flow(width: 1.0) do
-                para "<b>App Install Folder</b>", width: 0.249
+            para "<b>Folder Paths</b>", margin_top: 8, padding_top: 8, border_thickness_top: 2, border_color_top: 0xee_ffffff, width: 1.0
+            stack(width: 1.0, height: 0.3) do
+              flow(width: 1.0, height: 0.5) do
+                para "<b>App Install Folder</b>", width: 0.249, margin_left: 32, margin_top: 12
 
                 stack(width: 0.75) do
                   @app_install_dir_input = edit_line Store.settings[:app_install_dir], width: 1.0
@@ -25,7 +25,7 @@ class W3DHub
               end
 
               flow(width: 1.0, margin_top: 16) do
-                para "<b>Package Cache Folder</b>", width: 0.249
+                para "<b>Package Cache Folder</b>", width: 0.249, margin_left: 32, margin_top: 12
 
                 stack(width: 0.75) do
                   @package_cache_dir_input = edit_line Store.settings[:package_cache_dir], width: 1.0
@@ -35,17 +35,17 @@ class W3DHub
             end
 
             if true # W3DHub.unix?
-              para "<b>Wine</b>", margin_top: 32
-              flow(width: 1.0) do
-                para "<b>Wine Command</b>", width: 0.249
+              para "<b>Wine</b>", margin_top: 8, padding_top: 8, border_thickness_top: 2, border_color_top: 0xee_ffffff, width: 1.0
+              flow(width: 1.0, height: 0.12) do
+                para "<b>Wine Command</b>", width: 0.249, margin_left: 32, margin_top: 12
                 stack(width: 0.75) do
                   @wine_command_input = edit_line Store.settings[:wine_command], width: 1.0
                   inscription "Command to use to for Windows compatiblity layer"
                 end
               end
 
-              flow(width: 1.0, margin_top: 16) do
-                para "<b>Wine Prefix</b>", width: 0.249
+              flow(width: 1.0, height: 0.13, margin_top: 16) do
+                para "<b>Wine Prefix</b>", width: 0.249, margin_left: 32, margin_top: 12
                 stack(width: 0.75) do
                   @wine_prefix_toggle = toggle_button checked: Store.settings[:wine_prefix]
                   inscription "Whether each game gets its own prefix. Uses global/default prefix by default."

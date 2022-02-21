@@ -1,7 +1,6 @@
 class W3DHub
   class States
     class Interface < CyberarmEngine::GuiState
-      attr_reader :main_thread_queue
       attr_accessor :interface_task_update_pending
 
       @@instance = nil
@@ -23,8 +22,6 @@ class W3DHub
 
         @page = nil
         @pages = {}
-
-        @main_thread_queue = []
 
         Store.application_manager.auto_import
 
@@ -121,10 +118,6 @@ class W3DHub
         super
 
         @page&.update
-
-        while(block = @main_thread_queue.shift)
-          block&.call
-        end
 
         update_interface_task_status(@interface_task_update_pending) if @interface_task_update_pending
       end

@@ -7,6 +7,8 @@ class W3DHub
       Store[:settings] = Settings.new
       Store[:application_manager] = ApplicationManager.new
 
+      Store[:main_thread_queue] = []
+
       Store.settings.save_settings
 
       begin
@@ -23,6 +25,10 @@ class W3DHub
       super
 
       Store.application_manager.start_next_available_task if Store.application_manager.idle?
+
+      while (block = Store.main_thread_queue.shift)
+        block&.call
+      end
     end
 
     def gain_focus
@@ -52,13 +58,7 @@ class W3DHub
     end
 
     def main_thread_queue
-      if current_state.is_a?(W3DHub::States::Interface)
-        current_state.main_thread_queue
-      else
-        warn "Task will not be run for:"
-        warn caller
-        []
-      end
+      Store.main_thread_queue
     end
   end
 end

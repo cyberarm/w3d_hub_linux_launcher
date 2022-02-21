@@ -1,6 +1,9 @@
 class W3DHub
   class ApplicationManager
     class Task
+      class FailFast < RuntimeError
+      end
+
       include CyberarmEngine::Common
 
       attr_reader :app_id, :release_channel, :application, :channel,
@@ -59,6 +62,8 @@ class W3DHub
             rescue RuntimeError => e
               status = false
               @task_failure_reason = e.message[0..512]
+            rescue FailFast
+              # no-op
             end
 
             # Force free some bytes
@@ -74,7 +79,8 @@ class W3DHub
         end
       end
 
-      def execute_task; end
+      def execute_task
+      end
 
       # Suspend operation, if possible
       def pause
@@ -111,6 +117,8 @@ class W3DHub
         @task_failure_reason = reason.to_s
 
         hide_application_taskbar
+
+        raise FailFast, @task_failure_reason
       end
 
       def fail_silently!
@@ -119,6 +127,20 @@ class W3DHub
 
       # Quick checks before network and computational work starts
       def fail_fast
+        # Have write permissions to target directory
+        path = Cache.install_path(@application, @channel)
+        path = Store.settings[:app_install_dir] unless File.exist?(path)
+
+        begin
+          File.write("#{path}/___can_write.wlh", "")
+          File.delete("#{path}/___can_write.wlh")
+
+          Dir.mkdir("#{path}/__can_write")
+          Dir.rmdir("#{path}/__can_write")
+        rescue Errno::EACCES
+          fail!("FAIL FAST: Cannot write to #{path}")
+        end
+
         # Have enough disk space
 
         # tar present?
@@ -133,7 +155,7 @@ class W3DHub
       end
 
       def run_on_main_thread(block)
-        window.main_thread_queue << block
+        Store.main_thread_queue << block
       end
 
       def send_message_dialog(type, title, message)

@@ -71,7 +71,7 @@ class W3DHub
 
       def deliver(result)
         if @deliver_to_queue
-          $window.main_thread_queue << -> { @callback.call(result) }
+          Store.main_thread_queue << -> { @callback.call(result) }
         else
           @callback.call(result)
         end

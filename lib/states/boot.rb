@@ -153,10 +153,7 @@ class W3DHub
             end
 
             if regenerate
-              ico = ICO.new(file: path)
-              image = ico.images.max_by(&:width)
-
-              ico.save(image, generated_icon_path)
+              BackgroundWorker.foreground_job(-> { ICO.new(file: path) }, ->(result) { result.save(result.images.max_by(&:width), generated_icon_path) })
             end
           end
 

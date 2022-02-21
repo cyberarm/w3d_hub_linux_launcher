@@ -170,7 +170,7 @@ class W3DHub
           Store.server_list.each do |server|
             next unless @filters[server.game.to_sym]
             next unless server.region == @filter_region || @filter_region == "Any"
-            next unless server.channel == "release"
+            # next unless server.channel == "release"
 
             i += 1
 
@@ -251,7 +251,7 @@ class W3DHub
                 game_updatable = Store.application_manager.updateable?(server.game, server.channel)
                 style = server.channel != "release" ? TESTING_BUTTON : {}
 
-                button "<b>#{I18n.t(:"server_browser.join_server")}</b>", enabled: (game_installed && !game_updatable), **style do
+                button "<b>#{I18n.t(:"server_browser.join_server")}</b>", margin_left: 96, enabled: (game_installed && !game_updatable), **style do
                   # Check for nickname
                   #   prompt for nickname
                   # !abort unless nickname set
@@ -310,19 +310,24 @@ class W3DHub
 
             game_balance = server_game_balance(server)
 
-            flow(width: 1.0, height: 0.05) do
-              stack(width: 0.465, height: 1.0) do
-                para "<b>#{server.status.teams[0].name}</b>", width: 1.0, text_align: :center
+            flow(width: 1.0, height: 0.1, border_thickness_bottom: 2, border_color_bottom: 0x44_ffffff) do
+              stack(width: 0.4, height: 1.0) do
+                para "<b>#{server.status.teams[0].name} (#{server.status.players.select { |pl| pl.team == 0 }.count})</b>", width: 1.0, text_align: :center
+                para game_balance[:team_0_score].to_i.to_s, width: 1.0, text_align: :center
               end
 
-              image game_balance[:icon], height: 1.0, tip: game_balance[:message], color: game_balance[:color]
+              stack(width: 0.2, height: 1.0) do
+                image game_balance[:icon], height: 0.5, margin_left: 20, tip: game_balance[:message], color: game_balance[:color]
+                para game_balance[:ratio].round(2).to_s, width: 1.0, text_align: :center
+              end
 
-              stack(width: 0.46, height: 1.0) do
-                para "<b>#{server.status.teams[1].name}</b>", width: 1.0, text_align: :center
+              stack(width: 0.4, height: 1.0) do
+                para "<b>#{server.status.teams[1].name} (#{server.status.players.select { |pl| pl.team == 1 }.count})</b>", width: 1.0, text_align: :center
+                para game_balance[:team_1_score].to_i.to_s, width: 1.0, text_align: :center
               end
             end
 
-            flow(width: 1.0, height: 0.65, scroll: true) do
+            flow(width: 1.0, height: 0.60, scroll: true) do
               stack(width: 0.5) do
                 server.status.players.select { |ply| ply.team == 0 }.sort_by { |ply| ply.score }.reverse.each do |player|
                   flow(width: 1.0, height: 18) do
@@ -392,13 +397,23 @@ class W3DHub
         }
 
         # team 0 is left side
-        team_0_score = server.status.players.select { |ply| ply.team == 0 }.map(&:score).sum.to_f
+        team_0_score = server.status.teams[0].score
+        team_0_score = nil if team_0_score.zero?
+        team_0_score ||= server.status.players.select { |ply| ply.team == 0 }.map(&:score).sum
+        team_0_score = team_0_score.to_f
 
         # team 1 is right side
-        team_1_score = server.status.players.select { |ply| ply.team == 1 }.map(&:score).sum.to_f
+        team_1_score = server.status.teams[1].score
+        team_1_score = nil if team_1_score.zero?
+        team_1_score ||= server.status.players.select { |ply| ply.team == 1 }.map(&:score).sum
+        team_1_score = team_1_score.to_f
 
         ratio = 1.0 / (team_0_score / team_1_score)
         ratio = 1.0 if ratio.to_s == "NaN"
+
+        data[:ratio] = ratio
+        data[:team_0_score] = team_0_score
+        data[:team_1_score] = team_1_score
 
         data[:icon] = if  server.status.players.size < 20 && server.game != "ren"
           data[:color] = 0xff_600000

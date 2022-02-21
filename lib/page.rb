@@ -15,10 +15,6 @@ class W3DHub
       @options = {}
     end
 
-    def main_thread_queue
-      @host.main_thread_queue
-    end
-
     def options=(options)
       @options = options
     end
