@@ -1,3 +1,4 @@
+pkg/
 *.json
 data/cache/*
 !data/cache/.gitkeep

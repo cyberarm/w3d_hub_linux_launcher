@@ -87,4 +87,4 @@ Thread.new do
   W3DHub::BackgroundWorker.create
 end
 
-W3DHub::Window.new(width: 980, height: 720, borderless: false).show
+W3DHub::Window.new(width: 980, height: 720, borderless: false).show unless defined?(Ocra)
