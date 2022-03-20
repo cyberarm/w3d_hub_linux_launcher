@@ -164,6 +164,8 @@ class W3DHub
           end
         end
 
+        return if Cache.net_lock?("game_news_#{game.id}")
+
         if @game_news[game.id]
           populate_game_news(game)
         else
@@ -171,20 +173,34 @@ class W3DHub
             title I18n.t(:"games.fetching_news"), padding: 8
           end
 
-          BackgroundWorker.foreground_job(-> { fetch_game_news(game) }, ->(result) { populate_game_news(game) })
+          BackgroundWorker.foreground_job(
+            -> { fetch_game_news(game) },
+            lambda do |result|
+              if result
+                populate_game_news(game)
+                Cache.release_net_lock(result)
+              end
+            end
+          )
         end
       end
 
       def fetch_game_news(game)
-        news = Api.news(game.id)
+        lock = Cache.acquire_net_lock("game_news_#{game.id}")
+        return false unless lock
 
-        return unless news
+        news = Api.news(game.id)
+        Cache.release_net_lock("game_news_#{game.id}") unless news
+
+        return false unless news
 
         news.items[0..9].each do |item|
           Cache.fetch(uri: item.image, async: false)
         end
 
         @game_news[game.id] = news
+
+        "game_news_#{game.id}"
       end
 
       def populate_game_news(game)

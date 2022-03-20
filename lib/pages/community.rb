@@ -18,7 +18,7 @@ class W3DHub
 
               flow(width: icon_container_width, height: 1.0) do
                 image "#{GAME_ROOT_PATH}/media/icons/app.png", hover: { color: 0xaa_ffffff }, height: 1.0, tip: "#{I18n.t(:app_name)} Github Repository" do
-                  Launchy.open("https://github.com/cyberarm/w3dhub_ruby")
+                  Launchy.open("https://github.com/cyberarm/w3d_hub_linux_launcher")
                 end
                 image "#{GAME_ROOT_PATH}/media/icons/w3dhub.png", hover: { color: 0xaa_ffffff }, height: 1.0, margin_left: 32, tip: "W3D Hub Forums" do
                   Launchy.open("https://w3dhub.com/forum/")
@@ -43,15 +43,17 @@ class W3DHub
               tagline "<b>Help & Support</b>"
               flow(width: 1.0) do
                 para "For help and support using this launcher or playing any W3D Hub game visit the"
-                link("W3D Hub forums", text_size: 16) { Launchy.open("https://w3dhub.com/forum/") }
+                link("W3D Hub forums", text_size: 16, tip: "https://w3dhub.com/forum/") { Launchy.open("https://w3dhub.com/forum/") }
                 para "or join us in"
                 image "#{GAME_ROOT_PATH}/media/social_media_icons/discord.png", height: 16, padding_top: 4
-                link("#tech-support", text_size: 16) { Launchy.open("https://discord.com/invite/GYhW7eV") }
+                link("#tech-support", text_size: 16, tip: "https://discord.com/invite/GYhW7eV") { Launchy.open("https://discord.com/invite/GYhW7eV") }
                 para "on the W3D Hub Discord server"
               end
             end
           end
         end
+
+        return if Cache.net_lock?("w3dhub_news")
 
         if @w3dhub_news
           populate_w3dhub_news
@@ -60,12 +62,24 @@ class W3DHub
             para I18n.t(:"games.fetching_news"), padding: 8
           end
 
-          BackgroundWorker.foreground_job(-> { fetch_w3dhub_news }, ->(result) { populate_w3dhub_news })
+          BackgroundWorker.foreground_job(
+            -> { fetch_w3dhub_news },
+            lambda do |result|
+              if result
+                populate_w3dhub_news
+                Cache.release_net_lock(result)
+              end
+            end
+          )
         end
       end
 
       def fetch_w3dhub_news
+        lock = Cache.acquire_net_lock("w3dhub_news")
+        return false unless lock
+
         news = Api.news("launcher-home")
+        Cache.release_net_lock("w3dhub_news") unless news
 
         return unless news
 
@@ -74,6 +88,8 @@ class W3DHub
         end
 
         @w3dhub_news = news
+
+        "w3dhub_news"
       end
 
       def populate_w3dhub_news

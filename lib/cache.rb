@@ -123,5 +123,31 @@ class W3DHub
     ensure
       file&.close
     end
+
+    def self.acquire_net_lock(key)
+      Store["net_locks"] ||= {}
+
+      if Store["net_locks"][key]
+        false
+      else
+        Store["net_locks"][key] = true
+      end
+    end
+
+    def self.release_net_lock(key)
+      Store["net_locks"] ||= {}
+
+      if Store["net_locks"][key]
+        Store["net_locks"].delete(key)
+      else
+        warn "!!! net_lock not found for #{key.inspect}"
+      end
+    end
+
+    def self.net_lock?(key)
+      Store["net_locks"] ||= {}
+
+      Store["net_locks"][key]
+    end
   end
 end
