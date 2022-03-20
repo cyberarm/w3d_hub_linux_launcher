@@ -71,7 +71,7 @@ class W3DHub
             end
 
           else
-            update_account_data(account)
+            BackgroundWorker.foreground_job(-> { update_account_data(account) }, ->(_) {})
           end
 
         else
@@ -85,7 +85,7 @@ class W3DHub
 
           Store.settings[:account][:data] = account
 
-          Cache.fetch(account.avatar_uri, true)
+          Cache.fetch(uri: account.avatar_uri, force_fetch: true, async: false)
         else
           Store.settings[:account] = {}
         end

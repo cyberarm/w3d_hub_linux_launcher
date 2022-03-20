@@ -7,16 +7,19 @@ class W3DHub
     end
 
     # Fetch a generic uri
-    def self.fetch(uri, force_fetch = false)
+    def self.fetch(uri:, force_fetch: false, async: true)
       path = path(uri)
 
       if !force_fetch && File.exist?(path)
         path
-      else
+      elsif async
         BackgroundWorker.job(
           -> { Async::HTTP::Internet.instance.get(uri, W3DHub::Api::DEFAULT_HEADERS) },
           ->(response) { response.save(path, "wb") if response.success? }
         )
+      else
+        response = Async::HTTP::Internet.instance.get(uri, W3DHub::Api::DEFAULT_HEADERS)
+        response.save(path, "wb") if response.success?
       end
     end
 
