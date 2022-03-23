@@ -1,5 +1,7 @@
 class W3DHub
   class Cache
+    LOG_TAG = "W3DHub::Cache".freeze
+
     def self.path(uri)
       ext = File.basename(uri).split(".").last
 
@@ -54,7 +56,7 @@ class W3DHub
       headers = Api::FORM_ENCODED_HEADERS
       start_from_bytes = package.custom_partially_valid_at_bytes
 
-      puts "    Start from bytes: #{start_from_bytes} of #{package.size}"
+      logger.info(LOG_TAG) { "    Start from bytes: #{start_from_bytes} of #{package.size}" }
 
       create_directories(path)
 
@@ -92,7 +94,7 @@ class W3DHub
       headers["Authorization"] = "Bearer #{Store.account.access_token}" if Store.account
       start_from_bytes = package.custom_partially_valid_at_bytes
 
-      puts "    Start from bytes: #{start_from_bytes} of #{package.size}"
+      logger.info(LOG_TAG) { "    Start from bytes: #{start_from_bytes} of #{package.size}" }
 
       create_directories(path)
 

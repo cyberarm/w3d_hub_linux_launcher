@@ -1,6 +1,8 @@
 class W3DHub
   class ApplicationManager
     class Task
+      LOG_TAG = "W3DHub::ApplicationManager::Task".freeze
+
       class FailFast < RuntimeError
       end
 
@@ -44,10 +46,6 @@ class W3DHub
         @task_state
       end
 
-      def log(string)
-        puts string if W3DHUB_DEBUG
-      end
-
       # Start task, inside its own thread
       # FIXME: Ruby 3 has parallelism now: Use a Ractor to do work on a seperate core to
       #        prevent the UI from locking up while doing computation heavy work, i.e building
@@ -59,11 +57,14 @@ class W3DHub
           Sync do
             begin
               status = execute_task
-            rescue RuntimeError => e
-              status = false
-              @task_failure_reason = e.message[0..512]
             rescue FailFast
               # no-op
+            rescue StandardError, ERRNO::EACCES => e
+              status = false
+              @task_failure_reason = e.message[0..512]
+
+              logger.error(LOG_TAG) { "Task #{type.inspect} failed for #{@application.name}" }
+              logger.error(LOG_TAG) { e }
             end
 
             # Force free some bytes
@@ -227,7 +228,7 @@ class W3DHub
         packages = []
 
         manifests.reverse.each do |manifest|
-          log "#{manifest.game}-#{manifest.type}: #{manifest.version} (#{manifest.base_version})"
+          logger.info(LOG_TAG) { "#{manifest.game}-#{manifest.type}: #{manifest.version} (#{manifest.base_version})" }
 
           manifest.files.each do |file|
             @files["#{file.name}:#{manifest.version}"] = file
@@ -296,7 +297,7 @@ class W3DHub
 
             unless File.exist?(file_path)
               rejected_files << { file: file, manifest_version: manifest.version }
-              log "[#{manifest.version}] File missing: #{file_path}"
+              logger.info(LOG_TAG) { "[#{manifest.version}] File missing: #{file_path}" }
               next
             end
 
@@ -309,19 +310,19 @@ class W3DHub
 
             f.close
 
-            log file.inspect if file.checksum.nil?
+            logger.info(LOG_TAG) { file.inspect } if file.checksum.nil?
 
             if digest.hexdigest.upcase == file.checksum.upcase
               accepted_files[safe_file_name] = manifest.version
-              log "[#{manifest.version}] Verified file: #{file_path}"
+              logger.info(LOG_TAG) { "[#{manifest.version}] Verified file: #{file_path}" }
             else
               rejected_files << { file: file, manifest_version: manifest.version }
-              log "[#{manifest.version}] File failed Verification: #{file_path}"
+              logger.info(LOG_TAG) { "[#{manifest.version}] File failed Verification: #{file_path}" }
             end
           end
         end
 
-        log "#{rejected_files.count} missing or corrupt files"
+        logger.info(LOG_TAG) { "#{rejected_files.count} missing or corrupt files" }
 
         selected_packages = []
         selected_packages_hash = {}
@@ -448,7 +449,7 @@ class W3DHub
 
       def unpack_packages(packages)
         path = Cache.install_path(@application, @channel)
-        log "Unpacking packages in '#{path}'..."
+        logger.info(LOG_TAG) { "Unpacking packages in '#{path}'..." }
         Cache.create_directories(path, true)
 
         @status.operations.clear
@@ -495,7 +496,7 @@ class W3DHub
 
             update_interface_task_status
           else
-            log "COMMAND FAILED!"
+            logger.info(LOG_TAG) { "COMMAND FAILED!" }
             fail!("Failed to unpack #{package.name}")
 
             break
@@ -535,7 +536,7 @@ class W3DHub
 
         @status.step = :mark_application_installed
 
-        log "#{@app_id} has been installed."
+        logger.info(LOG_TAG) { "#{@app_id} has been installed." }
       end
 
       #############
@@ -567,7 +568,7 @@ class W3DHub
       end
 
       def package_fetch(package, &block)
-        log "Downloading: #{package.category}:#{package.subcategory}:#{package.name}-#{package.version}"
+        logger.info(LOG_TAG) { "Downloading: #{package.category}:#{package.subcategory}:#{package.name}-#{package.version}" }
 
         Api.package(package) do |chunk, remaining_bytes, total_bytes|
           block&.call(chunk, remaining_bytes, total_bytes)
@@ -575,7 +576,7 @@ class W3DHub
       end
 
       def verify_package(package, &block)
-        log "Verifying: #{package.category}:#{package.subcategory}:#{package.name}-#{package.version}"
+        logger.info(LOG_TAG) { "Verifying: #{package.category}:#{package.subcategory}:#{package.name}-#{package.version}" }
 
         digest = Digest::SHA256.new
         path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
@@ -586,7 +587,7 @@ class W3DHub
           operation&.value = "Verifying..."
 
         file_size = File.size(path)
-        log "    File size: #{file_size}"
+        logger.info(LOG_TAG) { "    File size: #{file_size}" }
         chunk_size = package.checksum_chunk_size
         chunks = package.checksum_chunks.size
 
@@ -611,11 +612,11 @@ class W3DHub
 
             if Digest::SHA256.new.hexdigest(chunk).upcase == checksum.upcase
               valid_at = chunk_start + read_length
-              # log "    Passed chunk: #{chunk_start}"
+              # logger.debug(LOG_TAG) { "    Passed chunk: #{chunk_start}" } # Only enable when deep diving to find a bug (VERBOSE)
               # package.partially_valid_at_bytes = valid_at
               package.partially_valid_at_bytes = chunk_start
             else
-              log "    FAILED chunk: #{chunk_start}"
+              logger.info(LOG_TAG) { "    FAILED chunk: #{chunk_start}" }
               break
             end
           end
@@ -629,25 +630,25 @@ class W3DHub
       end
 
       def unpack_package(package, path)
-        log "    #{package.name}:#{package.version}"
+        logger.info(LOG_TAG) { "    #{package.name}:#{package.version}" }
         package_path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
 
-        log "      Running #{W3DHub.tar_command} command: #{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{path}\""
+        logger.info(LOG_TAG) { "      Running #{W3DHub.tar_command} command: #{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{path}\"" }
         return system("#{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{path}\"")
       end
 
       def apply_patch(package, path)
-        log "    #{package.name}:#{package.version}"
+        logger.info(LOG_TAG) { "    #{package.name}:#{package.version}" }
         package_path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
         temp_path = "#{Store.settings[:package_cache_dir]}/temp"
         manifest_file = package.custom_is_patch
 
         Cache.create_directories(temp_path, true)
 
-        log "      Running #{W3DHub.tar_command} command: #{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{temp_path}\""
+        logger.info(LOG_TAG) { "      Running #{W3DHub.tar_command} command: #{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{temp_path}\"" }
         system("#{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{temp_path}\"")
 
-        log "      Loading #{temp_path}/#{manifest_file.name}.patch..."
+        logger.info(LOG_TAG) { "      Loading #{temp_path}/#{manifest_file.name}.patch..." }
         patch_mix = W3DHub::Mixer::Reader.new(file_path: "#{temp_path}/#{manifest_file.name}.patch", ignore_crc_mismatches: false)
         patch_info = JSON.parse(patch_mix.package.files.find { |f| f.name == ".w3dhub.patch" || f.name == ".bhppatch" }.data, symbolize_names: true)
 
@@ -655,16 +656,19 @@ class W3DHub
         # Fix borked data -> Data 'cause Windows don't care about capitalization
         repaired_path = "#{path}/#{manifest_file.name.sub('data', 'Data')}" unless File.exist?(repaired_path) && path
 
-        log "      Loading #{repaired_path}..."
+        logger.info(LOG_TAG) { "      Loading #{repaired_path}..." }
         target_mix = W3DHub::Mixer::Reader.new(file_path: repaired_path, ignore_crc_mismatches: false)
 
-        log "      Removing files..." if patch_info[:removedFiles].size.positive?
+        logger.info(LOG_TAG) { "      Removing files..." } if patch_info[:removedFiles].size.positive?
         patch_info[:removedFiles].each do |file|
+          logger.debug(LOG_TAG) { "        #{file}" }
           target_mix.package.files.delete_if { |f| f.name == file }
         end
 
-        log "      Adding/Updating files..." if patch_info[:updatedFiles].size.positive?
+        logger.info(LOG_TAG) { "      Adding/Updating files..." } if patch_info[:updatedFiles].size.positive?
         patch_info[:updatedFiles].each do |file|
+          logger.debug(LOG_TAG) { "        #{file}" }
+
           patch = patch_mix.package.files.find { |f| f.name == file }
           target = target_mix.package.files.find { |f| f.name == file }
 
@@ -676,7 +680,7 @@ class W3DHub
         end
 
 
-        log "      Writing updated #{repaired_path}..." if patch_info[:updatedFiles].size.positive?
+        logger.info(LOG_TAG) { "      Writing updated #{repaired_path}..." } if patch_info[:updatedFiles].size.positive?
         W3DHub::Mixer::Writer.new(file_path: repaired_path, package: target_mix.package, memory_buffer: true)
 
         FileUtils.remove_dir(temp_path)
@@ -693,7 +697,7 @@ class W3DHub
         # Force data/ to Data/
         return true unless File.exist?("#{path}/data") && File.directory?("#{path}/data")
 
-        log "      Moving #{path}/data/ to #{path}/Data/"
+        logger.info(LOG_TAG) { "      Moving #{path}/data/ to #{path}/Data/" }
 
         FileUtils.mv(Dir.glob("#{path}/data/**"), "#{path}/Data", force: true)
         FileUtils.remove_dir("#{path}/data", force: true)

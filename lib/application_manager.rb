@@ -1,5 +1,6 @@
 class W3DHub
   class ApplicationManager
+    LOG_TAG = "W3DHub::ApplicationManager".freeze
     include CyberarmEngine::Common
 
     def initialize
@@ -7,7 +8,7 @@ class W3DHub
     end
 
     def install(app_id, channel)
-      puts "Installation Request: #{app_id}-#{channel}"
+      logger.info(LOG_TAG) { "Installation Request: #{app_id}-#{channel}" }
 
       return false if installed?(app_id, channel) || installing?(app_id, channel)
 
@@ -27,7 +28,7 @@ class W3DHub
     end
 
     def update(app_id, channel)
-      puts "Update Request: #{app_id}-#{channel}"
+      logger.info(LOG_TAG) { "Update Request: #{app_id}-#{channel}" }
 
       return false unless installed?(app_id, channel)
 
@@ -37,7 +38,7 @@ class W3DHub
     end
 
     def import(app_id, channel)
-      puts "Import Request: #{app_id}-#{channel}"
+      logger.info(LOG_TAG) { "Import Request: #{app_id}-#{channel}" }
 
       # Check registry for auto-import if windows
       # if auto-import fails ask user for path to game exe
@@ -47,7 +48,7 @@ class W3DHub
     end
 
     def settings(app_id, channel)
-      puts "Settings Request: #{app_id}-#{channel}"
+      logger.info(LOG_TAG) { "Settings Request: #{app_id}-#{channel}" }
 
       # open wwconfig.exe or config.exe for ecw
 
@@ -70,7 +71,7 @@ class W3DHub
     end
 
     def wine_configuration(app_id, channel)
-      puts "Wine Configuration Request: #{app_id}-#{channel}"
+      logger.info(LOG_TAG) { "Wine Configuration Request: #{app_id}-#{channel}" }
 
       # open wwconfig.exe or config.exe for ecw
 
@@ -86,7 +87,7 @@ class W3DHub
     end
 
     def repair(app_id, channel)
-      puts "Repair Installation Request: #{app_id}-#{channel}"
+      logger.info(LOG_TAG) { "Repair Installation Request: #{app_id}-#{channel}" }
 
       return false if !installed?(app_id, channel) || installing?(app_id, channel)
 
@@ -101,7 +102,7 @@ class W3DHub
     end
 
     def uninstall(app_id, channel)
-      puts "Uninstall Request: #{app_id}-#{channel}"
+      logger.info(LOG_TAG) { "Uninstall Request: #{app_id}-#{channel}" }
 
       return false if !installed?(app_id, channel) || installing?(app_id, channel)
 
@@ -118,7 +119,7 @@ class W3DHub
     end
 
     def show_folder(app_id, channel, type)
-      puts "Show Folder Request: #{app_id} -> #{type.inspect}"
+      logger.info(LOG_TAG) { "Show Folder Request: #{app_id} -> #{type.inspect}" }
 
       app_data = installed?(app_id, channel)
 
@@ -203,7 +204,7 @@ class W3DHub
     def auto_import_win32_registry(app_id, channel_id, registry_path = nil)
       return unless W3DHub.windows?
 
-      puts "Importing: #{app_id}-#{channel_id}"
+      logger.info(LOG_TAG) { "Importing: #{app_id}-#{channel_id}" }
 
       require "win32/registry"
 
@@ -234,7 +235,12 @@ class W3DHub
         end
       rescue => e
         # puts e.class, e.message, e.backtrace
-        puts "    Failed to import #{app_id}-#{channel_id}" if e.is_a?(Win32::Registry::Error)
+        if Win32::Registry::Error
+          logger.warn(LOG_TAG) { "    Failed to import #{app_id}-#{channel_id}" }
+        else
+          logger.warn(LOG_TAG) { "    An error occurred while tying to import #{app_id}-#{channel_id}" }
+          logger.warn(LOG_TAG) { e }
+        end
 
         false
       end

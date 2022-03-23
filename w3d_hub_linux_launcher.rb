@@ -1,16 +1,43 @@
+# Hint to SDL that we're not a game and that the system may sleep
 ENV["SDL_VIDEO_ALLOW_SCREENSAVER"] = "1"
+
+require "fileutils"
+require "digest"
+require "rexml"
+require "logger"
+
+class W3DHub
+  W3DHUB_DEBUG = ARGV.join.include?("--debug")
+
+  GAME_ROOT_PATH = File.expand_path(".", __dir__)
+  CACHE_PATH = "#{GAME_ROOT_PATH}/data/cache"
+  SETTINGS_FILE_PATH = "#{GAME_ROOT_PATH}/data/settings.json"
+
+  LOGGER = Logger.new("#{GAME_ROOT_PATH}/data/logs/w3d_hub_linux_launcher.log", "daily")
+  LOGGER.level = Logger::Severity::DEBUG # W3DHUB_DEBUG ? Logger::Severity::DEBUG : Logger::Severity::WARN
+
+  LOG_TAG = "W3DHubLinuxLauncher"
+end
+
+module Kernel
+  def logger
+    W3DHub::LOGGER
+  end
+end
 
 begin
   require_relative "../cyberarm_engine/lib/cyberarm_engine"
 rescue LoadError => e
-  puts "Failed to load local cyberarm_engine:"
-  pp e
+  logger.warn(W3D::LOG_TAG) { "Failed to load local cyberarm_engine:" }
+  logger.warn(W3D::LOG_TAG) { e }
 
   require "cyberarm_engine"
 end
-require "fileutils"
-require "digest"
-require "rexml"
+
+class W3DHub
+  EMPTY_IMAGE = Gosu::Image.from_blob(1, 1)
+  BLACK_IMAGE = Gosu::Image.from_blob(1, 1, "\x00\x00\x00\xff")
+end
 
 require "i18n"
 require "launchy"
@@ -23,19 +50,8 @@ require "async/http/endpoint"
 require "async/websocket/client"
 require "protocol/websocket/connection"
 
-I18n.load_path << Dir[File.expand_path("locales") + "/*.yml"]
+I18n.load_path << Dir["#{W3DHub::GAME_ROOT_PATH}/locales/*.yml"]
 I18n.default_locale = :en
-
-class W3DHub
-  W3DHUB_DEBUG = ARGV.join.include?("--debug")
-
-  GAME_ROOT_PATH = File.expand_path(".", __dir__)
-  CACHE_PATH = "#{GAME_ROOT_PATH}/data/cache"
-  SETTINGS_FILE_PATH = "#{GAME_ROOT_PATH}/data/settings.json"
-
-  EMPTY_IMAGE = Gosu::Image.from_blob(1, 1)
-  BLACK_IMAGE = Gosu::Image.from_blob(1, 1, "\x00\x00\x00\xff")
-end
 
 require_relative "lib/version"
 require_relative "lib/theme"
@@ -83,8 +99,19 @@ require_relative "lib/pages/login"
 require_relative "lib/pages/settings"
 require_relative "lib/pages/download_manager"
 
+logger.info(W3DHub::LOG_TAG) { "W3D Hub Linux Launcher v#{W3DHub::VERSION}" }
+
 Thread.new do
   W3DHub::BackgroundWorker.create
 end
 
+logger.info(W3DHub::LOG_TAG) { "Launching window..." }
 W3DHub::Window.new(width: 980, height: 720, borderless: false).show unless defined?(Ocra)
+W3DHub::BackgroundWorker.shutdown!
+
+# Wait for BackgroundWorker to return
+while W3DHub::BackgroundWorker.alive?
+  sleep 0.1
+end
+
+W3DHub::LOGGER&.close

@@ -1,5 +1,8 @@
 class W3DHub
   class Api
+    LOG_TAG = "W3DHub::Api".freeze
+
+    API_TIMEOUT = 10 # seconds
     USER_AGENT = "Cyberarm's Linux Friendly W3D Hub Launcher v#{W3DHub::VERSION}".freeze
     DEFAULT_HEADERS = [
       ["User-Agent", USER_AGENT],
@@ -13,6 +16,12 @@ class W3DHub
       BackgroundWorker.job(-> { Api.send(method, *args) }, callback)
     end
 
+    class DummyResponse
+      def success?
+        false
+      end
+    end
+
     #! === W3D Hub API === !#
 
     ENDPOINT = "https://secure.w3dhub.com".freeze
@@ -22,13 +31,27 @@ class W3DHub
 
       # TODO: Check if session has expired and attempt to refresh session before submitting request
 
+      logger.debug(LOG_TAG) { "Fetching POST \"#{url}\"..." }
+
       # Inject Authorization header if account data is populated
       if Store.account
+        logger.debug(LOG_TAG) { "  Injecting Authorization header..." }
         headers = headers.dup
         headers << ["Authorization", "Bearer #{Store.account.access_token}"]
       end
 
-      @client.post(url, headers, body)
+      begin
+        Async::Task.current.with_timeout(API_TIMEOUT) do
+          @client.post(url, headers, body)
+        end
+      rescue Async::TimeoutError
+        logger.error(LOG_TAG) { "Connection to \"#{url}\" timed out after: #{API_TIMEOUT} seconds" }
+        DummyResponse.new
+      rescue EOFError
+        logger.error(LOG_TAG) { "Connection to \"#{url}\" errored:" }
+        logger.error(LOG_TAG) { e }
+        DummyResponse.new
+      end
     end
 
     # Method: POST
@@ -50,7 +73,7 @@ class W3DHub
       body = "data=#{JSON.dump({refreshToken: refresh_token})}"
       response = post("#{ENDPOINT}/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body)
 
-      if response.success?#status == 200
+      if response.success?
         user_data = JSON.parse(response.read, symbolize_names: true)
 
         return false if user_data[:error]
@@ -60,10 +83,15 @@ class W3DHub
 
         if user_details.success?
           user_details_data = JSON.parse(user_details.read, symbolize_names: true)
+        else
+          logger.error(LOG_TAG) { "Failed to fetch refresh user details:" }
+          logger.error(LOG_TAG) { user_details }
         end
 
-        return Account.new(user_data, user_details_data)
+        Account.new(user_data, user_details_data)
       else
+        logger.error(LOG_TAG) { "Failed to fetch refresh user login:" }
+        logger.error(LOG_TAG) { response }
         false
       end
     end
@@ -83,10 +111,15 @@ class W3DHub
 
         if user_details.success?
           user_details_data = JSON.parse(user_details.read, symbolize_names: true)
+        else
+          logger.error(LOG_TAG) { "Failed to fetch user details:" }
+          logger.error(LOG_TAG) { user_details }
         end
 
-        return Account.new(user_data, user_details_data)
+        Account.new(user_data, user_details_data)
       else
+        logger.error(LOG_TAG) { "Failed to fetch user login:" }
+        logger.error(LOG_TAG) { response }
         false
       end
     end
@@ -107,6 +140,8 @@ class W3DHub
       if response.success?
         ServiceStatus.new(response.read)
       else
+        logger.error(LOG_TAG) { "Failed to fetch service status:" }
+        logger.error(LOG_TAG) { response }
         false
       end
     end
@@ -121,6 +156,8 @@ class W3DHub
       if response.success?
         Applications.new(response.read)
       else
+        logger.error(LOG_TAG) { "Failed to fetch applications list:" }
+        logger.error(LOG_TAG) { response }
         false
       end
     end
@@ -136,6 +173,9 @@ class W3DHub
       if response.success?
         News.new(response.read)
       else
+        logger.error(LOG_TAG) { "Failed to fetch news for:" }
+        logger.error(LOG_TAG) { category }
+        logger.error(LOG_TAG) { response }
         false
       end
     end
@@ -152,7 +192,9 @@ class W3DHub
         hash = JSON.parse(response.read, symbolize_names: true)
         hash[:packages].map { |pkg| Package.new(pkg) }
       else
-        pp response
+        logger.error(LOG_TAG) { "Failed to fetch package details for:" }
+        logger.error(LOG_TAG) { packages }
+        logger.error(LOG_TAG) { response }
         false
       end
     end
@@ -171,6 +213,8 @@ class W3DHub
 
     def self.get(url, headers = DEFAULT_HEADERS, body = nil)
       @client ||= Async::HTTP::Client.new(Async::HTTP::Endpoint.parse(SERVER_LIST_ENDPOINT, protocol: Async::HTTP::Protocol::HTTP10))
+
+      logger.debug(LOG_TAG) { "Fetching GET \"#{url}\"..." }
 
       @client.get(url, headers, body)
     end

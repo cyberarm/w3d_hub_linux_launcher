@@ -1,6 +1,7 @@
 class W3DHub
   class Api
     class ServerListUpdater
+      LOG_TAG = "W3DHub::Api::ServerListUpdater".freeze
       include CyberarmEngine::Common
 
       ##!!! When this breaks update from: https://github.com/socketry/async-websocket/blob/master/lib/async/websocket/connection.rb
@@ -70,6 +71,7 @@ class W3DHub
       end
 
       def initialize
+        logger.info(LOG_TAG) { "Starting emulated SignalR Server List Updater..." }
         run
       end
 
@@ -78,18 +80,23 @@ class W3DHub
           Async do |task|
             internet = Async::HTTP::Internet.instance
 
+            logger.debug(LOG_TAG) { "Requesting connection token..." }
             response = internet.post("https://gsh.w3dhub.com/listings/push/v2/negotiate?negotiateVersion=1", Api::DEFAULT_HEADERS, [""])
             data = JSON.parse(response.read, symbolize_names: true)
 
             id = data[:connectionToken]
             endpoint = Async::HTTP::Endpoint.parse("https://gsh.w3dhub.com/listings/push/v2?id=#{id}", alpn_protocols: Async::HTTP::Protocol::HTTP11.names)
 
+            logger.debug(LOG_TAG) { "Connecting to websocket..." }
             Async::WebSocket::Client.connect(endpoint, headers: Api::DEFAULT_HEADERS, handler: PatchedConnection) do |connection|
+              logger.debug(LOG_TAG) { "Requesting json protocol, v1..." }
               connection.write({ protocol: "json", version: 1 })
               connection.flush
-              pp connection.read
+              logger.debug(LOG_TAG) { "Received: #{connection.read}" }
+              logger.debug(LOG_TAG) { "Sending \"PING\"(?)" }
               connection.write({ "type": 6 })
 
+              logger.debug(LOG_TAG) { "Subscribing to server changes..." }
               Store.server_list.each_with_index do |server, i|
                 i += 1
                 mode = 1 # 2 full details, 1 basic details
@@ -97,7 +104,9 @@ class W3DHub
                 connection.write(out)
               end
 
+              logger.debug(LOG_TAG) { "Waiting for data..." }
               while (message = connection.read)
+                logger.debug(LOG_TAG) { "Sending \"PING\"(?)" } if message.first[:type] == 6
                 connection.write({ type: 6 }) if message.first[:type] == 6
 
                 if message&.first&.fetch(:type) == 1
@@ -108,11 +117,13 @@ class W3DHub
                     server = Store.server_list.find { |s| s.id == id }
                     server_updated = server&.update(data)
                     States::Interface.instance&.update_server_browser(server) if server_updated
+                    logger.debug(LOG_TAG) { "Updated #{server.status.name}" } if server_updated
                   end
                 end
               end
             end
           ensure
+            logger.debug(LOG_TAG) { "Cleaning up..." }
             @@instance = nil
           end
         end

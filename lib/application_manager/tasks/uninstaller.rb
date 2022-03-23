@@ -1,6 +1,8 @@
 class W3DHub
   class ApplicationManager
     class Uninstaller < Task
+      LOG_TAG = "W3DHub::ApplicationManager::Uninstaller".freeze
+
       def type
         :uninstaller
       end

@@ -1,6 +1,8 @@
 class W3DHub
   class ApplicationManager
     class Importer < Task
+      LOG_TAG = "W3DHub::ApplicationManager::Importer".freeze
+
       def type
         :importer
       end

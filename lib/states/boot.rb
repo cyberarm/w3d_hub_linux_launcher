@@ -1,6 +1,8 @@
 class W3DHub
   class States
     class Boot < CyberarmEngine::GuiState
+      LOG_TAG = "W3DHub::States::Boot".freeze
+
       def setup
         window.show_cursor = true
 
@@ -11,6 +13,7 @@ class W3DHub
         @fraction = 0.0
         @w3dhub_logo = get_image("#{GAME_ROOT_PATH}/media/icons/app.png")
         @tasks = {
+          # connectivity_check: { started: false, complete: false }, # HEAD connectivity-check.ubuntu.com or HEAD secure.w3dhub.com?
           refresh_user_token: { started: false, complete: false },
           service_status: { started: false, complete: false },
           applications: { started: false, complete: false },
@@ -64,8 +67,9 @@ class W3DHub
           account = Api::Account.new(Store.settings[:account, :data], {})
 
           if (account.access_token_expiry - Time.now) / 60 <= 60 * 3 # Refresh if token expires within 3 hours
-            puts "Refreshing user login..."
+            logger.info(LOG_TAG) { "Refreshing user login..." }
 
+            # TODO: Check without network
             Api.on_fiber(:refresh_user_login, account.refresh_token) do |refreshed_account|
               update_account_data(refreshed_account)
             end
@@ -108,7 +112,7 @@ class W3DHub
 
             @tasks[:service_status][:complete] = true
           else
-            @status_label.value = I18n.t(:"boot.w3dhub_service_is_down")
+            BackgroundWorker.foreground_job(-> {}, ->(_) { @status_label.value = I18n.t(:"boot.w3dhub_service_is_down") })
           end
         end
       end
@@ -123,7 +127,7 @@ class W3DHub
             @tasks[:applications][:complete] = true
           else
             # FIXME: Failed to retreive!
-            @status_label.value = "FAILED TO RETREIVE APPS LIST"
+            BackgroundWorker.foreground_job(-> {}, ->(_){ @status_label.value = "FAILED TO RETREIVE APPS LIST" })
           end
         end
       end

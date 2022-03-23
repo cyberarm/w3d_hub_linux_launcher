@@ -1,6 +1,8 @@
 class W3DHub
   class ApplicationManager
     class Installer < Task
+      LOG_TAG = "W3DHub::ApplicationManager::Installer".freeze
+
       def type
         :installer
       end
