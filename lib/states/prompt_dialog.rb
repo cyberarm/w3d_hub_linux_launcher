@@ -30,12 +30,38 @@ class W3DHub
 
             stack(width: 0.5)
 
-            button "Accept", width: 0.25 do
+            @accept_button = button "Accept", width: 0.25 do
               if @options[:valid_callback]&.call(@prompt_entry.value)
                 pop_state
                 @options[:accept_callback]&.call(@prompt_entry.value)
               end
             end
+          end
+        end
+
+        @prompt_entry.subscribe(:changed) do
+          if @options[:valid_callback]
+            if @options[:valid_callback].call(@prompt_entry.value)
+              c = W3DHub::THEME[:Button][:border_color]
+
+              @prompt_entry.style.border_color = c
+              @prompt_entry.style.default[:border_color] = c
+              @prompt_entry.style.hover[:border_color]   = c
+              @prompt_entry.style.active[:border_color]  = c
+
+              @accept_button.enabled = true
+            else
+              c = 0xff_ff0000
+
+              @prompt_entry.style.border_color = c
+              @prompt_entry.style.default[:border_color] = c
+              @prompt_entry.style.hover[:border_color]   = c
+              @prompt_entry.style.active[:border_color]  = c
+
+              @accept_button.enabled = false
+            end
+
+            @prompt_entry.set_border_color
           end
         end
       end

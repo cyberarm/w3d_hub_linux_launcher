@@ -448,7 +448,11 @@ class W3DHub
           prefill: Store.settings[:server_list_username],
           accept_callback: accept_callback,
           cancel_callback: cancel_callback,
-          valid_callback: proc { |entry| entry.length.positive? }
+          # See: https://gitlab.com/danpaul88/brenbot/-/blob/master/Source/renlog.pm#L136-175
+          valid_callback: proc do |entry|
+            entry.length > 1 && entry.length < 30 && (entry =~ /(:|!|&|%| )/i).nil? &&
+              (entry =~ /[\001\002\037]/).nil? && (entry =~ /\\/).nil?
+          end
         )
       end
 
