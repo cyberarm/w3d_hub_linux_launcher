@@ -106,7 +106,6 @@ class W3DHub
 
               logger.debug(LOG_TAG) { "Waiting for data..." }
               while (message = connection.read)
-                logger.debug(LOG_TAG) { "Sending \"PING\"(?)" } if message.first[:type] == 6
                 connection.write({ type: 6 }) if message.first[:type] == 6
 
                 if message&.first&.fetch(:type) == 1
@@ -117,7 +116,6 @@ class W3DHub
                     server = Store.server_list.find { |s| s.id == id }
                     server_updated = server&.update(data)
                     States::Interface.instance&.update_server_browser(server) if server_updated
-                    logger.debug(LOG_TAG) { "Updated #{server.status.name}" } if server_updated
                   end
                 end
               end
