@@ -47,7 +47,7 @@ class W3DHub
       rescue Async::TimeoutError
         logger.error(LOG_TAG) { "Connection to \"#{url}\" timed out after: #{API_TIMEOUT} seconds" }
         DummyResponse.new
-      rescue EOFError
+      rescue EOFError => e
         logger.error(LOG_TAG) { "Connection to \"#{url}\" errored:" }
         logger.error(LOG_TAG) { e }
         DummyResponse.new

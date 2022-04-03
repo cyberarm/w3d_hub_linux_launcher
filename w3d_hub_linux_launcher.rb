@@ -106,7 +106,7 @@ Thread.new do
 end
 
 logger.info(W3DHub::LOG_TAG) { "Launching window..." }
-W3DHub::Window.new(width: 980, height: 720, borderless: false).show unless defined?(Ocra)
+W3DHub::Window.new(width: 980, height: 720, borderless: false, resizable: true).show unless defined?(Ocra)
 W3DHub::BackgroundWorker.shutdown!
 
 # Wait for BackgroundWorker to return

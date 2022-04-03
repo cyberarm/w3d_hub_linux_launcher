@@ -104,7 +104,9 @@ class W3DHub
             end
           end
 
-          image Cache.path(Store.account.avatar_uri), height: 1.0
+          stack(fill: true, height: 1.0) do
+            image Cache.path(Store.account.avatar_uri), height: 1.0
+          end
         end
       end
 

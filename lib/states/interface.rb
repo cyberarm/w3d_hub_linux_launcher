@@ -30,16 +30,16 @@ class W3DHub
         stack(width: 1.0, height: 1.0, border_thickness: 1, border_color: 0xff_aaaaaa) do
           background 0xff_252525
 
-          @header_container = flow(width: 1.0, height: 0.15, padding: 4) do
-            image "#{GAME_ROOT_PATH}/media/icons/app.png", width: 0.11
+          @header_container = flow(width: 1.0, height: 100, padding: 4) do
+            image "#{GAME_ROOT_PATH}/media/icons/app.png", width: 108
 
-            stack(width: 0.89, height: 1.0) do
+            stack(fill: true, height: 1.0) do
               # background 0xff_885500
 
               @app_info_container = flow(width: 1.0, height: 0.65) do
                 # background 0xff_8855ff
 
-                stack(width: 0.75, height: 1.0) do
+                stack(fill: true, height: 1.0) do
                   title "<b>#{I18n.t(:"app_name")}</b>", height: 0.5
                   flow(width: 1.0, height: 0.5) do
                     @application_taskbar_container = stack(width: 1.0, height: 1.0, margin_left: 16, margin_right: 16) do
@@ -53,9 +53,9 @@ class W3DHub
                   end
                 end
 
-                @account_container = flow(width: 0.25, height: 1.0) do
+                @account_container = flow(width: 256, height: 1.0) do
                   stack(width: 0.7, height: 1.0) do
-                    # background 0xff_222222
+                    background 0xff_222222
                     tagline "<b>#{I18n.t(:"interface.not_logged_in")}</b>", text_wrap: :none
 
                     flow(width: 1.0) do
@@ -70,7 +70,8 @@ class W3DHub
 
               @navigation_container = flow(width: 1.0, height: 0.35) do
                 # background 0xff_666666
-                flow(width: 1.0, height: 1.0, padding_left: 75) do
+                flow(width: 1.0, height: 1.0) do
+                  flow(fill: true, height: 1.0) # Hacky centering
                   link I18n.t(:"interface.games") do
                     page(W3DHub::Pages::Games)
                   end
@@ -90,12 +91,13 @@ class W3DHub
                   link I18n.t(:"interface.settings"), margin_left: 18 do
                     page(W3DHub::Pages::Settings)
                   end
+                  flow(fill: true, height: 1.0) # Hacky centering
                 end
               end
             end
           end
 
-          @content_container = flow(width: 1.0, height: 0.85) do
+          @content_container = flow(width: 1.0, fill: true) do
           end
         end
 

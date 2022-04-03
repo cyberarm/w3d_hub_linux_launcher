@@ -24,14 +24,16 @@ class W3DHub
         @task_index = 0
 
         stack(width: 1.0, height: 1.0, border_thickness: 1, border_color: 0xff_aaaaaa) do
-          stack(width: 1.0, height: 0.925) do
+          stack(width: 1.0, fill: true) do
           end
 
-          @progressbar = progress height: 0.025, width: 1.0
+          stack(width: 1.0, height: 75) do
+            @progressbar = progress height: 25, width: 1.0
 
-          flow(width: 1.0, height: 0.05, padding_left: 16, padding_right: 16, padding_bottom: 8, padding_top: 8) do
-            @status_label = caption "Starting #{I18n.t(:app_name_simple)}...", width: 0.5
-            inscription "#{I18n.t(:app_name)} #{W3DHub::VERSION}", width: 0.5, text_align: :right
+            flow(width: 1.0, fill: true, padding_left: 16, padding_right: 16, padding_bottom: 8, padding_top: 8) do
+              @status_label = caption "Starting #{I18n.t(:app_name_simple)}...", width: 0.5
+              inscription "#{I18n.t(:app_name)} #{W3DHub::VERSION}", width: 0.5, text_align: :right
+            end
           end
         end
       end

@@ -21,7 +21,7 @@ class W3DHub
               inscription "<b>#{I18n.t(:"server_browser.filters")}</b>"
             end
 
-            flow(width: 1.0, height: 0.06) do
+            flow(width: 1.0, height: 32) do
               flow(width: 0.75, height: 1.0) do
                 @filters.each do |app_id, enabled|
                   app = Store.applications.games.find { |a| a.id == app_id.to_s }
@@ -49,7 +49,7 @@ class W3DHub
                 end
 
                 para I18n.t(:"server_browser.region")
-                list_box items: ["Any", "North America", "Europe"], choose: Store.settings[:server_list_region], width: 0.2, height: 1.0 do |value|
+                list_box items: ["Any", "North America", "Europe"], choose: Store.settings[:server_list_region], width: 0.2, max_width: 64, height: 1.0 do |value|
                   @filter_region = value
                   Store.settings[:server_list_region] = @filter_region
                   Store.settings.save_settings
@@ -86,14 +86,14 @@ class W3DHub
                 # Players
                 # Ping
                 flow(width: 1.0, height: 0.05) do
-                  stack(width: 0.08) do
+                  stack(width: 48, padding: 4) do
                   end
 
-                  stack(width: 0.50, height: 1.0) do
+                  stack(width: 0.45, height: 1.0) do
                     para "<b>#{I18n.t(:"server_browser.hostname")}</b>", text_wrap: :none, width: 1.0
                   end
 
-                  flow(width: 0.24, height: 1.0) do
+                  flow(fill: true, height: 1.0) do
                     para "<b>#{I18n.t(:"server_browser.current_map")}</b>", text_wrap: :none, width: 1.0
                   end
 
@@ -101,7 +101,7 @@ class W3DHub
                     para "<b>#{I18n.t(:"server_browser.players")}</b>", text_wrap: :none, width: 1.0
                   end
 
-                  stack(width: 0.06) do
+                  stack(width: 48) do
                     para "<b>#{I18n.t(:"server_browser.ping")}</b>", text_wrap: :none, width: 1.0
                   end
                 end
@@ -175,9 +175,11 @@ class W3DHub
             i += 1
 
             server_container = flow(width: 1.0, height: 48, hover: { background: 0xff_555566 }, active: { background: 0xff_555588 }) do
-              background 0xff_333333 if i.odd?
+              background 0xff_333333 if i.even?
 
-              image game_icon(server), width: 0.08, padding: 4
+              flow(width: 48, height: 1.0, padding: 4) do
+                image game_icon(server), height: 1.0
+              end
 
               stack(width: 0.45, height: 1.0) do
                 inscription "<b>#{server&.status&.name}</b>"
@@ -188,11 +190,11 @@ class W3DHub
                 end
               end
 
-              flow(width: 0.30, height: 1.0) do
+              flow(fill: true, height: 1.0) do
                 inscription "#{server&.status&.map}"
               end
 
-              flow(width: 0.1, height: 1.0) do
+              flow(width: 0.11, height: 1.0) do
                 inscription "#{server&.status&.player_count}/#{server&.status&.max_players}"
               end
 
@@ -205,7 +207,9 @@ class W3DHub
               #   image "#{GAME_ROOT_PATH}/media/ui_icons/signal1.png", width: 0.05, color: 0xff_800000
               # end
 
-              image "#{GAME_ROOT_PATH}/media/ui_icons/question.png", width: 0.05, color: 0xff_444444
+              flow(width: 48, height: 1.0, padding: 4) do
+                image "#{GAME_ROOT_PATH}/media/ui_icons/question.png", height: 1.0, color: 0xff_444444
+              end
             end
 
             def server_container.hit_element?(x, y)
@@ -389,7 +393,6 @@ class W3DHub
       end
 
       def server_game_balance(server)
-
         data = {
           icon: BLACK_IMAGE,
           color: 0xff_ffffff,
@@ -415,27 +418,27 @@ class W3DHub
         data[:team_0_score] = team_0_score
         data[:team_1_score] = team_1_score
 
-        data[:icon] = if  server.status.players.size < 20 && server.game != "ren"
-          data[:color] = 0xff_600000
-          data[:message] = "Too few players for a balanced game"
-          "#{GAME_ROOT_PATH}/media/ui_icons/cross.png"
-        elsif team_0_score + team_1_score < 2_500
-          data[:message] = "Score to low to estimate game balance"
-          data[:color] = 0xff_444444
-          "#{GAME_ROOT_PATH}/media/ui_icons/question.png"
-        elsif ratio.between?(0.75, 1.25)
-          data[:message] = "Game seems balanced based on score"
-          data[:color] = 0xff_008000
-          "#{GAME_ROOT_PATH}/media/ui_icons/checkmark.png"
-        elsif ratio < 0.75
-          data[:color] = 0xff_dd8800
-          data[:message] = "#{server.status.teams[0].name} is winning significantly"
-          "#{GAME_ROOT_PATH}/media/ui_icons/arrowRight.png"
-        else
-          data[:color] = 0xff_dd8800
-          data[:message] = "#{server.status.teams[1].name} is winning significantly"
-          "#{GAME_ROOT_PATH}/media/ui_icons/arrowLeft.png"
-        end
+        data[:icon] = if server.status.players.size < 20 && server.game != "ren"
+                        data[:color] = 0xff_600000
+                        data[:message] = "Too few players for a balanced game"
+                        "#{GAME_ROOT_PATH}/media/ui_icons/cross.png"
+                      elsif team_0_score + team_1_score < 2_500
+                        data[:message] = "Score to low to estimate game balance"
+                        data[:color] = 0xff_444444
+                        "#{GAME_ROOT_PATH}/media/ui_icons/question.png"
+                      elsif ratio.between?(0.75, 1.25)
+                        data[:message] = "Game seems balanced based on score"
+                        data[:color] = 0xff_008000
+                        "#{GAME_ROOT_PATH}/media/ui_icons/checkmark.png"
+                      elsif ratio < 0.75
+                        data[:color] = 0xff_dd8800
+                        data[:message] = "#{server.status.teams[0].name} is winning significantly"
+                        "#{GAME_ROOT_PATH}/media/ui_icons/arrowRight.png"
+                      else
+                        data[:color] = 0xff_dd8800
+                        data[:message] = "#{server.status.teams[1].name} is winning significantly"
+                        "#{GAME_ROOT_PATH}/media/ui_icons/arrowLeft.png"
+                      end
 
         data
       end

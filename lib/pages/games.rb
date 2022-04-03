@@ -10,11 +10,11 @@ class W3DHub
 
         body.clear do
           # Games List
-          @games_list_container = stack(width: 0.15, height: 1.0, scroll: true) do
+          @games_list_container = stack(width: 0.15, max_width: 148, height: 1.0, scroll: true) do
           end
 
           # Game Menu
-          @game_page_container = stack(width: 0.85, height: 1.0) do
+          @game_page_container = stack(fill: true, height: 1.0) do
           end
         end
 
@@ -70,7 +70,7 @@ class W3DHub
           background game.color
 
           # Release channel
-          flow(width: 1.0, height: 0.03) do
+          flow(width: 1.0, height: 18) do
             # background 0xff_444411
 
             inscription I18n.t(:"games.channel")
@@ -82,11 +82,11 @@ class W3DHub
           end
 
           # Game Stuff
-          flow(width: 1.0, height: 0.88) do
+          flow(width: 1.0, fill: true) do
             # background 0xff_9999ff
 
             # Game options
-            stack(width: 0.25, height: 1.0, padding: 8, scroll: true) do
+            stack(width: 208, height: 1.0, padding: 8, scroll: true) do
               # background 0xff_550055
 
               if Store.application_manager.installed?(game.id, channel.id)
@@ -123,13 +123,13 @@ class W3DHub
             end
 
             # Game News
-            @game_news_container = flow(width: 0.75, height: 1.0, padding: 8, scroll: true) do
+            @game_news_container = flow(fill: true, height: 1.0, padding: 8, scroll: true) do
               # background 0xff_005500
             end
           end
 
           # Play buttons
-          flow(width: 1.0, height: 0.09, padding_top: 6) do
+          flow(width: 1.0, height: 48, padding_top: 6) do
             # background 0xff_551100
 
             if Store.application_manager.installed?(game.id, channel.id)
@@ -209,7 +209,7 @@ class W3DHub
         if (feed = @game_news[game.id])
           @game_news_container.clear do
             feed.items.sort_by { |i| i.timestamp }.reverse[0..9].each do |item|
-              flow(width: 0.5, height: 128, margin: 4) do
+              flow(width: 0.5, max_width: 312, height: 128, margin: 4) do
                 # background 0x88_000000
 
                 path = Cache.path(item.image)
