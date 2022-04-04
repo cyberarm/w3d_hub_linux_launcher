@@ -17,12 +17,23 @@ class W3DHub
 
         body.clear do
           stack(width: 1.0, height: 1.0, padding: 8) do
-            stack(width: 1.0, height: 0.04) do
+            stack(width: 1.0, height: 18) do
               inscription "<b>#{I18n.t(:"server_browser.filters")}</b>"
             end
 
             flow(width: 1.0, height: 32) do
-              flow(width: 0.75, height: 1.0) do
+              flow(width: 128, height: 1.0) do
+                # para I18n.t(:"server_browser.region"), width: 0.5
+                list_box items: ["Any", "North America", "Europe"], choose: Store.settings[:server_list_region], width: 1.0, height: 1.0, padding_top: 4, padding_bottom: 4 do |value|
+                  @filter_region = value
+                  Store.settings[:server_list_region] = @filter_region
+                  Store.settings.save_settings
+
+                  populate_server_list
+                end
+              end
+
+              flow(fill: true, height: 1.0) do
                 @filters.each do |app_id, enabled|
                   app = Store.applications.games.find { |a| a.id == app_id.to_s }
                   next unless app
@@ -31,7 +42,7 @@ class W3DHub
 
                   image image_path, tip: "#{app.name}", height: 1.0,
                         border_thickness_bottom: 1, border_color_bottom: 0x00_000000,
-                        color: enabled ? 0xff_ffffff : 0xff_444444, hover: { border_color_bottom: 0xff_aaaaaa }, margin_right: 16 do |img|
+                        color: enabled ? 0xff_ffffff : 0xff_444444, hover: { border_color_bottom: 0xff_aaaaaa }, margin_left: 16 do |img|
                     @filters[app_id] = !@filters[app_id]
                     Store.settings[:server_list_filters] = @filters
                     Store.settings.save_settings
@@ -48,21 +59,12 @@ class W3DHub
                   end
                 end
 
-                para I18n.t(:"server_browser.region")
-                list_box items: ["Any", "North America", "Europe"], choose: Store.settings[:server_list_region], width: 0.2, max_width: 64, height: 1.0 do |value|
-                  @filter_region = value
-                  Store.settings[:server_list_region] = @filter_region
-                  Store.settings.save_settings
-
-                  populate_server_list
-                end
-
                 # button get_image("#{GAME_ROOT_PATH}/media/ui_icons/return.png"), tip: I18n.t(:"server_browser.refresh"), image_height: 1.0, margin_left: 16, padding_left: 2, padding_right: 2, padding_top: 2, padding_bottom: 2 do
                 #   fetch_server_list
                 # end
               end
 
-              flow(width: 0.249, height: 1.0) do
+              flow(min_width: 372, width: 0.38, max_width: 512, height: 1.0) do
                 inscription "#{I18n.t(:"server_browser.nickname")}:", width: 0.32
                 @nickname_label = inscription "#{Store.settings[:server_list_username]}", width: 0.6
                 image "#{GAME_ROOT_PATH}/media/ui_icons/wrench.png", height: 16, hover: { color: 0xaa_ffffff }, tip: I18n.t(:"server_browser.set_nickname") do
@@ -78,14 +80,14 @@ class W3DHub
               end
             end
 
-            flow(width: 1.0, height: 0.9, margin_top: 16) do
-              stack(width: 0.62, height: 1.0) do
+            flow(width: 1.0, fill: true, margin_top: 16) do
+              stack(fill: true, height: 1.0) do
                 # Icon
                 # Hostname
                 # Current Map
                 # Players
                 # Ping
-                flow(width: 1.0, height: 0.05) do
+                flow(width: 1.0, height: 24) do
                   stack(width: 48, padding: 4) do
                   end
 
@@ -106,12 +108,12 @@ class W3DHub
                   end
                 end
 
-                @server_list_container = stack(width: 1.0, height: 0.95, scroll: true) do
+                @server_list_container = stack(width: 1.0, fill: true, scroll: true) do
                   para I18n.t(:"server_browser.fetching_server_list")
                 end
               end
 
-              @game_server_info_container = stack(width: 0.38, height: 1.0) do
+              @game_server_info_container = stack(min_width: 372, width: 0.38, max_width: 512, height: 1.0) do
                 para I18n.t(:"server_browser.no_server_selected"), width: 1.0, text_align: :center
               end
             end
@@ -244,13 +246,13 @@ class W3DHub
       def populate_server_info(server)
         @game_server_info_container.clear do
           stack(width: 1.0, height: 1.0, padding: 8) do
-            stack(width: 1.0, height: 0.3) do
+            stack(width: 1.0, height: 220) do
               flow(width: 1.0, height: 0.2) do
                 image game_icon(server), width: 0.05
                 tagline server.status.name, width: 0.949, text_wrap: :none
               end
 
-              stack(width: 1.0, height: 0.25) do
+              stack(width: 1.0, height: 0.2) do
                 game_installed = Store.application_manager.installed?(server.game, server.channel)
                 game_updatable = Store.application_manager.updateable?(server.game, server.channel)
                 style = server.channel != "release" ? TESTING_BUTTON : {}
@@ -294,30 +296,42 @@ class W3DHub
                 end
               end
 
-              stack(width: 1.0, height: 0.55, margin_top: 16) do
-                flow(width: 1.0, height: 0.33) do
+              # Server Info
+              stack(width: 1.0, fill: true, margin_top: 16) do
+                flow(width: 1.0) do
                   inscription "<b>#{I18n.t(:"server_browser.game")}</b>", width: 0.28, text_wrap: :none
                   inscription "#{game_name(server.game)} (#{server.channel})", width: 0.71, text_wrap: :none
                 end
 
-                flow(width: 1.0, height: 0.33) do
+                flow(width: 1.0) do
                   inscription "<b>#{I18n.t(:"server_browser.map")}</b>", width: 0.28, text_wrap: :none
                   inscription server.status.map, width: 0.71, text_wrap: :none
                 end
 
-                flow(width: 1.0, height: 0.33) do
+                flow(width: 1.0) do
                   inscription "<b>#{I18n.t(:"server_browser.max_players")}</b>", width: 0.28, text_wrap: :none
                   inscription "#{server.status.max_players}", width: 0.71, text_wrap: :none
+                end
+
+                flow(width: 1.0) do
+                  inscription "<b>#{I18n.t(:"server_browser.time")}</b>", width: 0.28, text_wrap: :none
+                  inscription formatted_rentime(server.status.started), width: 0.71, text_wrap: :none
+                end
+
+                flow(width: 1.0) do
+                  inscription "<b>#{I18n.t(:"server_browser.remaining")}</b>", width: 0.28, text_wrap: :none
+                  inscription "#{server.status.remaining}", width: 0.71, text_wrap: :none
                 end
               end
             end
 
             game_balance = server_game_balance(server)
 
-            flow(width: 1.0, height: 0.1, border_thickness_bottom: 2, border_color_bottom: 0x44_ffffff) do
+            # Game score and balance display
+            flow(width: 1.0, height: 48, border_thickness_bottom: 2, border_color_bottom: 0x44_ffffff) do
               stack(width: 0.4, height: 1.0) do
                 para "<b>#{server.status.teams[0].name} (#{server.status.players.select { |pl| pl.team == 0 }.count})</b>", width: 1.0, text_align: :center
-                para game_balance[:team_0_score].to_i.to_s, width: 1.0, text_align: :center
+                para formatted_score(game_balance[:team_0_score].to_i), width: 1.0, text_align: :center
               end
 
               stack(width: 0.2, height: 1.0) do
@@ -327,34 +341,39 @@ class W3DHub
 
               stack(width: 0.4, height: 1.0) do
                 para "<b>#{server.status.teams[1].name} (#{server.status.players.select { |pl| pl.team == 1 }.count})</b>", width: 1.0, text_align: :center
-                para game_balance[:team_1_score].to_i.to_s, width: 1.0, text_align: :center
+                para formatted_score(game_balance[:team_1_score].to_i), width: 1.0, text_align: :center
               end
             end
 
-            flow(width: 1.0, height: 0.60, scroll: true) do
+            # Team roster
+            flow(width: 1.0, fill: true, scroll: true) do
               stack(width: 0.5) do
-                server.status.players.select { |ply| ply.team == 0 }.sort_by { |ply| ply.score }.reverse.each do |player|
+                server.status.players.select { |ply| ply.team == 0 }.sort_by { |ply| ply.score }.reverse.each_with_index do |player, i|
                   flow(width: 1.0, height: 18) do
+                    background 0xff_333333 if i.even?
+
                     stack(width: 0.6, height: 1.0) do
                       inscription player.nick, text_size: 14, text_wrap: :none
                     end
 
                     stack(width: 0.4, height: 1.0) do
-                      inscription "#{player.score}", text_size: 14, width: 1.0, text_align: :right, text_wrap: :none
+                      inscription formatted_score(player.score), text_size: 14, width: 1.0, text_align: :right, text_wrap: :none
                     end
                   end
                 end
               end
 
               stack(width: 0.5, border_thickness_left: 2, border_color_left: 0xff_000000) do
-                server.status.players.select { |ply| ply.team == 1 }.sort_by { |ply| ply.score }.reverse.each do |player|
+                server.status.players.select { |ply| ply.team == 1 }.sort_by { |ply| ply.score }.reverse.each_with_index do |player, i|
                   flow(width: 1.0, height: 18) do
+                    background 0xff_333333 if i.even?
+
                     stack(width: 0.6, height: 1.0) do
                       inscription player.nick, text_size: 14, text_wrap: :none
                     end
 
                     stack(width: 0.4, height: 1.0) do
-                      inscription "#{player.score}", text_size: 14, width: 1.0, text_align: :right, text_wrap: :none
+                      inscription formatted_score(player.score), text_size: 14, width: 1.0, text_align: :right, text_wrap: :none
                     end
                   end
                 end
@@ -484,6 +503,20 @@ class W3DHub
         else
           window.push_state(W3DHub::States::MessageDialog, type: "?", title: "?", message: "?")
         end
+      end
+
+      def formatted_score(int)
+        int.to_s.reverse.scan(/.{1,3}/).join(",").reverse
+      end
+
+      def formatted_rentime(time)
+        range = Time.now - Time.parse(time)
+
+        hours   = range / 60.0 / 60.0 / 24.0
+        minutes = (range / 60.0) % 59
+        seconds = range % 59
+
+        format("%02d:%02d:%02d", hours, minutes, seconds)
       end
     end
   end

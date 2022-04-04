@@ -2,6 +2,8 @@ class W3DHub
   REGULAR_FONT = "#{GAME_ROOT_PATH}/media/fonts/NotoSans-Regular.ttf"
   BOLD_FONT = "#{GAME_ROOT_PATH}/media/fonts/NotoSans-Bold.ttf"
 
+  MAX_PAGE_WIDTH = 1200
+
   TESTING_BUTTON = {
     background: 0xff_ff8800,
     hover: {

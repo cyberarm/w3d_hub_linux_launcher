@@ -53,3 +53,5 @@ en:
     set_nickname_message: Set a nickname that will be used when joining a server
     enter_password: Enter Password
     enter_password_message: This server requires a password
+    time: Time
+    remaining: Remaining

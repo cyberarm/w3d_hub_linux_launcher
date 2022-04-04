@@ -194,7 +194,7 @@ class W3DHub
 
         return false unless news
 
-        news.items[0..9].each do |item|
+        news.items[0..15].each do |item|
           Cache.fetch(uri: item.image, async: false)
         end
 

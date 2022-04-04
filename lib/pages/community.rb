@@ -6,17 +6,15 @@ class W3DHub
 
         body.clear do
           stack(width: 1.0, height: 1.0, padding: 8) do
-            stack(width: 1.0, height: 0.15) do
+            stack(width: 1.0) do
               tagline "<b>Welcome to #{I18n.t(:app_name)}</b>"
               para "The #{I18n.t(:app_name_simple)} is a one-stop shop for your W3D gaming needs, providing game downloads, automatic updating, an integrated server browser, and centralized management of in-game options."
             end
 
-            flow(width: 1.0, height: 0.15, margin_bottom: 24) do
-              icon_container_width = 0.37
-              flow(width: (1.0 - icon_container_width) / 2, height: 1.0) do
-              end
+            flow(width: 1.0, height: 64, margin_bottom: 24) do
+              flow(fill: true, height: 1.0)
 
-              flow(width: icon_container_width, height: 1.0) do
+              flow(width: 64 * 4 + (3 * 32), height: 1.0) do
                 image "#{GAME_ROOT_PATH}/media/icons/app.png", hover: { color: 0xaa_ffffff }, height: 1.0, tip: "#{I18n.t(:app_name)} Github Repository" do
                   Launchy.open("https://github.com/cyberarm/w3d_hub_linux_launcher")
                 end
@@ -30,16 +28,18 @@ class W3DHub
                   Launchy.open("https://www.facebook.com/w3dhub")
                 end
               end
+
+              flow(fill: true, height: 1.0)
             end
 
-            stack(width: 1.0, height: 0.55) do
-              tagline "<b>Latest Updates</b>", height: 0.1
+            stack(width: 1.0, fill: true) do
+              tagline "<b>Latest Updates</b>"
 
-              @wd3hub_news_container = flow(width: 1.0, height: 0.9, padding: 8, scroll: true) do
+              @wd3hub_news_container = flow(width: 1.0, fill: true, padding: 8, scroll: true) do
               end
             end
 
-            stack(width: 1.0, height: 0.15, margin_top: 16) do
+            stack(width: 1.0, height: 72, margin_top: 16) do
               tagline "<b>Help & Support</b>"
               flow(width: 1.0) do
                 para "For help and support using this launcher or playing any W3D Hub game visit the"
@@ -83,7 +83,7 @@ class W3DHub
 
         return unless news
 
-        news.items[0..9].each do |item|
+        news.items[0..15].each do |item|
           Cache.fetch(uri: item.image, async: false)
         end
 
@@ -98,7 +98,7 @@ class W3DHub
         if (feed = @w3dhub_news)
           @wd3hub_news_container.clear do
             feed.items.sort_by { |i| i.timestamp }.reverse[0..9].each do |item|
-              flow(width: 0.5, height: 128, margin: 4) do
+              flow(width: 0.5, max_width: 312, height: 128, margin: 4) do
                 # background 0x88_000000
 
                 path = Cache.path(item.image)

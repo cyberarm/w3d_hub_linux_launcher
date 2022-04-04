@@ -93,7 +93,6 @@ class W3DHub
       def populate_account_info
         @host.instance_variable_get(:"@account_container").clear do
           stack(width: 0.7, height: 1.0) do
-            # background 0xff_222222
             tagline "<b>#{Store.account.username}</b>"
 
             flow(width: 1.0) do
@@ -104,7 +103,8 @@ class W3DHub
             end
           end
 
-          stack(fill: true, height: 1.0) do
+          flow(fill: true, height: 1.0) do
+            flow(fill: true) # Fill empty space to push image over to container edge
             image Cache.path(Store.account.avatar_uri), height: 1.0
           end
         end
@@ -125,8 +125,7 @@ class W3DHub
             end
 
             @host.instance_variable_get(:"@account_container").clear do
-              stack(width: 0.7, height: 1.0) do
-                # background 0xff_222222
+              stack(width: 1.0, height: 1.0) do
                 tagline "<b>#{I18n.t(:"interface.not_logged_in")}</b>", text_wrap: :none
 
                 flow(width: 1.0) do
