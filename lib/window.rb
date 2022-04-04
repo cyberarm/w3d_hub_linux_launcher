@@ -18,6 +18,7 @@ class W3DHub
       end
 
       # push_state(W3DHub::States::DemoInputDelay)
+      # push_state(W3DHub::States::Welcome)
       push_state(W3DHub::States::Boot)
     end
 
