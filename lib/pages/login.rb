@@ -32,7 +32,7 @@ class W3DHub
                   @password.enabled = false
                   btn.enabled = false
 
-                  # Todo lock whole UI until response or timeout
+                  # TODO: lock whole UI until response or timeout
 
                   # Do network stuff
 
@@ -46,7 +46,7 @@ class W3DHub
                         Store.settings[:account][:data] = account
                         Store.settings.save_settings
 
-                        Cache.fetch(account.avatar_uri, force_fetch: true, async: false) if account
+                        Cache.fetch(uri: account.avatar_uri, force_fetch: true, async: false) if account
                         applications = Api.applications if account
                       end
 
