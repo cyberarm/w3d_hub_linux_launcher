@@ -159,9 +159,34 @@ class W3DHub
       end
     end
 
+    def mangohud_command(app_id, channel)
+      return "" if W3DHub.windows?
+
+      # TODO: Add game specific options
+      # OPENGL?
+      if false && system("which mangohud")
+        "MANGOHUD=1 MANGOHUD_DLSYM=1 DXVK_HUD=1 mangohud "
+      else
+        ""
+      end
+    end
+
+    def dxvk_command(app_id, channel)
+      return "" if W3DHub.windows?
+
+      # Vulkan
+      # SETTING && WINE WILL USE DXVK?
+      if false && true#system()
+        _setting = "full"
+        "DXVK_HUD=#{_setting} "
+      else
+        ""
+      end
+    end
+
     def run(app_id, channel, *args)
       if (app_data = installed?(app_id, channel))
-        pid = Process.spawn("#{wine_command(app_id, channel)}\"#{app_data[:install_path]}\" #{args.join(' ')}")
+        pid = Process.spawn("#{dxvk_command(app_id, channel)}#{mangohud_command(app_id, channel)}#{wine_command(app_id, channel)}\"#{app_data[:install_path]}\" #{args.join(' ')}")
         Process.detach(pid)
       end
     end
@@ -180,7 +205,7 @@ class W3DHub
 
       return false unless app_data
 
-      server = Store.server_list.select { |server| server.game == app_id && !server.status.password }&.first
+      server = Store.server_list.select { |server| server.game == app_id && server.channel == channel && !server.status.password }&.first
 
       return false unless server
 

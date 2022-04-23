@@ -12,6 +12,7 @@ en:
     profile: Profile
     games: Games
     server_browser: Server Browser
+    servers: Servers
     community: Community
     download_manager: Download Manager
     downloads: Downloads
@@ -34,6 +35,7 @@ en:
     read_more: Read More
     fetching_news: Fetching news...
     channel: Channel
+    version: Version
   server_browser:
     refresh: Refresh
     join_server: Join Server

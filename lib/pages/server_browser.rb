@@ -347,7 +347,7 @@ class W3DHub
 
             # Team roster
             flow(width: 1.0, fill: true, scroll: true) do
-              stack(width: 0.5) do
+              stack(width: 0.499) do
                 server.status.players.select { |ply| ply.team == 0 }.sort_by { |ply| ply.score }.reverse.each_with_index do |player, i|
                   flow(width: 1.0, height: 18) do
                     background 0xff_333333 if i.even?

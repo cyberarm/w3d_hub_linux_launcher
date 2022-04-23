@@ -76,7 +76,8 @@ require_relative "lib/application_manager/tasks/repairer"
 require_relative "lib/application_manager/tasks/importer"
 require_relative "lib/states/demo_input_delay"
 require_relative "lib/states/boot"
-require_relative "lib/states/interface"
+# require_relative "lib/states/interface"
+require_relative "lib/states/interface_redesign"
 require_relative "lib/states/welcome"
 require_relative "lib/states/message_dialog"
 require_relative "lib/states/prompt_dialog"
@@ -92,7 +93,8 @@ require_relative "lib/api/account"
 require_relative "lib/api/package"
 
 require_relative "lib/page"
-require_relative "lib/pages/games"
+# require_relative "lib/pages/games"
+require_relative "lib/pages/games_redesign"
 require_relative "lib/pages/server_browser"
 require_relative "lib/pages/community"
 require_relative "lib/pages/login"
@@ -106,7 +108,8 @@ Thread.new do
 end
 
 logger.info(W3DHub::LOG_TAG) { "Launching window..." }
-W3DHub::Window.new(width: 980, height: 720, borderless: false, resizable: true).show unless defined?(Ocra)
+# W3DHub::Window.new(width: 980, height: 720, borderless: false, resizable: true).show unless defined?(Ocra)
+W3DHub::Window.new(width: 1280, height: 800, borderless: false, resizable: true).show unless defined?(Ocra)
 W3DHub::BackgroundWorker.shutdown!
 
 # Wait for BackgroundWorker to return

@@ -10,7 +10,7 @@ class W3DHub
 
         body.clear do
           # Games List
-          @games_list_container = stack(width: 0.15, max_width: 148, height: 1.0, scroll: true, border_thickness_right: 1, border_color_right: 0xff_656565) do
+          @games_list_container = stack(width: 148, height: 1.0, scroll: true, border_thickness_right: 1, border_color_right: 0xff_656565) do
           end
 
           # Game Menu
@@ -69,25 +69,19 @@ class W3DHub
         @game_page_container.clear do
           background game.color
 
-          # Release channel
-          flow(width: 1.0, height: 18) do
-            # background 0xff_444411
-
-            inscription I18n.t(:"games.channel")
-            list_box(items: game.channels.map(&:name), choose: channel.name, enabled: game.channels.count > 1,
-                     margin_top: 0, margin_bottom: 0, width: 128,
-                     padding_left: 1, padding_top: 1, padding_right: 1, padding_bottom: 1, text_size: 14) do |value|
-              populate_game_page(game, game.channels.find { |c| c.name == value })
-            end
-          end
-
           # Game Stuff
           flow(width: 1.0, fill: true) do
             # background 0xff_9999ff
 
             # Game options
-            stack(width: 208, height: 1.0, padding: 8, scroll: true) do
+            stack(width: 360, height: 1.0, padding: 8, scroll: true) do
               # background 0xff_550055
+
+              flow(width: 1.0, height: 200) do
+                # background 0xff_1155aa
+
+                banner game.name + " [Banner image missing]"
+              end
 
               if Store.application_manager.installed?(game.id, channel.id)
                 Hash.new.tap { |hash|
@@ -103,8 +97,8 @@ class W3DHub
                   hash[I18n.t(:"games.view_screenshots")] = { icon: nil, block: proc { Store.application_manager.show_folder(game.id, channel.id, :screenshots) } }
                 }.each do |key, hash|
                   flow(width: 1.0, height: 22, margin_bottom: 8) do
-                    image "#{GAME_ROOT_PATH}/media/ui_icons/#{hash[:icon]}.png", width: 0.11 if hash[:icon]
-                    image EMPTY_IMAGE, width: 0.11 unless hash[:icon]
+                    image "#{GAME_ROOT_PATH}/media/ui_icons/#{hash[:icon]}.png", width: 24 if hash[:icon]
+                    image EMPTY_IMAGE, width: 24 unless hash[:icon]
                     link key, text_size: 18, enabled: hash.key?(:enabled) ? hash[:enabled] : true do
                       hash[:block]&.call
                     end
@@ -114,9 +108,59 @@ class W3DHub
 
               game.web_links.each do |item|
                 flow(width: 1.0, height: 22, margin_bottom: 8) do
-                  image "#{GAME_ROOT_PATH}/media/ui_icons/share1.png", width: 0.11
+                  image "#{GAME_ROOT_PATH}/media/ui_icons/share1.png", width: 24
                   link item.name, text_size: 18 do
                     Launchy.open(item.uri)
+                  end
+                end
+              end
+
+              # Spacer
+              flow(width: 1.0, fill: true)
+
+              # Release channel
+              flow(width: 1.0, height: 48) do
+                # background 0xff_444411
+                flow(fill: true)
+
+                list_box(width: 1.0, items: game.channels.map(&:name), choose: channel.name, enabled: game.channels.count > 1, margin_left: 24, margin_right: 24) do |value|
+                  populate_game_page(game, game.channels.find { |c| c.name == value })
+                end
+
+                flow(fill: true)
+              end
+
+              # Play buttons
+              flow(width: 1.0, height: 48, padding_top: 6) do
+                # background 0xff_551100
+
+                if Store.application_manager.installed?(game.id, channel.id)
+                  if Store.application_manager.updateable?(game.id, channel.id)
+                    button "<b>#{I18n.t(:"interface.install_update")}</b>", margin_left: 24, **UPDATE_BUTTON do
+                      Store.application_manager.update(game.id, channel.id)
+                    end
+                  else
+                    button "<b>#{I18n.t(:"interface.play_now")}</b>", margin_left: 24 do
+                      Store.application_manager.play_now(game.id, channel.id)
+                    end
+                  end
+
+                  button "<b>#{I18n.t(:"interface.single_player")}</b>", margin_left: 24 do
+                    Store.application_manager.run(game.id, channel.id)
+                  end
+                else
+                  installing = Store.application_manager.task?(:installer, game.id, channel.id)
+
+                  unless game.id == "ren"
+                    button "<b>#{I18n.t(:"interface.install")}</b>", margin_left: 24, enabled: !installing do |button|
+                      button.enabled = false
+                      @import_button.enabled = false
+                      Store.application_manager.install(game.id, channel.id)
+                    end
+                  end
+
+                  @import_button = button "<b>#{I18n.t(:"interface.import")}</b>", margin_left: 24, enabled: !installing do
+                    Store.application_manager.import(game.id, channel.id)
                   end
                 end
               end
@@ -125,41 +169,6 @@ class W3DHub
             # Game News
             @game_news_container = flow(fill: true, height: 1.0, padding: 8, scroll: true) do
               # background 0xff_005500
-            end
-          end
-
-          # Play buttons
-          flow(width: 1.0, height: 48, padding_top: 6) do
-            # background 0xff_551100
-
-            if Store.application_manager.installed?(game.id, channel.id)
-              if Store.application_manager.updateable?(game.id, channel.id)
-                button "<b>#{I18n.t(:"interface.install_update")}</b>", margin_left: 24, **UPDATE_BUTTON do
-                  Store.application_manager.update(game.id, channel.id)
-                end
-              else
-                button "<b>#{I18n.t(:"interface.play_now")}</b>", margin_left: 24 do
-                  Store.application_manager.play_now(game.id, channel.id)
-                end
-              end
-
-              button "<b>#{I18n.t(:"interface.single_player")}</b>", margin_left: 24 do
-                Store.application_manager.run(game.id, channel.id)
-              end
-            else
-              installing = Store.application_manager.task?(:installer, game.id, channel.id)
-
-              unless game.id == "ren"
-                button "<b>#{I18n.t(:"interface.install")}</b>", margin_left: 24, enabled: !installing do |button|
-                  button.enabled = false
-                  @import_button.enabled = false
-                  Store.application_manager.install(game.id, channel.id)
-                end
-              end
-
-              @import_button = button "<b>#{I18n.t(:"interface.import")}</b>", margin_left: 24, enabled: !installing do
-                Store.application_manager.import(game.id, channel.id)
-              end
             end
           end
         end
@@ -208,6 +217,12 @@ class W3DHub
 
         if (feed = @game_news[game.id])
           @game_news_container.clear do
+            flow(width: 1.0, height: 150) do
+              background 0xaa_444400
+
+              banner "Priority Notification Like Maintenance or Game Night"
+            end
+
             feed.items.sort_by { |i| i.timestamp }.reverse[0..9].each do |item|
               flow(width: 0.5, max_width: 312, height: 128, margin: 4) do
                 # background 0x88_000000
