@@ -48,8 +48,8 @@ class W3DHub
     Button: {
       text_size: 18,
       padding_top: 8,
-      padding_left: 32,
-      padding_right: 32,
+      padding_left: 16,
+      padding_right: 16,
       padding_bottom: 8,
       border_color: Gosu::Color::NONE,
       background: 0xff_00acff,

@@ -23,7 +23,7 @@ class W3DHub
         @page = nil
         @pages = {}
 
-        Store.application_manager.auto_import
+        Store.application_manager.auto_import # unless Store.offline_mode
 
         theme(W3DHub::THEME)
 

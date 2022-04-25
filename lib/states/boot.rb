@@ -21,6 +21,8 @@ class W3DHub
           server_list: { started: false, complete: false }
         }
 
+        @offline_mode = false
+
         @task_index = 0
 
         stack(width: 1.0, height: 1.0, border_thickness: 1, border_color: 0xff_aaaaaa) do
@@ -52,7 +54,9 @@ class W3DHub
 
         @progressbar.value = @fraction
 
-        push_state(States::Interface) if @progressbar.value >= 1.0 && @task_index == @tasks.size
+        push_state(States::Interface) if @offline_mode || (@progressbar.value >= 1.0 && @task_index == @tasks.size)
+
+        return if @offline_mode
 
         task = @tasks[@tasks.keys[@task_index]]
 
@@ -115,6 +119,10 @@ class W3DHub
             @tasks[:service_status][:complete] = true
           else
             BackgroundWorker.foreground_job(-> {}, ->(_) { @status_label.value = I18n.t(:"boot.w3dhub_service_is_down") })
+            @tasks[:service_status][:complete] = true
+
+            @offline_mode = true
+            Store.offline_mode = true
           end
         end
       end
