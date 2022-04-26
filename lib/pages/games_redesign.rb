@@ -19,6 +19,7 @@ class W3DHub
 
             # Game Menu
             @game_page_container = stack(width: 1.0, fill: true) do
+              # , background_image: "C:/Users/cyber/Downloads/vlcsnap-2022-04-24-22h24m15s854.png"
             end
           end
         end
@@ -76,6 +77,9 @@ class W3DHub
 
         @game_page_container.clear do
           background game.color
+          @game_page_container.style.background_image_color = game.color
+          @game_page_container.style.default[:background_image_color] = game.color
+          @game_page_container.update_background_image
 
           # Game Stuff
           flow(width: 1.0, fill: true) do
@@ -98,51 +102,46 @@ class W3DHub
                 end
               end
 
-              if Store.application_manager.installed?(game.id, channel.id)
-                Hash.new.tap { |hash|
-                  hash[I18n.t(:"games.game_settings")] = { icon: "gear", block: proc { Store.application_manager.settings(game.id, channel.id) } }
-                  hash[I18n.t(:"games.wine_configuration")] = { icon: "gear", block: proc { Store.application_manager.wine_configuration(game.id, channel.id) } } if W3DHub.unix?
-                  hash[I18n.t(:"games.game_modifications")] = { icon: "gear", enabled: true, block: proc { populate_game_modifications(game, channel) } }
-                  if game.id != "ren"
-                    hash[I18n.t(:"games.repair_installation")] = { icon: "wrench", block: proc { Store.application_manager.repair(game.id, channel.id) } }
-                    hash[I18n.t(:"games.uninstall_game")] = { icon: "trashCan", block: proc { Store.application_manager.uninstall(game.id, channel.id) } }
+              stack(width: 1.0, fill: true, scroll: true) do
+                if Store.application_manager.installed?(game.id, channel.id)
+                  Hash.new.tap { |hash|
+                    hash[I18n.t(:"games.game_settings")] = { icon: "gear", block: proc { Store.application_manager.settings(game.id, channel.id) } }
+                    hash[I18n.t(:"games.wine_configuration")] = { icon: "gear", block: proc { Store.application_manager.wine_configuration(game.id, channel.id) } } if W3DHub.unix?
+                    hash[I18n.t(:"games.game_modifications")] = { icon: "gear", enabled: true, block: proc { populate_game_modifications(game, channel) } }
+                    if game.id != "ren"
+                      hash[I18n.t(:"games.repair_installation")] = { icon: "wrench", block: proc { Store.application_manager.repair(game.id, channel.id) } }
+                      hash[I18n.t(:"games.uninstall_game")] = { icon: "trashCan", block: proc { Store.application_manager.uninstall(game.id, channel.id) } }
+                    end
+                    hash[I18n.t(:"games.install_folder")] = { icon: nil, block: proc { Store.application_manager.show_folder(game.id, channel.id, :installation) } }
+                    hash[I18n.t(:"games.user_data_folder")] = { icon: nil, block: proc { Store.application_manager.show_folder(game.id, channel.id, :user_data) } }
+                    hash[I18n.t(:"games.view_screenshots")] = { icon: nil, block: proc { Store.application_manager.show_folder(game.id, channel.id, :screenshots) } }
+                  }.each do |key, hash|
+                    flow(width: 1.0, height: 22, margin_bottom: 8) do
+                      image "#{GAME_ROOT_PATH}/media/ui_icons/#{hash[:icon]}.png", width: 24 if hash[:icon]
+                      image EMPTY_IMAGE, width: 24 unless hash[:icon]
+                      link key, text_size: 18, enabled: hash.key?(:enabled) ? hash[:enabled] : true do
+                        hash[:block]&.call
+                      end
+                    end
                   end
-                  hash[I18n.t(:"games.install_folder")] = { icon: nil, block: proc { Store.application_manager.show_folder(game.id, channel.id, :installation) } }
-                  hash[I18n.t(:"games.user_data_folder")] = { icon: nil, block: proc { Store.application_manager.show_folder(game.id, channel.id, :user_data) } }
-                  hash[I18n.t(:"games.view_screenshots")] = { icon: nil, block: proc { Store.application_manager.show_folder(game.id, channel.id, :screenshots) } }
-                }.each do |key, hash|
+                end
+
+                game.web_links.each do |item|
                   flow(width: 1.0, height: 22, margin_bottom: 8) do
-                    image "#{GAME_ROOT_PATH}/media/ui_icons/#{hash[:icon]}.png", width: 24 if hash[:icon]
-                    image EMPTY_IMAGE, width: 24 unless hash[:icon]
-                    link key, text_size: 18, enabled: hash.key?(:enabled) ? hash[:enabled] : true do
-                      hash[:block]&.call
+                    image "#{GAME_ROOT_PATH}/media/ui_icons/share1.png", width: 24
+                    link item.name, text_size: 18 do
+                      Launchy.open(item.uri)
                     end
                   end
                 end
               end
 
-              game.web_links.each do |item|
-                flow(width: 1.0, height: 22, margin_bottom: 8) do
-                  image "#{GAME_ROOT_PATH}/media/ui_icons/share1.png", width: 24
-                  link item.name, text_size: 18 do
-                    Launchy.open(item.uri)
-                  end
-                end
-              end
-
-              # Spacer
-              flow(width: 1.0, fill: true)
-
               # Release channel
               flow(width: 1.0, height: 48) do
                 # background 0xff_444411
-                flow(fill: true)
-
                 list_box(width: 1.0, items: game.channels.map(&:name), choose: channel.name, enabled: game.channels.count > 1) do |value|
                   populate_game_page(game, game.channels.find { |c| c.name == value })
                 end
-
-                flow(fill: true)
               end
 
               # Play buttons
@@ -270,37 +269,54 @@ class W3DHub
             end
 
             feed.items.sort_by { |i| i.timestamp }.reverse[0..9].each do |item|
-              flow(width: 346, height: 346, margin: 8, border_thickness: 1, border_color: game.color) do
+              image_path = Cache.path(item.image)
+              news_blurb_container = nil
+              news_title_container = nil
+
+              news_container = stack(width: 346, height: 346, margin: 8, background_image: image_path, border_thickness: 1, border_color: lighten(Gosu::Color.new(game.color))) do
                 background 0x88_000000
 
-                path = Cache.path(item.image)
+                # Detailed view
+                news_blurb_container = stack(width: 1.0, height: 1.0, background: 0xaa_000000, padding: 4) do
+                  tagline "<b>#{item.title}</b>", width: 1.0
+                  inscription item.timestamp.strftime("%Y-%m-%d")
+                  inscription item.blurb.gsub(/\n+/, "\n").strip[0..1024], fill: true
 
-                if File.exist?(path)
-                  button get_image(path), image_width: 1.0, padding_left: 0, padding_top: 0, padding_right: 0, padding_bottom: 0, border_thickness: 0, border_color: Gosu::Color::NONE, active: { color: 0xff_888888 } do
-                    Launchy.open(item.uri)
-                  end
-                else
-                  button BLACK_IMAGE, image_width: 1.0, padding_left: 0, padding_top: 0, padding_right: 0, padding_bottom: 0, border_thickness: 0, border_color: Gosu::Color::NONE, active: { color: 0xff_888888 } do
+                  button I18n.t(:"games.read_more"), width: 1.0, margin_top: 8, margin_bottom: 0, padding_top: 4, padding_bottom: 4 do
                     Launchy.open(item.uri)
                   end
                 end
 
-                para "<b>#{item.title}</b>", text_size: 18, width: 1.0, padding: 4, margin_top: -32, background: 0xaa_000000
+                # Just title
+                news_title_container = stack(width: 1.0, height: 1.0) do
+                  flow(fill: true)
 
-                # stack(width: 0.6, height: 1.0) do
-                #   stack(width: 1.0, height: 112) do
-                #       Launchy.open(item.uri)
-                #     end
-                #     inscription item.blurb.gsub(/\n+/, "\n").strip[0..180]
-                #   end
+                  tagline "<b>#{item.title}</b>", width: 1.0, background: 0xaa_000000, padding: 4
+                end
+              end
 
-                #   flow(width: 1.0) do
-                #     inscription item.timestamp.strftime("%Y-%m-%d"), width: 0.5
-                #     link I18n.t(:"games.read_more"), width: 0.5, text_align: :right, text_size: 14 do
-                #       Launchy.open(item.uri)
-                #     end
-                #   end
-                # end
+              news_blurb_container.hide
+
+              def news_container.hit_element?(x, y)
+                return unless hit?(x, y)
+
+                if @children.first.visible? && (btn = @children.first.children.find { |child| child.visible? && child.is_a?(CyberarmEngine::Element::Button) && child.hit?(x, y) })
+                  btn
+                else
+                  self
+                end
+              end
+
+              news_container.subscribe(:enter) do
+                news_title_container.hide
+                news_blurb_container.show
+              end
+
+              news_container.subscribe(:leave) do
+                unless news_container.hit?(window.mouse_x, window.mouse_y)
+                  news_title_container.show
+                  news_blurb_container.hide
+                end
               end
             end
           end
