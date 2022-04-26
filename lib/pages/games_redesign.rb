@@ -150,11 +150,11 @@ class W3DHub
 
                 if Store.application_manager.installed?(game.id, channel.id)
                   if Store.application_manager.updateable?(game.id, channel.id)
-                    button "<b>#{I18n.t(:"interface.install_update")}</b>", text_size: 32, **UPDATE_BUTTON do
+                    button "<b>#{I18n.t(:"interface.install_update")}</b>", fill: true, text_size: 32, **UPDATE_BUTTON do
                       Store.application_manager.update(game.id, channel.id)
                     end
                   else
-                    button "<b>#{I18n.t(:"interface.play")}</b>", fill: true, text_size: 32, padding_left: 32, padding_right: 32 do
+                    button "<b>#{I18n.t(:"interface.play")}</b>", fill: true, text_size: 32 do
                       Store.application_manager.play_now(game.id, channel.id)
                     end
                   end
@@ -167,14 +167,14 @@ class W3DHub
                   installing = Store.application_manager.task?(:installer, game.id, channel.id)
 
                   unless game.id == "ren"
-                    button "<b>#{I18n.t(:"interface.install")}</b>", margin_left: 24, enabled: !installing do |button|
+                    button "<b>#{I18n.t(:"interface.install")}</b>", fill: true, margin_right: 8, text_size: 32, enabled: !installing do |button|
                       button.enabled = false
                       @import_button.enabled = false
                       Store.application_manager.install(game.id, channel.id)
                     end
                   end
 
-                  @import_button = button "<b>#{I18n.t(:"interface.import")}</b>", margin_left: 24, enabled: !installing do
+                  @import_button = button "<b>#{I18n.t(:"interface.import")}</b>", fill: true, margin_left: 8, text_size: 32, enabled: !installing do
                     Store.application_manager.import(game.id, channel.id)
                   end
                 end
