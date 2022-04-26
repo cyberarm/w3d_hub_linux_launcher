@@ -43,14 +43,12 @@ class W3DHub
                                 padding_left: 4, padding_right: 4, tip: game.name) do
               background game.color if selected
 
-              flow(width: 1.0, height: 1.0, padding: 8) do
-                # stack(width: 0.3) do
-                #   image "#{GAME_ROOT_PATH}/media/ui_icons/return.png", width: 1.0, color: Gosu::Color::GRAY if Store.application_manager.updateable?(game.id, game.channels.first.id)
-                #   image "#{GAME_ROOT_PATH}/media/ui_icons/import.png", width: 0.5, color: 0x88_ffffff unless Store.application_manager.installed?(game.id, game.channels.first.id)
-                # end
-                image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{game.id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
+              image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{game.id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
+              image_color = Store.application_manager.installed?(game.id, game.channels.first.id) ? 0xff_ffffff : 0x66_ffffff
 
-                image image_path, height: 1.0, color: Store.application_manager.installed?(game.id, game.channels.first.id) ? 0xff_ffffff : 0x88_ffffff
+              flow(width: 1.0, height: 1.0, margin: 8, background_image: image_path, background_image_color: image_color, background_image_mode: :fill) do
+                image "#{GAME_ROOT_PATH}/media/ui_icons/return.png", width: 24, margin_left: -6, margin_top: -6, color: 0xdd_ff8844 if Store.application_manager.updateable?(game.id, game.channels.first.id)
+                image "#{GAME_ROOT_PATH}/media/ui_icons/import.png", width: 24, margin_left: -4, margin_top: -6, color: 0xdd_ffffff unless Store.application_manager.installed?(game.id, game.channels.first.id)
               end
 
               # inscription game.name, width: 1.0, text_align: :center, text_size: 14
@@ -90,15 +88,13 @@ class W3DHub
               # background 0xff_550055
 
               # Game Banner
-              stack(width: 360, height: 200, padding: 8) do
-                # background 0xff_1155aa
+              image_path = "#{GAME_ROOT_PATH}/media/banners/#{game.id}.png"
 
-                path = "#{GAME_ROOT_PATH}/media/banners/#{game.id}.png"
-
-                if File.exist?(path)
-                  image path, width: 1.0
-                else
-                  banner game.name
+              if File.exist?(image_path)
+                stack(width: 360-8, height: 200, margin: 8, background_image: image_path, background_image_mode: :fill_width)
+              else
+                stack(width: 360-8, height: 200, padding: 8) do
+                  banner game.name unless File.exist?(image_path)
                 end
               end
 
@@ -136,11 +132,13 @@ class W3DHub
                 end
               end
 
-              # Release channel
-              flow(width: 1.0, height: 48) do
-                # background 0xff_444411
-                list_box(width: 1.0, items: game.channels.map(&:name), choose: channel.name, enabled: game.channels.count > 1) do |value|
-                  populate_game_page(game, game.channels.find { |c| c.name == value })
+              if game.channels.count > 1
+                # Release channel
+                flow(width: 1.0, height: 48) do
+                  # background 0xff_444411
+                  list_box(width: 1.0, items: game.channels.map(&:name), choose: channel.name, enabled: game.channels.count > 1) do |value|
+                    populate_game_page(game, game.channels.find { |c| c.name == value })
+                  end
                 end
               end
 
