@@ -97,32 +97,84 @@ class W3DHub
 
         if (feed = @w3dhub_news)
           @wd3hub_news_container.clear do
+            # feed.items.sort_by { |i| i.timestamp }.reverse[0..9].each do |item|
+            #   flow(width: 0.5, max_width: 312, height: 128, margin: 4) do
+            #     # background 0x88_000000
+
+            #     path = Cache.path(item.image)
+
+            #     if File.exist?(path)
+            #       image path, height: 1.0, padding: 4
+            #     else
+            #       image BLACK_IMAGE, height: 1.0, padding: 4
+            #     end
+
+            #     stack(width: 0.6, height: 1.0) do
+            #       stack(width: 1.0, height: 112) do
+            #         link "<b>#{item.title}</b>", text_size: 18 do
+            #           Launchy.open(item.uri)
+            #         end
+            #         inscription item.blurb.gsub(/\n+/, "\n").strip[0..180]
+            #       end
+
+            #       flow(width: 1.0) do
+            #         inscription item.timestamp.strftime("%Y-%m-%d"), width: 0.499
+            #         link I18n.t(:"games.read_more"), width: 0.5, text_align: :right, text_size: 14 do
+            #           Launchy.open(item.uri)
+            #         end
+            #       end
+            #     end
+            #   end
+            # end
+
             feed.items.sort_by { |i| i.timestamp }.reverse[0..9].each do |item|
-              flow(width: 0.5, max_width: 312, height: 128, margin: 4) do
-                # background 0x88_000000
+              image_path = Cache.path(item.image)
+              news_blurb_container = nil
+              news_title_container = nil
 
-                path = Cache.path(item.image)
+              news_container = stack(width: 300, height: 300, margin: 8, background_image: image_path, border_thickness: 1, border_color: lighten(Gosu::Color.new(0xff_252525))) do
+                background 0x88_000000
 
-                if File.exist?(path)
-                  image path, height: 1.0, padding: 4
-                else
-                  image BLACK_IMAGE, height: 1.0, padding: 4
+                # Detailed view
+                news_blurb_container = stack(width: 1.0, height: 1.0, background: 0xaa_000000, padding: 4) do
+                  tagline "<b>#{item.title}</b>", width: 1.0
+                  inscription "#{item.author} • #{item.timestamp.strftime("%Y-%m-%d")}"
+                  inscription item.blurb.gsub(/\n+/, "\n").strip[0..1024], fill: true
+
+                  button I18n.t(:"games.read_more"), width: 1.0, margin_top: 8, margin_bottom: 0, padding_top: 4, padding_bottom: 4 do
+                    Launchy.open(item.uri)
+                  end
                 end
 
-                stack(width: 0.6, height: 1.0) do
-                  stack(width: 1.0, height: 112) do
-                    link "<b>#{item.title}</b>", text_size: 18 do
-                      Launchy.open(item.uri)
-                    end
-                    inscription item.blurb.gsub(/\n+/, "\n").strip[0..180]
-                  end
+                # Just title
+                news_title_container = stack(width: 1.0, height: 1.0) do
+                  flow(fill: true)
 
-                  flow(width: 1.0) do
-                    inscription item.timestamp.strftime("%Y-%m-%d"), width: 0.499
-                    link I18n.t(:"games.read_more"), width: 0.5, text_align: :right, text_size: 14 do
-                      Launchy.open(item.uri)
-                    end
-                  end
+                  tagline "<b>#{item.title}</b>", width: 1.0, background: 0xaa_000000, padding: 4
+                end
+              end
+
+              news_blurb_container.hide
+
+              def news_container.hit_element?(x, y)
+                return unless hit?(x, y)
+
+                if @children.first.visible? && (btn = @children.first.children.find { |child| child.visible? && child.is_a?(CyberarmEngine::Element::Button) && child.hit?(x, y) })
+                  btn
+                else
+                  self
+                end
+              end
+
+              news_container.subscribe(:enter) do
+                news_title_container.hide
+                news_blurb_container.show
+              end
+
+              news_container.subscribe(:leave) do
+                unless news_container.hit?(window.mouse_x, window.mouse_y)
+                  news_title_container.show
+                  news_blurb_container.hide
                 end
               end
             end

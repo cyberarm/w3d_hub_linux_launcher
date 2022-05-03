@@ -287,7 +287,7 @@ class W3DHub
               news_blurb_container = nil
               news_title_container = nil
 
-              news_container = stack(width: 346, height: 346, margin: 8, background_image: image_path, border_thickness: 1, border_color: lighten(Gosu::Color.new(game.color))) do
+              news_container = stack(width: 300, height: 300, margin: 8, background_image: image_path, border_thickness: 1, border_color: lighten(Gosu::Color.new(game.color))) do
                 background 0x88_000000
 
                 # Detailed view
