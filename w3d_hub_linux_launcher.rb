@@ -53,6 +53,9 @@ require "protocol/websocket/connection"
 I18n.load_path << Dir["#{W3DHub::GAME_ROOT_PATH}/locales/*.yml"]
 I18n.default_locale = :en
 
+# GUI_DEBUG = true
+require_relative "lib/gui_state_ext"
+
 require_relative "lib/version"
 require_relative "lib/theme"
 require_relative "lib/common"
@@ -82,6 +85,7 @@ require_relative "lib/states/welcome"
 require_relative "lib/states/message_dialog"
 require_relative "lib/states/prompt_dialog"
 require_relative "lib/states/confirm_dialog"
+require_relative "lib/states/direct_connect_dialog"
 
 require_relative "lib/api"
 require_relative "lib/api/service_status"

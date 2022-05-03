@@ -18,7 +18,7 @@ class W3DHub
             end
 
             # Game Menu
-            @game_page_container = stack(width: 1.0, fill: true) do
+            @game_page_container = stack(width: 1.0, fill: true, background_image: "#{GAME_ROOT_PATH}/media/textures/noiseb.png", background_image_mode: :tiled) do
               # , background_image: "C:/Users/cyber/Downloads/vlcsnap-2022-04-24-22h24m15s854.png"
             end
           end
@@ -46,9 +46,8 @@ class W3DHub
               image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{game.id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
               image_color = Store.application_manager.installed?(game.id, game.channels.first.id) ? 0xff_ffffff : 0x66_ffffff
 
-              flow(width: 1.0, height: 1.0, margin: 8, background_image: image_path, background_image_color: image_color, background_image_mode: :fill) do
-                image "#{GAME_ROOT_PATH}/media/ui_icons/return.png", width: 24, margin_left: -6, margin_top: -6, color: 0xdd_ff8844 if Store.application_manager.updateable?(game.id, game.channels.first.id)
-                image "#{GAME_ROOT_PATH}/media/ui_icons/import.png", width: 24, margin_left: -4, margin_top: -6, color: 0xdd_ffffff unless Store.application_manager.installed?(game.id, game.channels.first.id)
+              flow(width: 1.0, height: 1.0, margin: 8, background_image: image_path, background_image_color: image_color, background_image_mode: :fill_height) do
+                image "#{GAME_ROOT_PATH}/media/ui_icons/import.png", width: 24, margin_left: -4, margin_top: -6, color: 0xff_ff8800 if Store.application_manager.updateable?(game.id, game.channels.first.id)
               end
 
               # inscription game.name, width: 1.0, text_align: :center, text_size: 14
@@ -91,23 +90,21 @@ class W3DHub
               image_path = "#{GAME_ROOT_PATH}/media/banners/#{game.id}.png"
 
               if File.exist?(image_path)
-                stack(width: 360-8, height: 200, margin: 8, background_image: image_path, background_image_mode: :fill_width)
+                image image_path, width: 1.0
               else
-                stack(width: 360-8, height: 200, padding: 8) do
-                  banner game.name unless File.exist?(image_path)
-                end
+                banner game.name unless File.exist?(image_path)
               end
 
-              stack(width: 1.0, fill: true, scroll: true) do
+              stack(width: 1.0, fill: true, scroll: true, margin_top: 32) do
                 if Store.application_manager.installed?(game.id, channel.id)
                   Hash.new.tap { |hash|
-                    hash[I18n.t(:"games.game_settings")] = { icon: "gear", block: proc { Store.application_manager.settings(game.id, channel.id) } }
-                    hash[I18n.t(:"games.wine_configuration")] = { icon: "gear", block: proc { Store.application_manager.wine_configuration(game.id, channel.id) } } if W3DHub.unix?
-                    hash[I18n.t(:"games.game_modifications")] = { icon: "gear", enabled: true, block: proc { populate_game_modifications(game, channel) } }
-                    if game.id != "ren"
-                      hash[I18n.t(:"games.repair_installation")] = { icon: "wrench", block: proc { Store.application_manager.repair(game.id, channel.id) } }
-                      hash[I18n.t(:"games.uninstall_game")] = { icon: "trashCan", block: proc { Store.application_manager.uninstall(game.id, channel.id) } }
-                    end
+                    # hash[I18n.t(:"games.game_settings")] = { icon: "gear", block: proc { Store.application_manager.settings(game.id, channel.id) } }
+                    # hash[I18n.t(:"games.wine_configuration")] = { icon: "gear", block: proc { Store.application_manager.wine_configuration(game.id, channel.id) } } if W3DHub.unix?
+                    # hash[I18n.t(:"games.game_modifications")] = { icon: "gear", enabled: true, block: proc { populate_game_modifications(game, channel) } }
+                    # if game.id != "ren"
+                    #   hash[I18n.t(:"games.repair_installation")] = { icon: "wrench", block: proc { Store.application_manager.repair(game.id, channel.id) } }
+                    #   hash[I18n.t(:"games.uninstall_game")] = { icon: "trashCan", block: proc { Store.application_manager.uninstall(game.id, channel.id) } }
+                    # end
                     hash[I18n.t(:"games.install_folder")] = { icon: nil, block: proc { Store.application_manager.show_folder(game.id, channel.id, :installation) } }
                     hash[I18n.t(:"games.user_data_folder")] = { icon: nil, block: proc { Store.application_manager.show_folder(game.id, channel.id, :user_data) } }
                     hash[I18n.t(:"games.view_screenshots")] = { icon: nil, block: proc { Store.application_manager.show_folder(game.id, channel.id, :screenshots) } }
@@ -134,6 +131,9 @@ class W3DHub
 
               if game.channels.count > 1
                 # Release channel
+
+                inscription I18n.t(:"games.game_version"), width: 1.0, text_align: :center
+
                 flow(width: 1.0, height: 48) do
                   # background 0xff_444411
                   list_box(width: 1.0, items: game.channels.map(&:name), choose: channel.name, enabled: game.channels.count > 1) do |value|
@@ -159,6 +159,22 @@ class W3DHub
 
                   button get_image("#{GAME_ROOT_PATH}/media/ui_icons/singleplayer.png"), tip: I18n.t(:"interface.single_player"), image_height: 32, margin_left: 0 do
                     Store.application_manager.run(game.id, channel.id)
+                  end
+
+                  button get_image("#{GAME_ROOT_PATH}/media/ui_icons/gear.png"), tip: I18n.t(:"games.game_options"), image_height: 32, margin_left: 0 do |btn|
+                    items = []
+
+                    items << { label: I18n.t(:"games.game_settings"), block: proc { Store.application_manager.settings(game.id, channel.id) } }
+                    items << { label: I18n.t(:"games.wine_configuration"), block: proc { Store.application_manager.wine_configuration(game.id, channel.id) } } if W3DHub.unix?
+                    items << { label: I18n.t(:"games.game_modifications"), block: proc { populate_game_modifications(game, channel) } }
+                    if game.id != "ren"
+                      items << { label: I18n.t(:"games.repair_installation"), block: proc { Store.application_manager.repair(game.id, channel.id) } }
+                      items << { label: I18n.t(:"games.uninstall_game"), block: proc { Store.application_manager.uninstall(game.id, channel.id) } }
+                    end
+
+                    # From gui_state_ext.rb
+                    # TODO: Implement in engine proper
+                    menu(btn, items: items)
                   end
 
                 else
@@ -277,7 +293,7 @@ class W3DHub
                 # Detailed view
                 news_blurb_container = stack(width: 1.0, height: 1.0, background: 0xaa_000000, padding: 4) do
                   tagline "<b>#{item.title}</b>", width: 1.0
-                  inscription item.timestamp.strftime("%Y-%m-%d")
+                  inscription "#{item.author} • #{item.timestamp.strftime("%Y-%m-%d")}"
                   inscription item.blurb.gsub(/\n+/, "\n").strip[0..1024], fill: true
 
                   button I18n.t(:"games.read_more"), width: 1.0, margin_top: 8, margin_bottom: 0, padding_top: 4, padding_bottom: 4 do

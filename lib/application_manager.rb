@@ -133,13 +133,16 @@ class W3DHub
               "open"
             end
 
+      # TODO: Change if this correct on Linux
+      user_data_path = "#{Dir.home}/Documents/W3D Hub/games/#{app_id}-#{channel}"
+
       path = case type
       when :installation
         app_data[:install_directory]
       when :user_data
-        app_data[:install_directory]
+        user_data_path
       when :screenshots
-        app_data[:install_directory]
+        Dir.exist?("#{user_data_path}/Screenshots") ? "#{user_data_path}/Screenshots" : user_data_path
       else
         raise "Unknown folder type: #{type.inspect}"
       end

@@ -47,5 +47,9 @@ class W3DHub
 
     def button_up(id)
     end
+
+    def menu(host_element, items:)
+      @host.menu(host_element, items: items)
+    end
   end
 end

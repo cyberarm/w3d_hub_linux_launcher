@@ -26,6 +26,8 @@ en:
     settings: Settings
   games:
     game_settings: Game Settings
+    game_options: Game Options
+    game_version: Game Version
     wine_configuration: Wine Configuration
     game_modifications: Game Modifications
     repair_installation: Repair Installation
@@ -38,6 +40,7 @@ en:
     channel: Channel
     version: Version
   server_browser:
+    direct_connect: Direct Connect
     refresh: Refresh
     join_server: Join Server
     game: Game

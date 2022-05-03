@@ -20,6 +20,7 @@ class W3DHub
       # push_state(W3DHub::States::DemoInputDelay)
       # push_state(W3DHub::States::Welcome)
       push_state(W3DHub::States::Boot)
+      # push_state(W3DHub::States::DirectConnectDialog)
     end
 
     def update

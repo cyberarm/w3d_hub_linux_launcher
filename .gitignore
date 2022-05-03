@@ -10,3 +10,5 @@ media/icons/*
 !media/icons/app.*
 !media/icons/default_icon.png
 !media/icons/w3dhub.png
+media/banners/*
+!media/banners/.gitkeep

@@ -62,11 +62,19 @@ class W3DHub
                 # button get_image("#{GAME_ROOT_PATH}/media/ui_icons/return.png"), tip: I18n.t(:"server_browser.refresh"), image_height: 1.0, margin_left: 16, padding_left: 2, padding_right: 2, padding_top: 2, padding_bottom: 2 do
                 #   fetch_server_list
                 # end
+
+                flow(fill: true)
+
+                button "Direct Connect", height: 1.0, padding_top: 4, padding_bottom: 4, enabled: false, tip: "Directly connect to a game server (under development)" do
+                  push_state(W3DHub::States::DirectConnectDialog)
+                end
               end
 
-              flow(min_width: 372, width: 0.38, max_width: 512, height: 1.0) do
-                inscription "#{I18n.t(:"server_browser.nickname")}:", width: 0.32
-                @nickname_label = inscription "#{Store.settings[:server_list_username]}", width: 0.6
+              flow(min_width: 372, width: 0.38, max_width: 512, height: 1.0) do |container|
+                flow(fill: true)
+
+                inscription "#{I18n.t(:"server_browser.nickname")}:"
+                @nickname_label = inscription "#{Store.settings[:server_list_username]}"
                 image "#{GAME_ROOT_PATH}/media/ui_icons/wrench.png", height: 16, hover: { color: 0xaa_ffffff }, tip: I18n.t(:"server_browser.set_nickname") do
                   # Prompt for player name
                   prompt_for_nickname(
@@ -74,6 +82,10 @@ class W3DHub
                       @nickname_label.value = entry
                       Store.settings[:server_list_username] = entry
                       Store.settings.save_settings
+
+                      container.recalculate
+                      container.recalculate
+                      container.recalculate
                     end
                   )
                 end
@@ -248,16 +260,21 @@ class W3DHub
           stack(width: 1.0, height: 1.0, padding: 8) do
             stack(width: 1.0, height: 220) do
               flow(width: 1.0, height: 0.2) do
+                flow(fill: true)
+
                 image game_icon(server), width: 0.05
-                tagline server.status.name, width: 0.949, text_wrap: :none
+                tagline server.status.name, text_wrap: :none
+
+                flow(fill: true)
               end
 
-              stack(width: 1.0, height: 0.2) do
+              flow(width: 1.0, height: 0.2) do
                 game_installed = Store.application_manager.installed?(server.game, server.channel)
                 game_updatable = Store.application_manager.updateable?(server.game, server.channel)
                 style = server.channel != "release" ? TESTING_BUTTON : {}
 
-                button "<b>#{I18n.t(:"server_browser.join_server")}</b>", margin_left: 96, enabled: (game_installed && !game_updatable), **style do
+                flow(fill: true)
+                button "<b>#{I18n.t(:"server_browser.join_server")}</b>", enabled: (game_installed && !game_updatable), **style do
                   # Check for nickname
                   #   prompt for nickname
                   # !abort unless nickname set
@@ -294,6 +311,13 @@ class W3DHub
                     end
                   end
                 end
+
+                if Store.developer_mode
+                  list_box(items: (1..12).to_a.map(&:to_s), margin_left: 16, **TESTING_BUTTON)
+                  button "Multijoin", tip: "Launch multiple clients with configured username_\#{number}", **TESTING_BUTTON, enabled: true
+                end
+
+                flow(fill: true)
               end
 
               # Server Info
@@ -329,17 +353,22 @@ class W3DHub
 
             # Game score and balance display
             flow(width: 1.0, height: 48, border_thickness_bottom: 2, border_color_bottom: 0x44_ffffff) do
-              stack(width: 0.4, height: 1.0) do
+              stack(fill: true, height: 1.0) do
                 para "<b>#{server.status.teams[0].name} (#{server.status.players.select { |pl| pl.team == 0 }.count})</b>", width: 1.0, text_align: :center
                 para formatted_score(game_balance[:team_0_score].to_i), width: 1.0, text_align: :center
               end
 
               stack(width: 0.2, height: 1.0) do
-                image game_balance[:icon], height: 0.5, margin_left: 20, tip: game_balance[:message], color: game_balance[:color]
+                flow(width: 1.0, height: 0.5) do
+                  flow(fill: true)
+                  image game_balance[:icon], height: 1.0, tip: game_balance[:message], color: game_balance[:color]
+                  flow(fill: true)
+                end
+
                 para game_balance[:ratio].round(2).to_s, width: 1.0, text_align: :center
               end
 
-              stack(width: 0.4, height: 1.0) do
+              stack(fill: true, height: 1.0) do
                 para "<b>#{server.status.teams[1].name} (#{server.status.players.select { |pl| pl.team == 1 }.count})</b>", width: 1.0, text_align: :center
                 para formatted_score(game_balance[:team_1_score].to_i), width: 1.0, text_align: :center
               end
@@ -347,7 +376,7 @@ class W3DHub
 
             # Team roster
             flow(width: 1.0, fill: true, scroll: true) do
-              stack(width: 0.499) do
+              stack(width: 0.5) do
                 server.status.players.select { |ply| ply.team == 0 }.sort_by { |ply| ply.score }.reverse.each_with_index do |player, i|
                   flow(width: 1.0, height: 18) do
                     background 0xff_333333 if i.even?

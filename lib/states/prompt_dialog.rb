@@ -17,7 +17,7 @@ class W3DHub
 
               image "#{GAME_ROOT_PATH}/media/ui_icons/question.png", width: 32, align: :center, color: 0xff_ff8800
 
-              tagline "<b>#{@options[:title]}</b>", width: 0.9, text_align: :center
+              tagline "<b>#{@options[:title]}</b>", fill: true, text_align: :center
             end
 
             stack(width: 1.0, fill: true, padding: 16) do
