@@ -25,7 +25,7 @@ class W3DHub
 
         @task_index = 0
 
-        stack(width: 1.0, height: 1.0, border_thickness: 1, border_color: 0xff_aaaaaa) do
+        stack(width: 1.0, height: 1.0, border_thickness: 1, border_color: W3DHub::BORDER_COLOR) do
           stack(width: 1.0, fill: true) do
           end
 

@@ -14,7 +14,7 @@ class W3DHub
         body.clear do
           stack(width: 1.0, height: 1.0) do
             # Games List
-            @games_list_container = flow(width: 1.0, height: 64, scroll: true, border_thickness_bottom: 1, border_color_bottom: 0xff_656565, padding_left: 32, padding_right: 32) do
+            @games_list_container = flow(width: 1.0, height: 64, scroll: true, border_thickness_bottom: 1, border_color_bottom: W3DHub::BORDER_COLOR, padding_left: 32, padding_right: 32) do
             end
 
             # Game Menu
@@ -83,7 +83,7 @@ class W3DHub
             # background 0xff_9999ff
 
             # Game options
-            stack(width: 360, height: 1.0, padding: 8, scroll: true, border_thickness_right: 1, border_color_right: 0xff_656565) do
+            stack(width: 360, height: 1.0, padding: 8, scroll: true, border_thickness_right: 1, border_color_right: W3DHub::BORDER_COLOR) do
               background 0x44_000000
 
               # Game Banner

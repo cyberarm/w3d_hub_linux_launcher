@@ -8,6 +8,7 @@ require "logger"
 
 class W3DHub
   W3DHUB_DEBUG = ARGV.join.include?("--debug")
+  W3DHUB_DEVELOPER = ARGV.join.include?("--developer")
 
   GAME_ROOT_PATH = File.expand_path(".", __dir__)
   CACHE_PATH = "#{GAME_ROOT_PATH}/data/cache"

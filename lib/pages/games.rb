@@ -10,7 +10,7 @@ class W3DHub
 
         body.clear do
           # Games List
-          @games_list_container = stack(width: 0.15, max_width: 148, height: 1.0, scroll: true, border_thickness_right: 1, border_color_right: 0xff_656565) do
+          @games_list_container = stack(width: 0.15, max_width: 148, height: 1.0, scroll: true, border_thickness_right: 1, border_color_right: W3DHub::BORDER_COLOR) do
           end
 
           # Game Menu
