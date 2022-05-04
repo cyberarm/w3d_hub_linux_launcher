@@ -72,6 +72,10 @@ class W3DHub
     Progress: {
       fraction_background: 0xff_00acff,
       border_thickness: 0
+    },
+    ListBox: {
+      padding_left: 8,
+      padding_right: 8
     }
   }
 end

@@ -84,7 +84,7 @@ class W3DHub
 
             # Game options
             stack(width: 360, height: 1.0, padding: 8, scroll: true, border_thickness_right: 1, border_color_right: W3DHub::BORDER_COLOR) do
-              background 0x44_000000
+              background 0x55_000000
 
               # Game Banner
               image_path = "#{GAME_ROOT_PATH}/media/banners/#{game.id}.png"
