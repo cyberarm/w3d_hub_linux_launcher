@@ -58,7 +58,7 @@ class W3DHub
               Store.settings[:language] = language_code(@language_menu.value)
 
               Store.settings[:app_install_dir] = @app_install_dir_input.value
-              Store.settings[:package_cache_dir_input] = @package_cache_dir_input.value
+              Store.settings[:package_cache_dir] = @package_cache_dir_input.value
 
               Store.settings[:wine_command] = @wine_command_input.value
               Store.settings[:wine_prefix] = @wine_prefix_toggle.value
