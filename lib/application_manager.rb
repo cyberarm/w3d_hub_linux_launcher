@@ -244,14 +244,14 @@ class W3DHub
       begin
         reg_constant.open(registry_path, reg_type) do |reg|
           if (install_path = reg["InstallDir"])
-            exe_path = app_id == "ecw" ? "#{File.dirname(install_path)}/game750.exe" : "#{File.dirname(install_path)}/game.exe"
+            exe_path = app_id == "ecw" ? "#{install_path}/game750.exe" : "#{install_path}/game.exe"
 
             if File.exist?(exe_path)
               install_path.gsub!("\\", "/")
               installed_version = reg["InstalledVersion"] unless app_id == "ren"
 
               application_data = {
-                install_directory: File.dirname(install_path),
+                install_directory: install_path,
                 installed_version: app_id == "ren" ? "1.0.0.0" : installed_version,
                 install_path: exe_path,
                 wine_prefix: nil
