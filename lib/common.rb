@@ -43,4 +43,28 @@ class W3DHub
   def self.home_directory
     File.expand_path("~")
   end
+
+  def self.ask_file(title: "Open File", filter: "*game*.exe")
+    if W3DHub.unix?
+      # search for command
+      cmds = %w{ zenity matedialog qarma kdialog }
+
+      command = cmds.find do |cmd|
+        cmd if system("which #{cmd}")
+      end
+
+      path = case File.basename(command)
+      when "zenity", "matedialog", "qarma"
+        `#{command} --file-selection --title "#{title}" --file-filter "#{filter}"`
+      when "kdialog"
+        `#{command} --title "#{title}" --getopenfilename . "#{filter}"`
+      else
+        raise "No known command found for system file selection dialog!"
+      end
+
+      path.strip
+    else
+      raise NotImplementedError
+    end
+  end
 end

@@ -106,6 +106,15 @@ require_relative "lib/pages/login"
 require_relative "lib/pages/settings"
 require_relative "lib/pages/download_manager"
 
+require_relative "lib/asterisk/config"
+require_relative "lib/asterisk/game"
+require_relative "lib/asterisk/irc_profile"
+require_relative "lib/asterisk/server_profile"
+require_relative "lib/asterisk/settings"
+require_relative "lib/asterisk/states/game_form"
+require_relative "lib/asterisk/states/irc_profile_form"
+require_relative "lib/asterisk/states/server_profile_form"
+
 logger.info(W3DHub::LOG_TAG) { "W3D Hub Linux Launcher v#{W3DHub::VERSION}" }
 
 Thread.new do
