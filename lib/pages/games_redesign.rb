@@ -152,8 +152,15 @@ class W3DHub
                       Store.application_manager.update(game.id, channel.id)
                     end
                   else
-                    button "<b>#{I18n.t(:"interface.play")}</b>", fill: true, text_size: 32 do
+                    play_now_server = Store.application_manager.play_now_server(game.id, channel.id)
+                    play_now_button = button "<b>#{I18n.t(:"interface.play")}</b>", fill: true, text_size: 32, enabled: !play_now_server.nil? do
                       Store.application_manager.play_now(game.id, channel.id)
+                    end
+
+                    play_now_button.subscribe(:enter) do |btn|
+                      server = Store.application_manager.play_now_server(game.id, channel.id)
+                      btn.enabled = !server.nil?
+                      btn.instance_variable_set(:"@tip", server ? "#{server.status.name} [#{server.status.player_count}/#{server.status.max_players}]" : "")
                     end
                   end
 

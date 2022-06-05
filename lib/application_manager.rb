@@ -203,12 +203,20 @@ class W3DHub
       end
     end
 
-    def play_now(app_id, channel)
+    def play_now_server(app_id, channel)
       app_data = installed?(app_id, channel)
 
-      return false unless app_data
+      return nil unless app_data
 
-      server = Store.server_list.select { |server| server.game == app_id && server.channel == channel && !server.status.password }&.first
+      found_server = Store.server_list.select do |server|
+        server.game == app_id && server.channel == channel && !server.status.password
+      end&.first
+
+      found_server ? found_server : nil
+    end
+
+    def play_now(app_id, channel)
+      server = play_now_server(app_id, channel)
 
       return false unless server
 
