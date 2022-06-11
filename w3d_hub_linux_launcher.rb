@@ -96,6 +96,7 @@ require_relative "lib/api/server_list_server"
 require_relative "lib/api/server_list_updater"
 require_relative "lib/api/account"
 require_relative "lib/api/package"
+require_relative "lib/api/event"
 
 require_relative "lib/page"
 # require_relative "lib/pages/games"

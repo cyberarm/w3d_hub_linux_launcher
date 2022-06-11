@@ -207,6 +207,21 @@ class W3DHub
       Cache.fetch_package(package, block)
     end
 
+    # /apis/w3dhub/1/get-events
+    #
+    # clients requests events: data={"serverPath":"apb"}
+    def self.events(app_id)
+      body = URI.encode_www_form("data": JSON.dump({ serverPath: app_id }))
+      response = post("#{ENDPOINT}/apis/w3dhub/1/get-server-events", FORM_ENCODED_HEADERS, body)
+
+      if response.success?
+        array = JSON.parse(response.read, symbolize_names: true)
+        array.map { |e| Event.new(e) }
+      else
+        false
+      end
+    end
+
     #! === Server List API === !#
 
     SERVER_LIST_ENDPOINT = "https://gsh.w3dhub.com".freeze

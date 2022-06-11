@@ -3,6 +3,7 @@ class W3DHub
     class Games < Page
       def setup
         @game_news ||= {}
+        @game_events ||= {}
 
         # unless Store.offline_mode
           @focused_game ||= Store.applications.games.find { |g| g.id == Store.settings[:last_selected_app] }
@@ -212,6 +213,10 @@ class W3DHub
                 end
               end
 
+              # Game Events
+              @game_events_container = flow(width: 1.0, height: 128, padding: 8, visible: false) do
+              end
+
               # Game News
               @game_news_container = flow(width: 1.0, fill: true, padding: 8, scroll: true) do
                 # background 0xff_005500
@@ -220,24 +225,40 @@ class W3DHub
           end
         end
 
-        return if Cache.net_lock?("game_news_#{game.id}")
-
-        if @game_news[game.id]
-          populate_game_news(game)
-        else
-          @game_news_container.clear do
-            title I18n.t(:"games.fetching_news"), padding: 8
-          end
-
-          BackgroundWorker.foreground_job(
-            -> { fetch_game_news(game) },
-            lambda do |result|
-              if result
-                populate_game_news(game)
-                Cache.release_net_lock(result)
+        unless Cache.net_lock?("game_news_#{game.id}")
+          if @game_events[game.id]
+            populate_game_events(game)
+          else
+            BackgroundWorker.foreground_job(
+              -> { fetch_game_events(game) },
+              lambda do |result|
+                if result
+                  populate_game_events(game)
+                  Cache.release_net_lock(result)
+                end
               end
+            )
+          end
+        end
+
+        unless Cache.net_lock?("game_events_#{game.id}")
+          if @game_news[game.id]
+            populate_game_news(game)
+          else
+            @game_news_container.clear do
+              title I18n.t(:"games.fetching_news"), padding: 8
             end
-          )
+
+            BackgroundWorker.foreground_job(
+              -> { fetch_game_news(game) },
+              lambda do |result|
+                if result
+                  populate_game_news(game)
+                  Cache.release_net_lock(result)
+                end
+              end
+            )
+          end
         end
       end
 
@@ -338,6 +359,41 @@ class W3DHub
                   news_title_container.show
                   news_blurb_container.hide
                 end
+              end
+            end
+          end
+        end
+      end
+
+      def fetch_game_events(game)
+        lock = Cache.acquire_net_lock("game_events_#{game.id}")
+        return false unless lock
+
+        events = Api.events(game.id)
+        Cache.release_net_lock("game_events_#{game.id}") unless events
+
+        return false unless events
+
+        @game_events[game.id] = events
+
+        "game_events_#{game.id}"
+      end
+
+      def populate_game_events(game)
+        return unless @focused_game == game
+
+        if (events = @game_events[game.id])
+          @game_events_container.show unless events.empty?
+          @game_events_container.hide if events.empty?
+
+          @game_events_container.clear do
+            events.flatten.each do |event|
+              stack(width: 300, height: 1.0, margin_left: 8, margin_right: 8, border_thickness: 1, border_color: lighten(Gosu::Color.new(game.color))) do
+                background 0xaa_222222
+
+                title event.title, width: 1.0, text_align: :center
+                tagline event.start_time.strftime("%A"), text_size: 36, width: 1.0, text_align: :center
+                caption event.start_time.strftime("%B %e, %Y %l:%M %p"), width: 1.0, text_align: :center
               end
             end
           end
