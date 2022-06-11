@@ -1,9 +1,10 @@
+---
 en:
-  app_name: Cyberarm's Linux Friendly W3D Hub Launcher # W3D Hub Launcher
+  app_name: Cyberarm's Linux Friendly W3D Hub Launcher
   app_name_simple: W3D Hub Linux Launcher
   boot:
     w3dhub_service_is_down: W3D Hub service is down.
-    checking_for_updates: Checking for updates...
+    checking_for_updates: Checking for updates…
   interface:
     log_in: Log in
     register: Register
@@ -18,6 +19,8 @@ en:
     downloads: Downloads
     play_now: Play Now
     play: Play
+    join_now: Join Now
+    join: Join
     install_update: Install Update
     single_player: Single Player
     import: Import
@@ -36,7 +39,7 @@ en:
     user_data_folder: User Data Folder
     view_screenshots: View Screenshots
     read_more: Read More
-    fetching_news: Fetching news...
+    fetching_news: Fetching news…
     channel: Channel
     version: Version
   server_browser:
@@ -48,7 +51,7 @@ en:
     max_players: Max Players
     filters: Filters
     region: Region
-    fetching_server_list: Fetching server list...
+    fetching_server_list: Fetching server list…
     no_server_selected: No server selected
     hostname: Hostname
     current_map: Current Map

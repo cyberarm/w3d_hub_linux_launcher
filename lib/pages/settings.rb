@@ -84,11 +84,11 @@ class W3DHub
 
       def language_code(string)
         case string.downcase.strip
-        when "german"
+        when "deutsch"
           "de"
-        when "french"
+        when "français"
           "fr"
-        when "spanish"
+        when "español"
           "es"
         else
           "en"
@@ -100,9 +100,11 @@ class W3DHub
         when "en"
           "English"
         when "de"
-          "German"
+          "Deutsch"
         when "fr"
-          "French"
+          "Français"
+        when "es"
+          "Español"
         else
           raise "Unknown language error"
         end

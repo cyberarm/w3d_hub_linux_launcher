@@ -1,0 +1,61 @@
+__KEY__■EN-ENGLISH■DE-GERMAN■FR-FRENCH■ES-SPANISH■KO-KOREAN■JA-JAPANESE■ZH-CHINESE
+app_name■Cyberarm's Linux Friendly W3D Hub Launcher■■■■■■
+app_name_simple■W3D Hub Linux Launcher■■■■■■
+boot.w3dhub_service_is_down■W3D Hub service is down.■■■■■■
+boot.checking_for_updates■Checking for updates…■■■■■■
+interface.log_in■Log in■■■■■■
+interface.register■Register■■■■■■
+interface.log_out■Log out■■■■■■
+interface.not_logged_in■Not Logged In■■■■■■
+interface.profile■Profile■■■■■■
+interface.games■Games■■■■■■
+interface.server_browser■Server Browser■■■■■■
+interface.servers■Servers■■■■■■
+interface.community■Community■■■■■■
+interface.download_manager■Download Manager■■■■■■
+interface.downloads■Downloads■■■■■■
+interface.play_now■Play Now■■■■■■
+interface.play■Play■■■■■■
+interface.join_now■Join Now■■■■■■
+interface.join■Join■■■■■■
+interface.install_update■Install Update■■■■■■
+interface.single_player■Single Player■■■■■■
+interface.import■Import■■■■■■
+interface.install■Install■■■■■■
+interface.app_settings_tip■W3D Hub Launcher Settings■■■■■■
+interface.settings■Settings■■■■■■
+games.game_settings■Game Settings■■■■■■
+games.game_options■Game Options■■■■■■
+games.game_version■Game Version■■■■■■
+games.wine_configuration■Wine Configuration■■■■■■
+games.game_modifications■Game Modifications■■■■■■
+games.repair_installation■Repair Installation■■■■■■
+games.uninstall_game■Uninstall Game■■■■■■
+games.install_folder■Install Folder■■■■■■
+games.user_data_folder■User Data Folder■■■■■■
+games.view_screenshots■View Screenshots■■■■■■
+games.read_more■Read More■■■■■■
+games.fetching_news■Fetching news…■■■■■■
+games.channel■Channel■■■■■■
+games.version■Version■■■■■■
+server_browser.direct_connect■Direct Connect■■■■■■
+server_browser.refresh■Refresh■■■■■■
+server_browser.join_server■Join Server■■■■■■
+server_browser.game■Game■■■■■■
+server_browser.map■Map■■■■■■
+server_browser.max_players■Max Players■■■■■■
+server_browser.filters■Filters■■■■■■
+server_browser.region■Region■■■■■■
+server_browser.fetching_server_list■Fetching server list…■■■■■■
+server_browser.no_server_selected■No server selected■■■■■■
+server_browser.hostname■Hostname■■■■■■
+server_browser.current_map■Current Map■■■■■■
+server_browser.players■Players■■■■■■
+server_browser.ping■Ping■■■■■■
+server_browser.nickname■Nickname■■■■■■
+server_browser.set_nickname■Set Nickname■■■■■■
+server_browser.set_nickname_message■Set a nickname that will be used when joining a server■■■■■■
+server_browser.enter_password■Enter Password■■■■■■
+server_browser.enter_password_message■This server requires a password■■■■■■
+server_browser.time■Time■■■■■■
+server_browser.remaining■Remaining■■■■■■

@@ -34,10 +34,14 @@ class W3DHub
     end
 
     def gain_focus
+      super
+
       self.update_interval = 1000.0 / 60
     end
 
     def lose_focus
+      super
+
       self.update_interval = 1000.0 / 10
     end
 
