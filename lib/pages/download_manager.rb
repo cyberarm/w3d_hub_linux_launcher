@@ -33,7 +33,7 @@ class W3DHub
 
                 stack(margin_left: 8, width: 0.75) do
                   @application_name_label = tagline "#{task.application.name}"
-                  @application_version_label = inscription "Version: #{task.channel.current_version} (#{task.channel.id})"
+                  @application_version_label = inscription "Version: #{task.target_version} (#{task.channel.id})"
                 end
               end
 

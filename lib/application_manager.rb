@@ -306,7 +306,7 @@ class W3DHub
       install_directory = Cache.install_path(task.application, task.channel)
       application_data = {
         install_directory: install_directory,
-        installed_version: task.channel.current_version,
+        installed_version: task.target_version,
         install_path: "#{install_directory}/game.exe",
         wine_prefix: task.wine_prefix
       }

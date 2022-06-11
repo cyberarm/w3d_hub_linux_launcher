@@ -8,7 +8,7 @@ class W3DHub
 
       include CyberarmEngine::Common
 
-      attr_reader :app_id, :release_channel, :application, :channel,
+      attr_reader :app_id, :release_channel, :application, :channel, :target_version,
                   :manifests, :packages, :files, :wine_prefix, :status
 
       def initialize(app_id, release_channel)
@@ -19,6 +19,8 @@ class W3DHub
 
         @application = Store.applications.games.find { |g| g.id == app_id }
         @channel = @application.channels.find { |c| c.id == release_channel }
+
+        @target_version = type == :repairer ? Store.settings[:games][:"#{app_id}_#{@channel.id}"][:installed_version] : @channel.current_state
 
         @packages_to_download = []
         @total_bytes_to_download = -1
@@ -203,8 +205,8 @@ class W3DHub
 
         @status.step = :fetching_manifests
 
-        if fetch_manifest("games", app_id, "manifest.xml", @channel.current_version)
-          manifest = load_manifest("games", app_id, "manifest.xml", @channel.current_version)
+        if fetch_manifest("games", app_id, "manifest.xml", @target_version)
+          manifest = load_manifest("games", app_id, "manifest.xml", @target_version)
           @manifests << manifest
 
           until(manifest.full?)
