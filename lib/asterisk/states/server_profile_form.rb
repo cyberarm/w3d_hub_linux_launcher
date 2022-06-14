@@ -21,9 +21,9 @@ class W3DHub
             end
 
             stack(width: 1.0, fill: true, padding_left: 8, padding_right: 8) do
-              stack(width: 1.0, height: 65) do
+              stack(width: 1.0, height: 66) do
                 para "Server Profile Name:"
-                @server_name = edit_line "#{@server_profile&.name}", width: 1.0
+                @server_name = edit_line "#{@server_profile&.name}", width: 1.0, fill: true
                 @server_name.subscribe(:changed) do |label|
                   @save_button.enabled = label.value.length.positive?
                 end

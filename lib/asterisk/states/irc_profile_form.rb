@@ -15,70 +15,62 @@ class W3DHub
               background 0x88_000000
 
               # tagline "<b>#{I18n.t(:"server_browser.direct_connect")}</b>", fill: true, text_align: :center
-              tagline @profile ? "Update IRC Profile" : "Add IRC Profile", width: 1.0, text_align: :center
+              tagline @profile ? "Update IRC Profile" : "Add IRC Profile", width: 1.0, fill: true, text_align: :center
             end
 
             stack(width: 1.0, fill: true, padding_left: 8, padding_right: 8) do
-              stack(width: 1.0, height: 60) do
+              stack(width: 1.0, height: 66) do
                 para "IRC Nickname:"
-                @irc_nickname = edit_line "#{@profile&.nickname}", width: 1.0
+                @nickname = edit_line "#{@profile&.nickname}", width: 1.0, fill: true
               end
 
-              stack(width: 1.0, height: 60) do
+              stack(width: 1.0, height: 66) do
                 flow(width: 1.0, height: 1.0) do
                   stack(width: 0.5, height: 1.0) do
-                    para "IRC Username:"
-                    @irc_username = edit_line "#{@profile&.username}", width: 1.0
+                    para "IRC Username (Optional):"
+                    @username = edit_line "#{@profile&.username}", width: 1.0, fill: true
                   end
 
                   stack(width: 0.5, height: 1.0) do
-                    para "IRC Server Password:"
-                    @irc_password = edit_line @profile ? Base64.strict_decode64(@profile.password) : "", width: 1.0, type: :password
+                    para "IRC Server Password (Optional):"
+                    @password = edit_line @profile ? Base64.strict_decode64(@profile.password) : "", width: 1.0, fill: true, type: :password
                   end
                 end
               end
 
-              stack(width: 1.0, height: 60) do
+              stack(width: 1.0, height: 66, margin_top: 32) do
                 flow(width: 1.0, height: 1.0) do
                   stack(width: 0.75, height: 1.0) do
                     para "IRC Server IP or Hostname:"
-                    @irc_hostname = edit_line "#{@profile&.server_hostname}", width: 1.0
+                    @server_hostname = edit_line "#{@profile&.server_hostname}", width: 1.0, fill: true
                   end
 
                   stack(width: 0.249, height: 1.0) do
                     para "IRC Server Port:"
-                    @irc_port = edit_line "#{@profile&.server_port || '6667'}", width: 1.0
+                    @server_port = edit_line "#{@profile&.server_port || '6667'}", width: 1.0, fill: true
                   end
                 end
               end
 
-              flow(width: 1.0, height: 60, margin_top: 8) do
-                flow(width: 0.5, height: 60) do
-                  para "IRC Server Use SSL:", margin_top: 8
-                  @irc_bot = check_box "#{@profile&.server_bot}"
-                end
-
-
-                flow(width: 0.5, height: 60) do
-                  para "IRC Verify Server SSL Certificate:", margin_top: 8
-                  @irc_bot = check_box "#{@profile&.server_bot}"
-                end
+              flow(width: 1.0, height: 66, margin_top: 8) do
+                @server_ssl = check_box "IRC Server Use SSL", checked: @profile&.server_ssl, text_size: 18, width: 0.5, height: 66
+                @server_verify_ssl = check_box "IRC Verify Server SSL Certificate", checked: @profile ? @profile.server_verify_ssl : true, text_size: 18, width: 0.5, height: 66
               end
 
-              stack(width: 1.0, height: 60, margin_top: 32) do
+              stack(width: 1.0, height: 66) do
                 para "Brenbot Bot Name:"
-                @irc_bot = edit_line "#{@profile&.server_bot}", width: 1.0
+                @bot_username = edit_line "#{@profile&.bot_username}", width: 1.0, fill: true
               end
 
-              flow(width: 1.0, height: 60) do
-                stack(width: 0.5, height: 60) do
+              flow(width: 1.0, height: 66) do
+                stack(width: 0.5, height: 66) do
                   para "Brenbot Auth Username:"
-                  @irc_bot = edit_line "#{@profile&.server_bot}", width: 1.0
+                  @bot_auth_username = edit_line "#{@profile&.bot_auth_username}", width: 1.0, fill: true
                 end
 
-                stack(width: 0.5, height: 60) do
+                stack(width: 0.5, height: 66) do
                   para "Brenbot Auth Password:"
-                  @irc_password = edit_line @profile ? Base64.strict_decode64(@profile.password) : "", width: 1.0, type: :password
+                  @bot_auth_password = edit_line @profile ? Base64.strict_decode64(@profile.bot_auth_password) : "", width: 1.0, fill: true, type: :password
                 end
               end
 
@@ -95,11 +87,16 @@ class W3DHub
                   pop_state
                   @options[:save_callback].call(
                     @profile,
-                    @irc_nickname.value,
-                    @irc_password.value,
-                    @irc_hostname.value,
-                    @irc_port.value,
-                    @irc_bot.value
+                    @nickname.value,
+                    @username.value,
+                    @password.value,
+                    @server_hostname.value,
+                    @server_port.value,
+                    @server_ssl.value,
+                    @server_verify_ssl.value,
+                    @bot_username.value,
+                    @bot_auth_username.value,
+                    @bot_auth_password.value
                   )
                 end
               end
@@ -132,18 +129,19 @@ class W3DHub
 
         def valid?
           generated_name = IRCProfileForm.generate_profile_name(
-            @irc_nickname.value,
-            @irc_hostname.value,
-            @irc_port.value,
-            @irc_bot.value
+            @nickname.value,
+            @server_hostname.value,
+            @server_port.value,
+            @bot_username.value
           )
           existing_profile = W3DHub::Store[:asterisk_config].irc_profiles.find { |profile| profile.name == generated_name }
 
-          @irc_nickname.value.length.positive? &&
-          @irc_password.value.length.positive? && # May be optional?
-          @irc_hostname.value.length.positive? &&
-          @irc_port.value.length.positive? &&
-          @irc_bot.value.length.positive?
+          @nickname.value.length.positive? &&
+          @server_hostname.value.length.positive? &&
+          @server_port.value.length.positive? &&
+          @bot_username.value.length.positive? &&
+          @bot_auth_username.value.length.positive? &&
+          @bot_auth_password.value.length.positive?
         end
 
         def self.generate_profile_name(nickname, hostname, port, bot)

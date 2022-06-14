@@ -21,17 +21,17 @@ class W3DHub
             end
 
             stack(width: 1.0, fill: true, padding_left: 8, padding_right: 8) do
-              stack(width: 1.0, height: 60) do
+              stack(width: 1.0, height: 66) do
                 para "Game or Mod Title:"
-                @game_title = edit_line "#{@game&.title}", width: 1.0
+                @game_title = edit_line "#{@game&.title}", width: 1.0, fill: true
               end
 
-              stack(width: 1.0, height: 60) do
+              stack(width: 1.0, height: 66) do
                 para "Path to Executable:"
 
-                flow(width: 1.0) do
-                  @game_path = edit_line "#{@game&.path}", width: 0.749
-                  button "Browse...", width: 0.25, enabled: W3DHub.unix?, tip: W3DHub.unix? ? "Browse for game executable" : "Not available on Windows" do
+                flow(width: 1.0, fill: true) do
+                  @game_path = edit_line "#{@game&.path}", fill: true, height: 1.0
+                  button "Browse...", width: 128, height: 1.0, enabled: W3DHub.unix?, tip: W3DHub.unix? ? "Browse for game executable" : "Not available on Windows" do
                     path = W3DHub.ask_file
                     @game_path.value = path if !path.empty? && File.exist?(path)
                   end

@@ -9,7 +9,7 @@ class W3DHub
 
         background 0xee_444444
 
-        stack(width: 1.0, max_width: 720, height: 1.0, max_height: 512, v_align: :center, h_align: :center, background: 0xee_222222) do
+        stack(width: 1.0, max_width: 720, height: 1.0, max_height: 540, v_align: :center, h_align: :center, background: 0xee_222222) do
           # Title bar
           flow(width: 1.0, height: 32, padding: 8) do
             background 0x88_000000
@@ -20,7 +20,7 @@ class W3DHub
           end
 
           stack(width: 1.0, fill: true, scroll: true) do
-            stack(width: 1.0, height: 60, margin_left: 8, margin_right: 8) do
+            stack(width: 1.0, height: 66, margin_left: 8, margin_right: 8) do
               para "Server profiles", text_align: :center, width: 1.0
 
               flow(width: 1.0, fill: true) do
@@ -51,7 +51,7 @@ class W3DHub
             end
 
             stack(width: 1.0, fill: true, margin_top: 8, padding: 8, border_color: 0xff_111111, border_thickness: 1) do
-              flow(width: 1.0, height: 60) do
+              flow(width: 1.0, height: 66) do
                 stack(width: 0.5, height: 1.0) do
                   para "Nickname:"
                   @server_nickname = edit_line "", width: 1.0, fill: true
@@ -73,7 +73,7 @@ class W3DHub
                 end
               end
 
-              flow(width: 1.0, height: 60) do
+              flow(width: 1.0, height: 66) do
                 stack(width: 0.5, height: 1.0) do
                   para "Server IP or Hostname:"
                   @server_hostname = edit_line "", width: 1.0, fill: true
@@ -95,7 +95,7 @@ class W3DHub
                 end
               end
 
-              stack(width: 1.0, height: 60) do
+              stack(width: 1.0, height: 66) do
                 para "Game or Mod:"
 
                 flow(width: 1.0, fill: true) do
@@ -124,7 +124,7 @@ class W3DHub
                 end
               end
 
-              stack(width: 1.0, height: 60) do
+              stack(width: 1.0, height: 66) do
                 para "Launch arguments (Optional):"
                 @launch_arguments = edit_line "", width: 1.0, fill: true
                 @launch_arguments.subscribe(:changed) do |e|
@@ -134,7 +134,7 @@ class W3DHub
                 end
               end
 
-              stack(width: 1.0, height: 60) do
+              stack(width: 1.0, height: 66) do
                 para "IRC Profile:"
 
                 flow(width: 1.0, fill: true) do
@@ -293,24 +293,43 @@ class W3DHub
         @games_list.choose = title
       end
 
-      def save_irc_profile(updated, nickname, password, hostname, port, bot)
-        generated_name = Asterisk::States::IRCProfileForm.generate_profile_name(nickname, hostname, port, bot)
+      def save_irc_profile(
+                            updated, nickname, username, password,
+                            server_hostname, server_port, server_ssl, server_verify_ssl,
+                            bot_username, bot_auth_username, bot_auth_password
+                          )
+        generated_name = Asterisk::States::IRCProfileForm.generate_profile_name(
+          nickname,
+          server_hostname,
+          server_port,
+          bot_username
+        )
 
         if updated
           updated.name = generated_name
           updated.nickname = nickname
+          updated.username = username
           updated.password = Base64.strict_encode64(password)
-          updated.server_hostname = hostname
-          updated.server_port = port
-          updated.server_bot = bot
+          updated.server_hostname = hserver_hostname
+          updated.server_port = hserver_port
+          updated.server_ssl = server_ssl
+          updated.server_verify_ssl = server_verify_ssl
+          updated.bot_username = bot_username
+          updated.bot_auth_username = bot_auth_username
+          updated.bot_auth_password = Base64.strict_encode64(bot_auth_password)
         else
           profile = Asterisk::IRCProfile.new({
             name: generated_name,
             nickname: nickname,
+            username: username,
             password: Base64.strict_encode64(password),
-            server_hostname: hostname,
-            server_port: port,
-            server_bot: bot
+            server_hostname: server_hostname,
+            server_port: server_port,
+            server_ssl: server_ssl,
+            server_verify_ssl: server_verify_ssl,
+            bot_username: bot_username,
+            bot_auth_username: bot_auth_username,
+            bot_auth_password: Base64.strict_encode64(bot_auth_password)
           })
 
           W3DHub::Store[:asterisk_config].irc_profiles << profile
