@@ -7,9 +7,9 @@ class W3DHub
 
           theme W3DHub::THEME
 
-          background 0xee_444444
+          background 0xaa_444444
 
-          stack(width: 1.0, height: 1.0, margin: 256, background: 0xee_222222) do
+          stack(width: 1.0, max_width: 760, height: 1.0, max_height: 256, v_align: :center, h_align: :center, background: 0xff_222222) do
             # Title bar
             flow(width: 1.0, height: 32, padding: 8) do
               background 0x88_000000
@@ -72,10 +72,6 @@ class W3DHub
           super
 
           @save_button.enabled = valid?
-        end
-
-        def close
-          pop_state
         end
 
         def button_down(id)

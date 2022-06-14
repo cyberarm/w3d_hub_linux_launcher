@@ -21,6 +21,7 @@ class W3DHub
       # push_state(W3DHub::States::Welcome)
       push_state(W3DHub::States::Boot)
       # push_state(W3DHub::States::DirectConnectDialog)
+      # push_state(W3DHub::Asterisk::States::IRCProfileForm)
     end
 
     def update

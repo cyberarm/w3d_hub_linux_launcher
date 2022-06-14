@@ -9,7 +9,7 @@ class W3DHub
 
         background 0xee_444444
 
-        stack(width: 1.0, height: 1.0, margin: 128, background: 0xee_222222) do
+        stack(width: 1.0, max_width: 720, height: 1.0, max_height: 512, v_align: :center, h_align: :center, background: 0xee_222222) do
           # Title bar
           flow(width: 1.0, height: 32, padding: 8) do
             background 0x88_000000
@@ -138,22 +138,22 @@ class W3DHub
                 para "IRC Profile:"
 
                 flow(width: 1.0, fill: true) do
-                  @irc_profiles_list = list_box items: ["None"], fill: true, height: 1.0, enabled: false
+                  @irc_profiles_list = list_box items: W3DHub::Store[:asterisk_config].irc_profiles.map {| pf| pf.name }.insert(0, "None"), fill: true, height: 1.0
                   @irc_profiles_list.subscribe(:changed) do |list|
                     @changes_made = true if @server_profiles_list.value.length.positive?
 
                     valid_for_multiplayer?
                   end
 
-                  button get_image("#{GAME_ROOT_PATH}/media/ui_icons/plus.png"), image_height: 1.0, tip: "Add IRC profile", enabled: false do
+                  button get_image("#{GAME_ROOT_PATH}/media/ui_icons/plus.png"), image_height: 1.0, tip: "Add IRC profile" do
                     push_state(Asterisk::States::IRCProfileForm, save_callback: method(:save_irc_profile))
                   end
 
-                  @irc_delete_button = button get_image("#{GAME_ROOT_PATH}/media/ui_icons/minus.png"), image_height: 1.0, tip: "Remove selected IRC profile", enabled: false do
+                  @irc_delete_button = button get_image("#{GAME_ROOT_PATH}/media/ui_icons/minus.png"), image_height: 1.0, tip: "Remove selected IRC profile" do
                     push_state(ConfirmDialog, message: "")
                   end
 
-                  @irc_edit_button = button get_image("#{GAME_ROOT_PATH}/media/ui_icons/gear.png"), image_height: 1.0, tip: "Edit selected IRC profile", enabled: false do
+                  @irc_edit_button = button get_image("#{GAME_ROOT_PATH}/media/ui_icons/gear.png"), image_height: 1.0, tip: "Edit selected IRC profile" do
                     push_state(Asterisk::States::IRCProfileForm, editing: W3DHub::Store[:asterisk_config].irc_profiles.find { |pf| pf.name == @irc_profiles_list.value }, save_callback: method(:save_irc_profile))
                   end
                 end
@@ -206,11 +206,9 @@ class W3DHub
       end
 
       def draw
-        if window.current_state == self
-          previous_state&.draw
+        previous_state&.draw
 
-          Gosu.flush
-        end
+        Gosu.flush
 
         super
       end
@@ -222,7 +220,7 @@ class W3DHub
         @server_port.value     = profile.server_port
 
         @games_list.choose = profile.game if @games_list.items.find { |game| game == profile.game }
-        @launch_arguments.value     = profile.launch_arguments
+        @launch_arguments.value = profile.launch_arguments
 
         @irc_profiles_list.choose = profile.irc_profile if @irc_profiles_list.items.find { |irc| irc == profile.irc_profile }
       end
@@ -250,17 +248,19 @@ class W3DHub
           updated.launch_arguments = @launch_arguments.value
           updated.irc_profile = @irc_profiles_list.value
         else
-          profile = Asterisk::ServerProfile.new({
-            name: name,
-            nickname: @server_nickname.value,
-            password: Base64.strict_encode64(@server_password.value),
-            server_profile: @server_profiles_list.value,
-            server_hostname: @server_hostname.value,
-            server_port: @server_port.value,
-            game: @games_list.value,
-            launch_arguments: @launch_arguments.value,
-            irc_profile: @irc_profiles_list.value
-          })
+          profile = Asterisk::ServerProfile.new(
+            {
+              name: name,
+              nickname: @server_nickname.value,
+              password: Base64.strict_encode64(@server_password.value),
+              server_profile: @server_profiles_list.value,
+              server_hostname: @server_hostname.value,
+              server_port: @server_port.value,
+              game: @games_list.value,
+              launch_arguments: @launch_arguments.value,
+              irc_profile: @irc_profiles_list.value
+            }
+          )
 
           W3DHub::Store[:asterisk_config].server_profiles << profile
         end

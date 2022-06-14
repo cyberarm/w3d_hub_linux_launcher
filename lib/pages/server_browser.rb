@@ -65,7 +65,7 @@ class W3DHub
 
                 flow(fill: true)
 
-                button "Direct Connect", height: 1.0, padding_top: 4, padding_bottom: 4, enabled: false, tip: "Directly connect to a game server (under development)" do
+                button "Direct Connect", height: 1.0, padding_top: 4, padding_bottom: 4, enabled: W3DHUB_DEBUG && W3DHUB_DEVELOPER, tip: "Directly connect to a game server (under development)" do
                   push_state(W3DHub::States::DirectConnectDialog)
                 end
               end

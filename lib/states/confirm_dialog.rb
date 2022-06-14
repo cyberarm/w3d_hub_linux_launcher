@@ -8,7 +8,7 @@ class W3DHub
 
         background 0xee_444444
 
-        stack(width: 1.0, height: 1.0, margin: 128, background: 0xee_222222) do
+        stack(width: 1.0, max_width: 720, height: 1.0, max_height: 480, v_align: :center, h_align: :center, background: 0xee_222222) do
           flow(width: 1.0, height: 0.1, padding: 8) do
             background 0x88_000000
 

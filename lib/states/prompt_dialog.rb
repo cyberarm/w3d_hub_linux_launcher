@@ -8,41 +8,35 @@ class W3DHub
 
         background 0xee_444444
 
-        flow(width: 1.0, height: 1.0) do
-          flow(fill: true, height: 1.0)
+        stack(width: 1.0, max_width: 720, height: 1.0, max_height: 256, v_align: :center, h_align: :center, background: 0xee_222222) do
+          flow(width: 1.0, height: 32, padding: 8) do
+            background 0x88_000000
 
-          stack(width: 1.0, max_width: MAX_PAGE_WIDTH, height: 1.0, margin: 128, background: 0xee_222222) do
-            flow(width: 1.0, height: 32, padding: 8) do
-              background 0x88_000000
+            image "#{GAME_ROOT_PATH}/media/ui_icons/question.png", width: 32, align: :center, color: 0xff_ff8800
 
-              image "#{GAME_ROOT_PATH}/media/ui_icons/question.png", width: 32, align: :center, color: 0xff_ff8800
+            tagline "<b>#{@options[:title]}</b>", fill: true, text_align: :center
+          end
 
-              tagline "<b>#{@options[:title]}</b>", fill: true, text_align: :center
+          stack(width: 1.0, fill: true, padding: 16) do
+            para @options[:message], width: 1.0
+            @prompt_entry = edit_line @options[:prefill].to_s, margin_top: 24, width: 1.0, autofocus: true, focus: true, type: @options[:input_type] == :password ? :password : :text
+          end
+
+          flow(width: 1.0, height: 40, padding: 8) do
+            button "Cancel", width: 0.25 do
+              pop_state
+              @options[:cancel_callback]&.call(@prompt_entry.value)
             end
 
-            stack(width: 1.0, fill: true, padding: 16) do
-              para @options[:message], width: 1.0
-              @prompt_entry = edit_line @options[:prefill].to_s, margin_top: 24, width: 1.0, autofocus: true, focus: true, type: @options[:input_type] == :password ? :password : :text
-            end
+            stack(fill: true)
 
-            flow(width: 1.0, height: 40, padding: 8) do
-              button "Cancel", width: 0.25 do
+            @accept_button = button "Accept", width: 0.25 do
+              if @options[:valid_callback]&.call(@prompt_entry.value)
                 pop_state
-                @options[:cancel_callback]&.call(@prompt_entry.value)
-              end
-
-              stack(fill: true)
-
-              @accept_button = button "Accept", width: 0.25 do
-                if @options[:valid_callback]&.call(@prompt_entry.value)
-                  pop_state
-                  @options[:accept_callback]&.call(@prompt_entry.value)
-                end
+                @options[:accept_callback]&.call(@prompt_entry.value)
               end
             end
           end
-
-          flow(fill: true, height: 1.0)
         end
 
         @prompt_entry.subscribe(:changed) do
