@@ -20,7 +20,7 @@ class W3DHub
         @application = Store.applications.games.find { |g| g.id == app_id }
         @channel = @application.channels.find { |c| c.id == release_channel }
 
-        @target_version = type == :repairer ? Store.settings[:games][:"#{app_id}_#{@channel.id}"][:installed_version] : @channel.current_state
+        @target_version = type == :repairer ? Store.settings[:games][:"#{app_id}_#{@channel.id}"][:installed_version] : @channel.current_version
 
         @packages_to_download = []
         @total_bytes_to_download = -1
