@@ -5,12 +5,10 @@ class W3DHub
         @game_news ||= {}
         @game_events ||= {}
 
-        # unless Store.offline_mode
-          @focused_game ||= Store.applications.games.find { |g| g.id == Store.settings[:last_selected_app] }
-          @focused_game ||= Store.applications.games.find { |g| g.id == "ren" }
-          @focused_channel ||= @focused_game.channels.find { |c| c.id == Store.settings[:last_selected_channel] }
-          @focused_channel ||= @focused_game.channels.first
-        # end
+        @focused_game ||= Store.applications.games.find { |g| g.id == Store.settings[:last_selected_app] }
+        @focused_game ||= Store.applications.games.find { |g| g.id == "ren" }
+        @focused_channel ||= @focused_game.channels.find { |c| c.id == Store.settings[:last_selected_channel] }
+        @focused_channel ||= @focused_game.channels.first
 
         body.clear do
           stack(width: 1.0, height: 1.0) do
@@ -174,10 +172,10 @@ class W3DHub
 
                     items << { label: I18n.t(:"games.game_settings"), block: proc { Store.application_manager.settings(game.id, channel.id) } }
                     items << { label: I18n.t(:"games.wine_configuration"), block: proc { Store.application_manager.wine_configuration(game.id, channel.id) } } if W3DHub.unix?
-                    items << { label: I18n.t(:"games.game_modifications"), block: proc { populate_game_modifications(game, channel) } }
+                    items << { label: I18n.t(:"games.game_modifications"), block: proc { populate_game_modifications(game, channel) } } unless Store.offline_mode
                     if game.id != "ren"
-                      items << { label: I18n.t(:"games.repair_installation"), block: proc { Store.application_manager.repair(game.id, channel.id) } }
-                      items << { label: I18n.t(:"games.uninstall_game"), block: proc { Store.application_manager.uninstall(game.id, channel.id) } }
+                      items << { label: I18n.t(:"games.repair_installation"), block: proc { Store.application_manager.repair(game.id, channel.id) } } unless Store.offline_mode
+                      items << { label: I18n.t(:"games.uninstall_game"), block: proc { Store.application_manager.uninstall(game.id, channel.id) } } unless Store.offline_mode
                     end
 
                     # From gui_state_ext.rb
@@ -224,6 +222,8 @@ class W3DHub
             end
           end
         end
+
+        return if Store.offline_mode
 
         unless Cache.net_lock?("game_news_#{game.id}")
           if @game_events[game.id]

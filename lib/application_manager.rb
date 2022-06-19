@@ -259,6 +259,7 @@ class W3DHub
               installed_version = reg["InstalledVersion"] unless app_id == "ren"
 
               application_data = {
+                name: task.application.name, # FIXME!
                 install_directory: install_path,
                 installed_version: app_id == "ren" ? "1.0.0.0" : installed_version,
                 install_path: exe_path,
@@ -286,6 +287,7 @@ class W3DHub
 
     def imported!(task, exe_path)
       application_data = {
+        name: task.application.name,
         install_directory: File.dirname(exe_path),
         installed_version: task.channel.current_version,
         install_path: exe_path,
@@ -305,6 +307,7 @@ class W3DHub
 
       install_directory = Cache.install_path(task.application, task.channel)
       application_data = {
+        name: task.application.name,
         install_directory: install_directory,
         installed_version: task.target_version,
         install_path: "#{install_directory}/game.exe",

@@ -76,13 +76,23 @@ class W3DHub
             end
 
             @account_container = flow(width: 256, height: 1.0) do
-              stack(width: 1.0, height: 1.0) do
-                tagline "<b>#{I18n.t(:"interface.not_logged_in")}</b>", text_wrap: :none
+              if Store.offline_mode
+                stack(width: 1.0, height: 1.0) do
+                  flow(fill: true)
 
-                flow(width: 1.0) do
-                  link(I18n.t(:"interface.log_in"), text_size: 16, width: 0.5) { page(W3DHub::Pages::Login) }
-                  link I18n.t(:"interface.register"), text_size: 16, width: 0.49 do
-                    Launchy.open("https://secure.w3dhub.com/forum/index.php?app=core&module=global&section=register")
+                  title "<b>OFFLINE</b>", text_wrap: :none, width: 1.0, text_align: :center
+
+                  flow(fill: true)
+                end
+              else
+                stack(width: 1.0, height: 1.0) do
+                  tagline "<b>#{I18n.t(:"interface.not_logged_in")}</b>", text_wrap: :none
+
+                  flow(width: 1.0) do
+                    link(I18n.t(:"interface.log_in"), text_size: 16, width: 0.5) { page(W3DHub::Pages::Login) }
+                    link I18n.t(:"interface.register"), text_size: 16, width: 0.49 do
+                      Launchy.open("https://secure.w3dhub.com/forum/index.php?app=core&module=global&section=register")
+                    end
                   end
                 end
               end

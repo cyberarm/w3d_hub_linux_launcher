@@ -54,6 +54,8 @@ class W3DHub
 
         @progressbar.value = @fraction
 
+        load_offline_applications_list if @offline_mode
+
         push_state(States::Interface) if @offline_mode || (@progressbar.value >= 1.0 && @task_index == @tasks.size)
 
         return if @offline_mode
@@ -187,6 +189,42 @@ class W3DHub
 
           @tasks[:server_list][:complete] = true
         end
+      end
+
+      def load_offline_applications_list
+        hash = {
+          applications: []
+        }
+
+        Store.settings[:games].each do |key, game|
+          app_id, channel_id = key.to_s.split("_")
+
+          app = hash[:applications].find { |a| a[:id] == app_id }
+          app_in_array = !app.nil?
+          app ||= {
+            id: app_id,
+            name: game[:name],
+            type: "",
+            category: "games",
+            "studio-id": "",
+            channels: [],
+            "web-links": [],
+            "extended-data": [{ name: "colour", value: "#353535" }]
+          }
+
+          channel = {
+            id: channel_id,
+            name: channel_id,
+            "user-level": "",
+            "current-version": game[:installed_version]
+          }
+
+          app[:channels] << channel
+
+          hash[:applications] << app unless app_in_array
+        end
+
+        Store.applications = Api::Applications.new(hash.to_json)
       end
     end
   end
