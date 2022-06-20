@@ -229,16 +229,18 @@ class W3DHub
       Store.applications.games.each do |game|
         game.channels.each do |channel|
           if game.id == "ren" && channel.id == "release"
-            auto_import_win32_registry(game.id, channel.id, 'SOFTWARE\Westwood\Renegade')
+            auto_import_win32_registry(game, channel.id, 'SOFTWARE\Westwood\Renegade')
           else
-            auto_import_win32_registry(game.id, channel.id)
+            auto_import_win32_registry(game, channel.id)
           end
         end
       end
     end
 
-    def auto_import_win32_registry(app_id, channel_id, registry_path = nil)
+    def auto_import_win32_registry(game, channel_id, registry_path = nil)
       return unless W3DHub.windows?
+
+      app_id = game.id
 
       logger.info(LOG_TAG) { "Importing: #{app_id}-#{channel_id}" }
 
@@ -252,14 +254,15 @@ class W3DHub
       begin
         reg_constant.open(registry_path, reg_type) do |reg|
           if (install_path = reg["InstallDir"])
+            install_path.gsub!("\\", "/")
+
             exe_path = app_id == "ecw" ? "#{install_path}/game750.exe" : "#{install_path}/game.exe"
 
             if File.exist?(exe_path)
-              install_path.gsub!("\\", "/")
               installed_version = reg["InstalledVersion"] unless app_id == "ren"
 
               application_data = {
-                name: task.application.name, # FIXME!
+                name: game.name,
                 install_directory: install_path,
                 installed_version: app_id == "ren" ? "1.0.0.0" : installed_version,
                 install_path: exe_path,
