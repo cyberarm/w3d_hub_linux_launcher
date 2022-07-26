@@ -50,6 +50,17 @@ class W3DHub
     def settings(app_id, channel)
       logger.info(LOG_TAG) { "Settings Request: #{app_id}-#{channel}" }
 
+      if (app_data = installed?(app_id, channel))
+        _application = Store.applications.games.find { |g| g.id == app_id }
+        _channel = _application.channels.find { |c| c.id == channel }
+
+        push_state(W3DHub::States::GameSettingsDialog, title: "#{_application.name} (#{_channel.name}) Settings", app_id: app_id, channel: channel)
+      end
+    end
+
+    def wwconfig(app_id, channel)
+      logger.info(LOG_TAG) { "WWConfig Request: #{app_id}-#{channel}" }
+
       # open wwconfig.exe or config.exe for ecw
 
       if (app_data = installed?(app_id, channel))

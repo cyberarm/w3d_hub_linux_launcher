@@ -76,6 +76,24 @@ class W3DHub
     ListBox: {
       padding_left: 8,
       padding_right: 8
+    },
+    Slider: {
+      border_color: 0xff_00acff
+    },
+    Handle: {
+      text_size: 18,
+      padding_top: 8,
+      padding_left: 2,
+      padding_right: 2,
+      padding_bottom: 8,
+      border_color: Gosu::Color::NONE,
+      background: 0xff_00acff,
+      hover: {
+        background: 0xff_bee6fd
+      },
+      active: {
+        background: 0xff_add5ec
+      }
     }
   }
 end

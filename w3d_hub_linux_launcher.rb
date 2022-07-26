@@ -87,6 +87,7 @@ require_relative "lib/states/message_dialog"
 require_relative "lib/states/prompt_dialog"
 require_relative "lib/states/confirm_dialog"
 require_relative "lib/states/direct_connect_dialog"
+require_relative "lib/states/game_settings_dialog"
 
 require_relative "lib/api"
 require_relative "lib/api/service_status"

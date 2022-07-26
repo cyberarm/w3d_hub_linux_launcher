@@ -33,6 +33,16 @@ class W3DHub
         @games_list_container.clear do
           background 0xff_121920
 
+          stack(width: 128, height: 1.0) do
+            flow(fill: true)
+
+            button "All Games", enabled: false, tip: "Under Construction" do
+              populate_all_games_view
+            end
+
+            flow(fill: true)
+          end
+
           Store.applications.games.each do |game|
             selected = game == @focused_game
 
@@ -170,7 +180,8 @@ class W3DHub
                   button get_image("#{GAME_ROOT_PATH}/media/ui_icons/gear.png"), tip: I18n.t(:"games.game_options"), image_height: 32, margin_left: 0 do |btn|
                     items = []
 
-                    items << { label: I18n.t(:"games.game_settings"), block: proc { Store.application_manager.settings(game.id, channel.id) } }
+                    items << { label: I18n.t(:"games.game_settings"), block: proc { Store.application_manager.wwconfig(game.id, channel.id) } }
+                    # items << { label: I18n.t(:"games.game_settings"), block: proc { Store.application_manager.settings(game.id, channel.id) } }
                     items << { label: I18n.t(:"games.wine_configuration"), block: proc { Store.application_manager.wine_configuration(game.id, channel.id) } } if W3DHub.unix?
                     items << { label: I18n.t(:"games.game_modifications"), block: proc { populate_game_modifications(game, channel) } } unless Store.offline_mode
                     if game.id != "ren"
@@ -258,6 +269,70 @@ class W3DHub
                 end
               end
             )
+          end
+        end
+      end
+
+      def populate_all_games_view
+        @game_page_container.clear do
+          background 0x88_353535
+          @game_page_container.style.background_image_color = 0x88_353535
+          @game_page_container.style.default[:background_image_color] = 0x88_353535
+          @game_page_container.update_background_image
+
+          @focused_game = nil
+          @focused_channel = nil
+
+          populate_games_list
+
+          flow(width: 1.0, height: 1.0) do
+            games_view_container = nil
+            # Options
+            stack(width: 360, height: 1.0, padding: 8, scroll: true, border_thickness_right: 1, border_color_right: W3DHub::BORDER_COLOR) do
+              background 0x55_000000
+
+              flow(width: 1.0, height: 48) do
+                button "All Games", width: 280 do
+                  # games_view_container.clear
+                end
+                tagline Store.applications.games.count.to_s, fill: true, text_align: :right
+              end
+
+              flow(width: 1.0, height: 48, margin_top: 8) do
+                button "Installed", width: 280
+                tagline "0", fill: true, text_align: :right
+              end
+
+              flow(width: 1.0, height: 48, margin_top: 8) do
+                button "Favorites", width: 280
+                tagline "0", fill: true, text_align: :right
+              end
+            end
+
+            # Games list
+            games_view_container = stack(fill: true, height: 1.0, padding: 8, margin: 8) do
+              title "All Games"
+
+              flow(width: 1.0, fill: true, scroll: true) do
+                Store.applications.games.each do |game|
+                  stack(width: 150, height: 200, padding: 8, margin: 8, background: 0x88_151515, border_color: game.color, border_thickness: 1) do
+                    flow(width: 1.0, height: 24) do
+                      para "Favorite", fill: true
+                      toggle_button checked: false, height: 1.0, padding_top: 3, padding_right: 3, padding_bottom: 3, padding_left: 3
+                    end
+
+                    image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{game.id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
+                    flow(width: 1.0, margin_top: 8) do
+                      flow(fill: true)
+                      image image_path, width: 0.5
+                      flow(fill: true)
+                    end
+
+                    caption game.name, margin_top: 8
+                  end
+                end
+              end
+            end
           end
         end
       end
