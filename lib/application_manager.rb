@@ -234,6 +234,34 @@ class W3DHub
       join_server(app_id, channel, server)
     end
 
+    def favorive(app_id, bool)
+      Store.settings[:favorites] ||= {}
+
+      if bool
+        Store.settings[:favorites][app_id.to_sym] = true
+      else
+        Store.settings[:favorites].delete(app_id.to_sym)
+      end
+    end
+
+    def favorite?(app_id)
+      Store.settings[:favorites] ||= {}
+
+      Store.settings[:favorites][app_id.to_sym]
+    end
+
+    def app_order(app_id, int)
+      Store.settings[:app_order] ||= {}
+
+      Store.settings[:app_order][app_id.to_sym] = int
+    end
+
+    def app_order_index(app_id)
+      Store.settings[:app_order] ||= {}
+
+      Store.settings[:app_order][app_id.to_sym]
+    end
+
     def auto_import
       return unless W3DHub.windows?
 

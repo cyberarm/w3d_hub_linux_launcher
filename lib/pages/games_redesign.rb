@@ -36,14 +36,18 @@ class W3DHub
           stack(width: 128, height: 1.0) do
             flow(fill: true)
 
-            button "All Games", enabled: false, tip: "Under Construction" do
+            button "All Games" do
               populate_all_games_view
             end
 
             flow(fill: true)
           end
 
+          has_favorites = Store.settings[:favorites].size.positive?
+
           Store.applications.games.each do |game|
+            next if has_favorites && !Store.application_manager.favorite?(game.id)
+
             selected = game == @focused_game
 
             game_button = stack(width: 64, height: 1.0, border_thickness_bottom: 4,
@@ -299,13 +303,13 @@ class W3DHub
               end
 
               flow(width: 1.0, height: 48, margin_top: 8) do
-                button "Installed", width: 280
+                button "Installed", enabled: false, width: 280
                 tagline "0", fill: true, text_align: :right
               end
 
               flow(width: 1.0, height: 48, margin_top: 8) do
-                button "Favorites", width: 280
-                tagline "0", fill: true, text_align: :right
+                button "Favorites", enabled: false, width: 280
+                tagline Store.settings[:favorites].count, fill: true, text_align: :right
               end
             end
 
@@ -315,20 +319,42 @@ class W3DHub
 
               flow(width: 1.0, fill: true, scroll: true) do
                 Store.applications.games.each do |game|
-                  stack(width: 150, height: 200, padding: 8, margin: 8, background: 0x88_151515, border_color: game.color, border_thickness: 1) do
-                    flow(width: 1.0, height: 24) do
+                  stack(width: 166, height: 224, margin: 8, background: 0x88_151515, border_color: game.color, border_thickness: 1) do
+                    flow(width: 1.0, height: 24, padding: 8) do
                       para "Favorite", fill: true
-                      toggle_button checked: false, height: 1.0, padding_top: 3, padding_right: 3, padding_bottom: 3, padding_left: 3
+                      toggle_button checked: Store.application_manager.favorite?(game.id), text_size: 18, padding_top: 3, padding_right: 3, padding_bottom: 3, padding_left: 3 do |btn|
+                        Store.application_manager.favorive(game.id, btn.value)
+                        Store.settings.save_settings
+
+                        populate_games_list
+                      end
                     end
 
-                    image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{game.id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
-                    flow(width: 1.0, margin_top: 8) do
-                      flow(fill: true)
-                      image image_path, width: 0.5
-                      flow(fill: true)
+                    container = stack(fill: true, width: 1.0, padding: 8) do
+                      image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{game.id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
+                      flow(width: 1.0, margin_top: 8) do
+                        flow(fill: true)
+                        image image_path, width: 0.5
+                        flow(fill: true)
+                      end
+
+                      caption game.name, margin_top: 8
                     end
 
-                    caption game.name, margin_top: 8
+                    def container.hit_element?(x, y)
+                      return unless hit?(x, y)
+
+                      self
+                    end
+
+                    container.subscribe(:clicked_left_mouse_button) do |element|
+                      populate_game_page(game, game.channels.first)
+                      populate_games_list
+                    end
+
+                    container.subscribe(:enter) do |element|
+                      element.background = 0x88_454545
+                    end
                   end
                 end
               end

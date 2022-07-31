@@ -9,6 +9,9 @@ class W3DHub
 
       Store[:main_thread_queue] = []
 
+      # Repair/Upgrade schema
+      Store.settings[:favorites] ||= {}
+
       Store.settings.save_settings
 
       begin

@@ -3,7 +3,7 @@ GEM
   specs:
     addressable (2.8.0)
       public_suffix (>= 2.0.2, < 5.0)
-    async (1.30.2)
+    async (1.30.3)
       console (~> 1.10)
       nio4r (~> 2.3)
       timers (~> 4.1)
@@ -34,15 +34,16 @@ GEM
       gosu_more_drawables (~> 0.3)
     digest-crc (0.6.4)
       rake (>= 12.0.0, < 14.0.0)
-    excon (0.92.3)
+    excon (0.92.4)
     ffi (1.15.5)
     ffi (1.15.5-x64-mingw-ucrt)
     ffi (1.15.5-x64-mingw32)
     fiber-local (1.0.0)
     gosu (1.4.3)
     gosu_more_drawables (0.3.1)
-    i18n (1.10.0)
+    i18n (1.12.0)
       concurrent-ruby (~> 1.0)
+    ircparser (1.0.0)
     launchy (2.5.0)
       addressable (~> 2.7)
     nio4r (2.5.8)
@@ -76,9 +77,10 @@ DEPENDENCIES
   digest-crc
   ffi
   i18n
+  ircparser
   launchy
   rexml
   thread-local
 
 BUNDLED WITH
-   2.3.3
+   2.3.17

@@ -15,6 +15,8 @@ class W3DHub
         account: {},
         applications: {},
         games: {},
+        favorites: {},
+        app_order: {},
         last_selected_app: "ren",
         last_selected_channel: "release"
       }
