@@ -144,7 +144,7 @@ class W3DHub
           fail!("FAIL FAST: Cannot write to #{path}")
         end
 
-        # Have enough disk space
+        # FIXME: Check that there is enough disk space
 
         # tar present?
         bsdtar_present = system("#{W3DHub.tar_command} --help")
@@ -287,7 +287,7 @@ class W3DHub
           manifest.files.each do |file|
             safe_file_name = file.name.gsub("\\", "/")
             # Fix borked data -> Data 'cause Windows don't care about capitalization
-            safe_file_name.sub!("data/", "Data/") unless File.exist?("#{path}/#{safe_file_name}")
+            safe_file_name.sub!("data/", "Data/") # unless File.exist?("#{path}/#{safe_file_name}")
 
             file_path = "#{path}/#{safe_file_name}"
 
@@ -681,7 +681,6 @@ class W3DHub
           end
         end
 
-
         logger.info(LOG_TAG) { "      Writing updated #{repaired_path}..." } if patch_info[:updatedFiles].size.positive?
         W3DHub::Mixer::Writer.new(file_path: repaired_path, package: target_mix.package, memory_buffer: true)
 
@@ -691,8 +690,6 @@ class W3DHub
       end
 
       def repair_windows_case_insensitive(package, path)
-        return true if @app_id == "apb"
-
         # Windows is just confused
         return true if W3DHub.windows?
 
