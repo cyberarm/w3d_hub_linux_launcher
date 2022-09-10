@@ -15,6 +15,9 @@ class W3DHub
 
         Store.applications.games.each { |game| @filters[game.id.to_sym] = true if @filters[game.id.to_sym].nil? }
 
+        @ping_icons = {}
+        generate_ping_icons
+
         body.clear do
           stack(width: 1.0, height: 1.0, padding: 8) do
             stack(width: 1.0, height: 18) do
@@ -142,7 +145,8 @@ class W3DHub
         if @refresh_server_list && Gosu.milliseconds >= @refresh_server_list
           @refresh_server_list = nil
 
-          populate_server_list
+          # populate_server_list
+          reorder_server_list
 
           if @selected_server&.id == @refresh_server&.id
             if @refresh_server
@@ -158,9 +162,77 @@ class W3DHub
         end
       end
 
+      def generate_ping_icons
+        signal3  = get_image("#{GAME_ROOT_PATH}/media/ui_icons/signal3.png")
+        signal2  = get_image("#{GAME_ROOT_PATH}/media/ui_icons/signal2.png")
+        signal1  = get_image("#{GAME_ROOT_PATH}/media/ui_icons/signal1.png")
+        question = get_image("#{GAME_ROOT_PATH}/media/ui_icons/question.png")
+
+        good = Gosu.render(signal3.width, signal3.height) do
+          signal3.draw(0, 0, 0, 1, 1, 0xff_008000)
+        end
+
+        fair = Gosu.render(signal3.width, signal3.height) do
+          signal3.draw(0, 0, 0, 1, 1, 0xff_444444)
+          signal2.draw(0, 0, 0, 1, 1, 0xff_804000)
+        end
+
+        poor = Gosu.render(signal3.width, signal3.height) do
+          signal3.draw(0, 0, 0, 1, 1, 0xff_444444)
+          signal1.draw(0, 0, 0, 1, 1, 0xff_800000)
+        end
+
+        bad = Gosu.render(signal3.width, signal3.height) do
+          signal3.draw(0, 0, 0, 1, 1, 0xff_444444)
+        end
+
+        unknown = Gosu.render(signal3.width, signal3.height) do
+          signal3.draw(0, 0, 0, 1, 1, 0xff_222222)
+          question.draw(0, 0, 0, 1, 1, 0xff_888888)
+        end
+
+        @ping_icons[:good] = good
+        @ping_icons[:fair] = fair
+        @ping_icons[:poor] = poor
+        @ping_icons[:bad]  = bad
+        @ping_icons[:unknown] = unknown
+      end
+
+      def ping_icon(ping)
+        case ping
+        when 0..160
+          @ping_icons[:good]
+        when 161..250
+          @ping_icons[:fair]
+        when 251..1_000
+          @ping_icons[:poor]
+        when 1_001..5_000
+          @ping_icons[:bad]
+        else
+          @ping_icons[:unknown]
+        end
+      end
+
       def refresh_server_list(server)
         @refresh_server_list = Gosu.milliseconds + 3_000
         @refresh_server = server if @selected_server&.id == server.id
+      end
+
+      def update_server_ping(server)
+        container = @server_list_container.children.find do |child|
+          child.style.tag == server.id
+        end
+
+        if container
+          ping_image = container.children.map { |c| c.children }.flatten.find do |child|
+            child.style.tag == :ping
+          end
+
+          if ping_image
+            ping_image.value = ping_icon(server.ping)
+            ping_image.tip = "#{server.ping}ms"
+          end
+        end
       end
 
       def stylize_selected_server(server_container)
@@ -173,6 +245,19 @@ class W3DHub
         server_container.style.default[:background] = @selected_color
         server_container.style.hover[:background] = @selected_color
         server_container.style.active[:background] = @selected_color
+      end
+
+      def reorder_server_list
+        @server_list_container.children.sort_by! do |child|
+          s = Store.server_list.find { |s| s.id == child.style.tag }
+
+          [s&.status&.player_count, s&.id]
+        end.reverse!.each_with_index do |child, i|
+          child.style.background = 0xff_333333 if i.even?
+          child.style.background = 0 if i.odd?
+        end
+
+        @server_list_container.recalculate
       end
 
       def populate_server_list
@@ -188,41 +273,34 @@ class W3DHub
 
             i += 1
 
-            server_container = flow(width: 1.0, height: 48, hover: { background: 0xff_555566 }, active: { background: 0xff_555588 }) do
+            server_container = flow(width: 1.0, height: 48, hover: { background: 0xff_555566 }, active: { background: 0xff_555588 }, tag: server.id) do
               background 0xff_333333 if i.even?
 
               flow(width: 48, height: 1.0, padding: 4) do
-                image game_icon(server), height: 1.0
+                image game_icon(server), height: 1.0, tag: :game_icon
               end
 
               stack(width: 0.45, height: 1.0) do
-                inscription "<b>#{server&.status&.name}</b>"
+                inscription "<b>#{server&.status&.name}</b>", tag: :server_name
 
                 flow(width: 1.0, height: 1.0) do
-                  inscription server.channel, margin_right: 64, text_size: 14
-                  inscription server.region, text_size: 14
+                  inscription server.channel, margin_right: 64, text_size: 14, tag: :server_channel
+                  inscription server.region, text_size: 14, tag: :server_region
                 end
               end
 
               flow(fill: true, height: 1.0) do
-                inscription "#{server&.status&.map}"
+                inscription "#{server&.status&.map}", tag: :map_name
               end
 
               flow(width: 0.11, height: 1.0) do
-                inscription "#{server&.status&.player_count}/#{server&.status&.max_players}"
+                inscription "#{server&.status&.player_count}/#{server&.status&.max_players}", tag: :player_count
               end
 
-              # case rand(0..478)
-              # when 0..60
-              #   image "#{GAME_ROOT_PATH}/media/ui_icons/signal3.png", width: 0.05, color: 0xff_008000
-              # when 61..160
-              #   image "#{GAME_ROOT_PATH}/media/ui_icons/signal2.png", width: 0.05, color: 0xff_804000
-              # else
-              #   image "#{GAME_ROOT_PATH}/media/ui_icons/signal1.png", width: 0.05, color: 0xff_800000
-              # end
-
               flow(width: 48, height: 1.0, padding: 4) do
-                image "#{GAME_ROOT_PATH}/media/ui_icons/question.png", height: 1.0, color: 0xff_444444
+                puts "#{server&.status&.name}#{server.ping}"
+
+                image ping_icon(server.ping), height: 1.0, tip: "#{server.ping}ms", tag: :ping
               end
             end
 

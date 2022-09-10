@@ -11,6 +11,7 @@ gem "async-http"
 gem "async-websocket"
 gem "thread-local"
 gem "ircparser"
+gem "net-ping"
 
 # group :windows_packaging do
 #   gem "rake"

@@ -165,6 +165,12 @@ class W3DHub
         @page.refresh_server_list(server)
       end
 
+      def update_server_ping(server)
+        return unless @page.is_a?(Pages::ServerBrowser)
+
+        @page.update_server_ping(server)
+      end
+
       def show_application_taskbar
         @application_taskbar_container.show
       end

@@ -77,53 +77,65 @@ class W3DHub
 
       def run
         Thread.new do
-          Async do |task|
-            internet = Async::HTTP::Internet.instance
+          begin
+            connect
+          rescue => e
+            puts e
+            puts e.backtrace
 
-            logger.debug(LOG_TAG) { "Requesting connection token..." }
-            response = internet.post("https://gsh.w3dhub.com/listings/push/v2/negotiate?negotiateVersion=1", Api::DEFAULT_HEADERS, [""])
-            data = JSON.parse(response.read, symbolize_names: true)
+            sleep 10
+            retry
+          end
+        end
+      end
 
-            id = data[:connectionToken]
-            endpoint = Async::HTTP::Endpoint.parse("https://gsh.w3dhub.com/listings/push/v2?id=#{id}", alpn_protocols: Async::HTTP::Protocol::HTTP11.names)
+      def connect
+        Async do |task|
+          internet = Async::HTTP::Internet.instance
 
-            logger.debug(LOG_TAG) { "Connecting to websocket..." }
-            Async::WebSocket::Client.connect(endpoint, headers: Api::DEFAULT_HEADERS, handler: PatchedConnection) do |connection|
-              logger.debug(LOG_TAG) { "Requesting json protocol, v1..." }
-              connection.write({ protocol: "json", version: 1 })
-              connection.flush
-              logger.debug(LOG_TAG) { "Received: #{connection.read}" }
-              logger.debug(LOG_TAG) { "Sending \"PING\"(?)" }
-              connection.write({ "type": 6 })
+          logger.debug(LOG_TAG) { "Requesting connection token..." }
+          response = internet.post("https://gsh.w3dhub.com/listings/push/v2/negotiate?negotiateVersion=1", Api::DEFAULT_HEADERS, [""])
+          data = JSON.parse(response.read, symbolize_names: true)
 
-              logger.debug(LOG_TAG) { "Subscribing to server changes..." }
-              Store.server_list.each_with_index do |server, i|
-                i += 1
-                mode = 1 # 2 full details, 1 basic details
-                out = { "type": 1, "invocationId": "#{i}", "target": "SubscribeToServerStatusUpdates", "arguments": [server.id, mode] }
-                connection.write(out)
-              end
+          id = data[:connectionToken]
+          endpoint = Async::HTTP::Endpoint.parse("https://gsh.w3dhub.com/listings/push/v2?id=#{id}", alpn_protocols: Async::HTTP::Protocol::HTTP11.names)
 
-              logger.debug(LOG_TAG) { "Waiting for data..." }
-              while (message = connection.read)
-                connection.write({ type: 6 }) if message.first[:type] == 6
+          logger.debug(LOG_TAG) { "Connecting to websocket..." }
+          Async::WebSocket::Client.connect(endpoint, headers: Api::DEFAULT_HEADERS, handler: PatchedConnection) do |connection|
+            logger.debug(LOG_TAG) { "Requesting json protocol, v1..." }
+            connection.write({ protocol: "json", version: 1 })
+            connection.flush
+            logger.debug(LOG_TAG) { "Received: #{connection.read}" }
+            logger.debug(LOG_TAG) { "Sending \"PING\"(?)" }
+            connection.write({ "type": 6 })
 
-                if message&.first&.fetch(:type) == 1
-                  message.each do |rpc|
-                    next unless rpc[:target] == "ServerStatusChanged"
+            logger.debug(LOG_TAG) { "Subscribing to server changes..." }
+            Store.server_list.each_with_index do |server, i|
+              i += 1
+              mode = 1 # 2 full details, 1 basic details
+              out = { "type": 1, "invocationId": "#{i}", "target": "SubscribeToServerStatusUpdates", "arguments": [server.id, mode] }
+              connection.write(out)
+            end
 
-                    id, data = rpc[:arguments]
-                    server = Store.server_list.find { |s| s.id == id }
-                    server_updated = server&.update(data)
-                    States::Interface.instance&.update_server_browser(server) if server_updated
-                  end
+            logger.debug(LOG_TAG) { "Waiting for data..." }
+            while (message = connection.read)
+              connection.write({ type: 6 }) if message.first[:type] == 6
+
+              if message&.first&.fetch(:type) == 1
+                message.each do |rpc|
+                  next unless rpc[:target] == "ServerStatusChanged"
+
+                  id, data = rpc[:arguments]
+                  server = Store.server_list.find { |s| s.id == id }
+                  server_updated = server&.update(data)
+                  States::Interface.instance&.update_server_browser(server) if server_updated
                 end
               end
             end
-          ensure
-            logger.debug(LOG_TAG) { "Cleaning up..." }
-            @@instance = nil
           end
+        ensure
+          logger.debug(LOG_TAG) { "Cleaning up..." }
+          @@instance = nil
         end
       end
     end

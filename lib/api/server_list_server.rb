@@ -1,7 +1,7 @@
 class W3DHub
   class Api
     class ServerListServer
-      attr_reader :id, :game, :address, :port, :region, :channel, :status
+      attr_reader :id, :game, :address, :port, :region, :channel, :ping, :status
 
       def initialize(hash)
         @data = hash
@@ -12,8 +12,12 @@ class W3DHub
         @port    = @data[:port]
         @region  = @data[:region]
         @channel = @data[:channel] || "release"
+        @ping    = -1
 
         @status  = @data[:status] ? Status.new(@data[:status]) : nil
+
+        @last_pinged = -1
+        @ping_interval = 30
       end
 
       def update(hash)
@@ -28,6 +32,17 @@ class W3DHub
 
           @status.instance_variable_set(:@teams, hash[:teams]&.map { |t| Team.new(t) }) if hash[:teams]
           @status.instance_variable_set(:@players, hash[:players]&.select { |t| t[:nick] != "Nod" && t[:nick] != "GDI" }&.map { |t| Player.new(t) }) if hash[:players]
+
+          if Gosu.milliseconds - @last_pinged >= @ping_interval
+            @last_pinged = Gosu.milliseconds
+
+            Thread.new do
+              ping = Net::Ping::External.new(@address)
+              @ping = (ping.duration * 1000.0).round if ping.ping?
+
+              States::Interface.instance&.update_server_ping(self)
+            end
+          end
 
           return true
         end

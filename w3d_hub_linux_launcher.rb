@@ -50,6 +50,7 @@ require "async/http/internet/instance"
 require "async/http/endpoint"
 require "async/websocket/client"
 require "protocol/websocket/connection"
+require "net/ping"
 
 I18n.load_path << Dir["#{W3DHub::GAME_ROOT_PATH}/locales/*.yml"]
 I18n.default_locale = :en
