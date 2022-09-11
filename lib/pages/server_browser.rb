@@ -198,8 +198,8 @@ class W3DHub
         @ping_icons[:unknown] = unknown
       end
 
-      def ping_icon(ping)
-        case ping
+      def ping_icon(server)
+        case server.ping
         when 0..160
           @ping_icons[:good]
         when 161..250
@@ -213,24 +213,53 @@ class W3DHub
         end
       end
 
+      def ping_tip(server)
+        server.ping.negative? ? "Ping failed" : "Ping #{server.ping}ms"
+      end
+
+      def find_element_by_tag(container, tag, list = [])
+        container.children.each do |child|
+          list << child if child.style.tag == tag
+
+          find_element_by_tag(child, tag, list) if child.is_a?(CyberarmEngine::Element::Container)
+        end
+
+        return list.first
+      end
+
       def refresh_server_list(server)
         @refresh_server_list = Gosu.milliseconds + 3_000
         @refresh_server = server if @selected_server&.id == server.id
+
+        server_container = find_element_by_tag(@server_list_container, server.id)
+
+        return unless server_container
+
+        game_icon      = find_element_by_tag(server_container, :game_icon)
+        server_name    = find_element_by_tag(server_container, :server_name)
+        server_channel = find_element_by_tag(server_container, :server_channel)
+        server_region  = find_element_by_tag(server_container, :server_region)
+        server_map     = find_element_by_tag(server_container, :server_map)
+        player_count   = find_element_by_tag(server_container, :player_count)
+        server_ping    = find_element_by_tag(server_container, :ping)
+
+        server_name.value = "<b>#{server&.status&.name}</b>"
+        server_channel.value = server.channel
+        server_region.value = server.region
+        server_map.value = server&.status&.map
+        player_count.value = "#{server&.status&.player_count}/#{server&.status&.max_players}"
+        server_ping.value = ping_icon(server)
       end
 
       def update_server_ping(server)
-        container = @server_list_container.children.find do |child|
-          child.style.tag == server.id
-        end
+        container = find_element_by_tag(@server_list_container, server.id)
 
         if container
-          ping_image = container.children.map { |c| c.children }.flatten.find do |child|
-            child.style.tag == :ping
-          end
+          ping_image = find_element_by_tag(container, :ping)
 
           if ping_image
-            ping_image.value = ping_icon(server.ping)
-            ping_image.tip = "#{server.ping}ms"
+            ping_image.value = ping_icon(server)
+            ping_image.parent.parent.tip = ping_tip(server)
           end
         end
       end
@@ -273,7 +302,7 @@ class W3DHub
 
             i += 1
 
-            server_container = flow(width: 1.0, height: 48, hover: { background: 0xff_555566 }, active: { background: 0xff_555588 }, tag: server.id) do
+            server_container = flow(width: 1.0, height: 48, hover: { background: 0xff_555566 }, active: { background: 0xff_555588 }, tag: server.id, tip: ping_tip(server)) do
               background 0xff_333333 if i.even?
 
               flow(width: 48, height: 1.0, padding: 4) do
@@ -290,7 +319,7 @@ class W3DHub
               end
 
               flow(fill: true, height: 1.0) do
-                inscription "#{server&.status&.map}", tag: :map_name
+                inscription "#{server&.status&.map}", tag: :server_map
               end
 
               flow(width: 0.11, height: 1.0) do
@@ -298,9 +327,7 @@ class W3DHub
               end
 
               flow(width: 48, height: 1.0, padding: 4) do
-                puts "#{server&.status&.name}#{server.ping}"
-
-                image ping_icon(server.ping), height: 1.0, tip: "#{server.ping}ms", tag: :ping
+                image ping_icon(server), height: 1.0, tag: :ping
               end
             end
 

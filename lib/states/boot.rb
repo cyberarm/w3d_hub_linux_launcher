@@ -187,6 +187,10 @@ class W3DHub
 
           Api::ServerListUpdater.instance
 
+          list.each do |server|
+            server.send_ping(true)
+          end
+
           @tasks[:server_list][:complete] = true
         end
       end

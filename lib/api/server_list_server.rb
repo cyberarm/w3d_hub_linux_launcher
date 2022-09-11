@@ -16,8 +16,8 @@ class W3DHub
 
         @status  = @data[:status] ? Status.new(@data[:status]) : nil
 
-        @last_pinged = -1
-        @ping_interval = 30
+        @ping_interval = 30_000
+        @last_pinged = Gosu.milliseconds + @ping_interval + 1
       end
 
       def update(hash)
@@ -33,21 +33,25 @@ class W3DHub
           @status.instance_variable_set(:@teams, hash[:teams]&.map { |t| Team.new(t) }) if hash[:teams]
           @status.instance_variable_set(:@players, hash[:players]&.select { |t| t[:nick] != "Nod" && t[:nick] != "GDI" }&.map { |t| Player.new(t) }) if hash[:players]
 
-          if Gosu.milliseconds - @last_pinged >= @ping_interval
-            @last_pinged = Gosu.milliseconds
-
-            Thread.new do
-              ping = Net::Ping::External.new(@address)
-              @ping = (ping.duration * 1000.0).round if ping.ping?
-
-              States::Interface.instance&.update_server_ping(self)
-            end
-          end
+          send_ping
 
           return true
         end
 
         false
+      end
+
+      def send_ping(force_ping = false)
+        if force_ping || Gosu.milliseconds - @last_pinged >= @ping_interval
+          @last_pinged = Gosu.milliseconds
+
+          Thread.new do
+            ping = Net::Ping::External.new(@address)
+            @ping = (ping.duration * 1000.0).round if ping.ping?
+
+            States::Interface.instance&.update_server_ping(self)
+          end
+        end
       end
 
       class Status
