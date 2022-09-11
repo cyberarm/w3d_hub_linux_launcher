@@ -38,6 +38,8 @@ GEM
     ffi (1.15.5)
     ffi (1.15.5-x64-mingw-ucrt)
     ffi (1.15.5-x64-mingw32)
+    ffi-win32-extensions (1.0.4)
+      ffi
     fiber-local (1.0.0)
     gosu (1.4.3)
     gosu_more_drawables (0.3.1)
@@ -46,6 +48,7 @@ GEM
     ircparser (1.0.0)
     launchy (2.5.0)
       addressable (~> 2.7)
+    net-ping (2.0.8)
     nio4r (2.5.8)
     protocol-hpack (1.4.2)
     protocol-http (0.22.6)
@@ -63,6 +66,9 @@ GEM
     thread-local (1.1.0)
     timers (4.3.3)
     traces (0.4.1)
+    win32-security (0.5.0)
+      ffi
+      ffi-win32-extensions
 
 PLATFORMS
   x64-mingw-ucrt
@@ -79,8 +85,10 @@ DEPENDENCIES
   i18n
   ircparser
   launchy
+  net-ping
   rexml
   thread-local
+  win32-security
 
 BUNDLED WITH
    2.3.17

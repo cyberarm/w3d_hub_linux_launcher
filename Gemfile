@@ -12,6 +12,7 @@ gem "async-websocket"
 gem "thread-local"
 gem "ircparser"
 gem "net-ping"
+gem "win32-security", platforms: [:x64_mingw, :mingw]
 
 # group :windows_packaging do
 #   gem "rake"
