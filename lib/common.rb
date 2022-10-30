@@ -40,6 +40,14 @@ class W3DHub
     end
   end
 
+  def self.commmand(command)
+    if windows?
+
+    else
+      IO.popen(command)
+    end
+  end
+
   def self.home_directory
     File.expand_path("~")
   end

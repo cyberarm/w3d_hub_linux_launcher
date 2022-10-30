@@ -4,15 +4,17 @@ class W3DHub
 
     API_TIMEOUT = 10 # seconds
     USER_AGENT = "Cyberarm's Linux Friendly W3D Hub Launcher v#{W3DHub::VERSION}".freeze
-    DEFAULT_HEADERS = [
-      ["User-Agent", USER_AGENT],
-      ["Accept", "application/json"]
-    ].freeze
-    FORM_ENCODED_HEADERS = (
-      DEFAULT_HEADERS + [["Content-Type", "application/x-www-form-urlencoded"]]
-    ).freeze
+    DEFAULT_HEADERS = {
+      "User-Agent": USER_AGENT,
+      "Accept": "application/json"
+    }.freeze
+    FORM_ENCODED_HEADERS = {
+      "User-Agent": USER_AGENT,
+      "Accept": "application/json",
+      "Content-Type": "application/x-www-form-urlencoded"
+    }.freeze
 
-    def self.on_fiber(method, *args, &callback)
+    def self.on_thread(method, *args, &callback)
       BackgroundWorker.job(-> { Api.send(method, *args) }, callback)
     end
 
@@ -27,8 +29,6 @@ class W3DHub
     ENDPOINT = "https://secure.w3dhub.com".freeze
 
     def self.post(url, headers = DEFAULT_HEADERS, body = nil)
-      @client ||= Async::HTTP::Client.new(Async::HTTP::Endpoint.parse(ENDPOINT, protocol: Async::HTTP::Protocol::HTTP10))
-
       # TODO: Check if session has expired and attempt to refresh session before submitting request
 
       logger.debug(LOG_TAG) { "Fetching POST \"#{url}\"..." }
@@ -37,17 +37,15 @@ class W3DHub
       if Store.account
         logger.debug(LOG_TAG) { "  Injecting Authorization header..." }
         headers = headers.dup
-        headers << ["Authorization", "Bearer #{Store.account.access_token}"]
+        headers["Authorization"] = "Bearer #{Store.account.access_token}"
       end
 
       begin
-        Async::Task.current.with_timeout(API_TIMEOUT) do
-          @client.post(url, headers, body)
-        end
-      rescue Async::TimeoutError
+        Excon.post(url, headers: headers, body: body, tcp_nodelay: true, write_timeout: API_TIMEOUT, read_timeout: API_TIMEOUT, connection_timeout: API_TIMEOUT)
+      rescue Excon::Errors::Timeout
         logger.error(LOG_TAG) { "Connection to \"#{url}\" timed out after: #{API_TIMEOUT} seconds" }
         DummyResponse.new
-      rescue EOFError => e
+      rescue Excon::Socket::Error => e
         logger.error(LOG_TAG) { "Connection to \"#{url}\" errored:" }
         logger.error(LOG_TAG) { e }
         DummyResponse.new
@@ -73,16 +71,16 @@ class W3DHub
       body = "data=#{JSON.dump({refreshToken: refresh_token})}"
       response = post("#{ENDPOINT}/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body)
 
-      if response.success?
-        user_data = JSON.parse(response.read, symbolize_names: true)
+      if response.status == 200
+        user_data = JSON.parse(response.body, symbolize_names: true)
 
         return false if user_data[:error]
 
         body = "data=#{JSON.dump({ id: user_data[:userid] })}"
         user_details = post("#{ENDPOINT}/apis/w3dhub/1/get-user-details", FORM_ENCODED_HEADERS, body)
 
-        if user_details.success?
-          user_details_data = JSON.parse(user_details.read, symbolize_names: true)
+        if user_details.status == 200
+          user_details_data = JSON.parse(user_details.body, symbolize_names: true)
         else
           logger.error(LOG_TAG) { "Failed to fetch refresh user details:" }
           logger.error(LOG_TAG) { user_details }
@@ -101,16 +99,16 @@ class W3DHub
       body = "data=#{JSON.dump({username: username, password: password})}"
       response = post("#{ENDPOINT}/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body)
 
-      if response.success?
-        user_data = JSON.parse(response.read, symbolize_names: true)
+      if response.status == 200
+        user_data = JSON.parse(response.body, symbolize_names: true)
 
         return false if user_data[:error]
 
         body = "data=#{JSON.dump({ id: user_data[:userid] })}"
         user_details = post("#{ENDPOINT}/apis/w3dhub/1/get-user-details", FORM_ENCODED_HEADERS, body)
 
-        if user_details.success?
-          user_details_data = JSON.parse(user_details.read, symbolize_names: true)
+        if user_details.status == 200
+          user_details_data = JSON.parse(user_details.body, symbolize_names: true)
         else
           logger.error(LOG_TAG) { "Failed to fetch user details:" }
           logger.error(LOG_TAG) { user_details }
@@ -137,8 +135,8 @@ class W3DHub
     def self.service_status
       response = post("#{ENDPOINT}/apis/w3dhub/1/get-service-status", DEFAULT_HEADERS)
 
-      if response.success?
-        ServiceStatus.new(response.read)
+      if response.status == 200
+        ServiceStatus.new(response.body)
       else
         logger.error(LOG_TAG) { "Failed to fetch service status:" }
         logger.error(LOG_TAG) { response }
@@ -153,8 +151,8 @@ class W3DHub
     def self.applications
       response = post("#{ENDPOINT}/apis/launcher/1/get-applications")
 
-      if response.success?
-        Applications.new(response.read)
+      if response.status == 200
+        Applications.new(response.body)
       else
         logger.error(LOG_TAG) { "Failed to fetch applications list:" }
         logger.error(LOG_TAG) { response }
@@ -170,8 +168,8 @@ class W3DHub
       body = "data=#{JSON.dump({category: category})}"
       response = post("#{ENDPOINT}/apis/w3dhub/1/get-news", FORM_ENCODED_HEADERS, body)
 
-      if response.success?
-        News.new(response.read)
+      if response.status == 200
+        News.new(response.body)
       else
         logger.error(LOG_TAG) { "Failed to fetch news for:" }
         logger.error(LOG_TAG) { category }
@@ -188,8 +186,8 @@ class W3DHub
       body = URI.encode_www_form("data": JSON.dump({ packages: packages }))
       response = post("#{ENDPOINT}/apis/launcher/1/get-package-details", FORM_ENCODED_HEADERS, body)
 
-      if response.success?
-        hash = JSON.parse(response.read, symbolize_names: true)
+      if response.status == 200
+        hash = JSON.parse(response.body, symbolize_names: true)
         hash[:packages].map { |pkg| Package.new(pkg) }
       else
         logger.error(LOG_TAG) { "Failed to fetch package details for:" }
@@ -214,8 +212,8 @@ class W3DHub
       body = URI.encode_www_form("data": JSON.dump({ serverPath: app_id }))
       response = post("#{ENDPOINT}/apis/w3dhub/1/get-server-events", FORM_ENCODED_HEADERS, body)
 
-      if response.success?
-        array = JSON.parse(response.read, symbolize_names: true)
+      if response.status == 200
+        array = JSON.parse(response.body, symbolize_names: true)
         array.map { |e| Event.new(e) }
       else
         false
@@ -227,11 +225,11 @@ class W3DHub
     SERVER_LIST_ENDPOINT = "https://gsh.w3dhub.com".freeze
 
     def self.get(url, headers = DEFAULT_HEADERS, body = nil)
-      @client ||= Async::HTTP::Client.new(Async::HTTP::Endpoint.parse(SERVER_LIST_ENDPOINT, protocol: Async::HTTP::Protocol::HTTP10))
+      @client ||= Excon.new(SERVER_LIST_ENDPOINT, persistent: true)
 
       logger.debug(LOG_TAG) { "Fetching GET \"#{url}\"..." }
 
-      @client.get(url, headers, body)
+      Excon.get(url, headers: headers, body: body, persistent: true)
     end
 
     # Method: GET
@@ -254,8 +252,8 @@ class W3DHub
     def self.server_list(level = 1)
       response = get("#{SERVER_LIST_ENDPOINT}/listings/getAll/v2?statusLevel=#{level}")
 
-      if response.success?
-        data = JSON.parse(response.read, symbolize_names: true)
+      if response.status == 200
+        data = JSON.parse(response.body, symbolize_names: true)
         return data.map { |hash| ServerListServer.new(hash) }
       end
 
@@ -276,8 +274,8 @@ class W3DHub
     def self.server_details(id, level)
       response = get("#{SERVER_LIST_ENDPOINT}/listings/getStatus/v2/#{id}?statusLevel=#{level}")
 
-      if response.success?
-        hash = JSON.parse(response.read, symbolize_names: true)
+      if response.status == 200
+        hash = JSON.parse(response.body, symbolize_names: true)
         return hash
       end
 

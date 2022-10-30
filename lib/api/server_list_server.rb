@@ -42,6 +42,8 @@ class W3DHub
       end
 
       def send_ping(force_ping = false)
+        return
+
         if force_ping || Gosu.milliseconds - @last_pinged >= @ping_interval
           @last_pinged = Gosu.milliseconds
 

@@ -5,6 +5,7 @@ require "fileutils"
 require "digest"
 require "rexml"
 require "logger"
+require "time"
 
 class W3DHub
   W3DHUB_DEBUG = ARGV.join.include?("--debug")
@@ -22,7 +23,31 @@ end
 
 module Kernel
   def logger
-    W3DHub::LOGGER
+    @logger = W3DHub::LOGGER
+  end
+
+  class W3DHubLogger
+    def initialize
+    end
+
+    def level=(options)
+    end
+
+    def info(tag, &block)
+      pp [tag, block&.call]
+    end
+
+    def debug(tag, &block)
+      pp [tag, block&.call]
+    end
+
+    def warn(tag, &block)
+      pp [tag, block&.call]
+    end
+
+    def error(tag, &block)
+      pp [tag, block&.call]
+    end
   end
 end
 
@@ -42,15 +67,7 @@ end
 
 require "i18n"
 require "launchy"
-
-require "async"
-require "async/barrier"
-require "async/semaphore"
-require "async/http/internet/instance"
-require "async/http/endpoint"
-require "async/websocket/client"
-require "protocol/websocket/connection"
-require "net/ping"
+require "websocket-client-simple"
 
 I18n.load_path << Dir["#{W3DHub::GAME_ROOT_PATH}/locales/*.yml"]
 I18n.default_locale = :en
@@ -124,14 +141,22 @@ Thread.new do
   W3DHub::BackgroundWorker.create
 end
 
+until W3DHub::BackgroundWorker.alive?
+  sleep 0.1
+end
+
 logger.info(W3DHub::LOG_TAG) { "Launching window..." }
 # W3DHub::Window.new(width: 980, height: 720, borderless: false, resizable: true).show unless defined?(Ocra)
 W3DHub::Window.new(width: 1280, height: 800, borderless: false, resizable: true).show unless defined?(Ocra)
 # W3DHub::Window.new(width: 1920, height: 1080, borderless: false, resizable: true).show unless defined?(Ocra)
 W3DHub::BackgroundWorker.shutdown!
 
+worker_soft_halt = Gosu.milliseconds
+
 # Wait for BackgroundWorker to return
 while W3DHub::BackgroundWorker.alive?
+  W3DHub::BackgroundWorker.kill! if Gosu.milliseconds - worker_soft_halt >= 1_000
+
   sleep 0.1
 end
 

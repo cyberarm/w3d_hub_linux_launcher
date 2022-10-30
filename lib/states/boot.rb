@@ -78,7 +78,7 @@ class W3DHub
             logger.info(LOG_TAG) { "Refreshing user login..." }
 
             # TODO: Check without network
-            Api.on_fiber(:refresh_user_login, account.refresh_token) do |refreshed_account|
+            Api.on_thread(:refresh_user_login, account.refresh_token) do |refreshed_account|
               update_account_data(refreshed_account)
             end
 
@@ -108,7 +108,7 @@ class W3DHub
       end
 
       def service_status
-        Api.on_fiber(:service_status) do |service_status|
+        Api.on_thread(:service_status) do |service_status|
           @service_status = service_status
 
           if @service_status
@@ -132,7 +132,7 @@ class W3DHub
       def applications
         @status_label.value = I18n.t(:"boot.checking_for_updates")
 
-        Api.on_fiber(:applications) do |applications|
+        Api.on_thread(:applications) do |applications|
           if applications
             Store.applications = applications
 
@@ -152,7 +152,7 @@ class W3DHub
           packages << { category: app.category, subcategory: app.id, name: "#{app.id}.ico", version: "" }
         end
 
-        Api.on_fiber(:package_details, packages) do |package_details|
+        Api.on_thread(:package_details, packages) do |package_details|
           package_details&.each do |package|
             path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
             generated_icon_path = "#{GAME_ROOT_PATH}/media/icons/#{package.subcategory}.png"
@@ -180,7 +180,7 @@ class W3DHub
       def server_list
         @status_label.value = I18n.t(:"server_browser.fetching_server_list")
 
-        Api.on_fiber(:server_list, 2) do |list|
+        Api.on_thread(:server_list, 2) do |list|
           Store.server_list = list.sort_by! { |s| s&.status&.players&.size }.reverse if list
 
           Store.server_list_last_fetch = Gosu.milliseconds

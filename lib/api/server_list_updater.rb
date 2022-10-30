@@ -3,65 +3,6 @@ class W3DHub
     class ServerListUpdater
       LOG_TAG = "W3DHub::Api::ServerListUpdater".freeze
       include CyberarmEngine::Common
-
-      ##!!! When this breaks update from: https://github.com/socketry/async-websocket/blob/master/lib/async/websocket/connection.rb
-      # refinements preserves super... 😢
-      class PatchedConnection < ::Protocol::WebSocket::Connection
-        include ::Protocol::WebSocket::Headers
-
-        def self.call(framer, protocol = [], **options)
-          instance = self.new(framer, Array(protocol).first, **options)
-
-          return instance unless block_given?
-
-          begin
-            yield instance
-          ensure
-            instance.close
-          end
-        end
-
-        def initialize(framer, protocol = nil, response: nil, **options)
-          super(framer, **options)
-
-          @protocol = protocol
-          @response = response
-        end
-
-        def close
-          super
-
-          if @response
-            @response.finish
-            @response = nil
-          end
-        end
-
-        attr :protocol
-
-        def read
-          if (buffer = super)
-            buffer.split("\x1e").map { |json| parse(json) }
-          end
-        end
-
-        def write(object)
-          super("#{dump(object)}\x1e")
-        end
-
-        def parse(buffer)
-          JSON.parse(buffer, symbolize_names: true)
-        end
-
-        def dump(object)
-          JSON.dump(object)
-        end
-
-        def call
-          self.close
-        end
-      end
-
       @@instance = nil
 
       def self.instance
@@ -87,45 +28,36 @@ class W3DHub
             retry
           end
         end
+
+        logger.debug(LOG_TAG) { "Cleaning up..." }
+        @@instance = nil
       end
 
       def connect
-        Async do |task|
-          internet = Async::HTTP::Internet.instance
+        auto_reconnect = false
 
-          logger.debug(LOG_TAG) { "Requesting connection token..." }
-          response = internet.post("https://gsh.w3dhub.com/listings/push/v2/negotiate?negotiateVersion=1", Api::DEFAULT_HEADERS, [""])
-          data = JSON.parse(response.read, symbolize_names: true)
+        logger.debug(LOG_TAG) { "Requesting connection token..." }
+        response = Excon.post("https://gsh.w3dhub.com/listings/push/v2/negotiate?negotiateVersion=1", headers: Api::DEFAULT_HEADERS, body: "")
+        data = JSON.parse(response.body, symbolize_names: true)
 
-          id = data[:connectionToken]
-          endpoint = Async::HTTP::Endpoint.parse("https://gsh.w3dhub.com/listings/push/v2?id=#{id}", alpn_protocols: Async::HTTP::Protocol::HTTP11.names)
+        id = data[:connectionToken]
+        endpoint = "https://gsh.w3dhub.com/listings/push/v2?id=#{id}"
 
-          logger.debug(LOG_TAG) { "Connecting to websocket..." }
-          Async::WebSocket::Client.connect(endpoint, headers: Api::DEFAULT_HEADERS, handler: PatchedConnection) do |connection|
-            logger.debug(LOG_TAG) { "Requesting json protocol, v1..." }
-            connection.write({ protocol: "json", version: 1 })
-            connection.flush
-            logger.debug(LOG_TAG) { "Received: #{connection.read}" }
-            logger.debug(LOG_TAG) { "Sending \"PING\"(?)" }
-            connection.write({ "type": 6 })
+        logger.debug(LOG_TAG) { "Connecting to websocket..." }
+        WebSocket::Client::Simple.connect(endpoint, headers: Api::DEFAULT_HEADERS) do |ws|
+          ws.on(:message) do |msg|
+            msg = msg.data.split("\x1e").first
 
-            logger.debug(LOG_TAG) { "Subscribing to server changes..." }
-            Store.server_list.each_with_index do |server, i|
-              i += 1
-              mode = 1 # 2 full details, 1 basic details
-              out = { "type": 1, "invocationId": "#{i}", "target": "SubscribeToServerStatusUpdates", "arguments": [server.id, mode] }
-              connection.write(out)
-            end
+            hash = JSON.parse(msg, symbolize_names: true)
 
-            logger.debug(LOG_TAG) { "Waiting for data..." }
-            while (message = connection.read)
-              connection.write({ type: 6 }) if message.first[:type] == 6
-
-              if message&.first&.fetch(:type) == 1
-                message.each do |rpc|
-                  next unless rpc[:target] == "ServerStatusChanged"
-
-                  id, data = rpc[:arguments]
+            # Send PING(?)
+            if hash.empty? || hash[:type] == 6
+              ws.send({ type: 6 }.to_json + "\x1e")
+            else
+              case hash[:type]
+              when 1
+                if hash[:target] == "ServerStatusChanged"
+                  id, data = hash[:arguments]
                   server = Store.server_list.find { |s| s.id == id }
                   server_updated = server&.update(data)
                   States::Interface.instance&.update_server_browser(server) if server_updated
@@ -133,10 +65,32 @@ class W3DHub
               end
             end
           end
-        ensure
-          logger.debug(LOG_TAG) { "Cleaning up..." }
-          @@instance = nil
+
+          ws.on(:open) do
+            logger.debug(LOG_TAG) { "Requesting json protocol, v1..." }
+            ws.send({ protocol: "json", version: 1 }.to_json + "\x1e")
+
+            logger.debug(LOG_TAG) { "Subscribing to server changes..." }
+            Store.server_list.each_with_index do |server, i|
+              i += 1
+              mode = 1 # 2 full details, 1 basic details
+              out = { "type": 1, "invocationId": "#{i}", "target": "SubscribeToServerStatusUpdates", "arguments": [server.id, mode] }
+              ws.send(out.to_json + "\x1e")
+            end
+          end
+
+          ws.on(:close) do |e|
+            p e
+            auto_reconnect = true
+          end
+
+          ws.on(:error) do |e|
+            p e
+            auto_reconnect = true
+          end
         end
+
+        connect if auto_reconnect
       end
     end
   end

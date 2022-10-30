@@ -16,12 +16,12 @@ class W3DHub
         path
       elsif async
         BackgroundWorker.job(
-          -> { Async::HTTP::Internet.instance.get(uri, W3DHub::Api::DEFAULT_HEADERS) },
-          ->(response) { response.save(path, "wb") if response.success? }
+          -> { Api.get(uri, W3DHub::Api::DEFAULT_HEADERS) },
+          ->(response) { File.open(path, "wb") { |f| f.write response.body } if response.status == 200 }
         )
       else
-        response = Async::HTTP::Internet.instance.get(uri, W3DHub::Api::DEFAULT_HEADERS)
-        response.save(path, "wb") if response.success?
+        response = Api.get(uri, W3DHub::Api::DEFAULT_HEADERS)
+        File.open(path, "wb") { |f| f.write response.body } if response.status == 200
       end
     end
 
@@ -82,7 +82,7 @@ class W3DHub
         block.call(chunk, remaining_bytes, total_bytes)
       end
 
-      response.success?
+      response.status == 200
     ensure
       file&.close
     end

@@ -56,7 +56,7 @@ class W3DHub
         @task_state = :running
 
         Thread.new do
-          Sync do
+          # Sync do
             begin
               status = execute_task
             rescue FailFast
@@ -78,7 +78,7 @@ class W3DHub
 
             hide_application_taskbar if @task_state == :failed
             send_message_dialog(:failure, "Task #{type.inspect} failed for #{@application.name}", @task_failure_reason) if @task_state == :failed && !@fail_silently
-          end
+          # end
         end
       end
 

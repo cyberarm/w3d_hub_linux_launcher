@@ -9,13 +9,12 @@ class W3DHub
       logger.info(LOG_TAG) { "Starting background job worker..." }
 
 
+      @@thread = Thread.current
       @@alive = true
       @@run = true
       @@instance = self.new
 
-      Async do
-        @@instance.handle_jobs
-      end
+      @@instance.handle_jobs
     end
 
     def self.instance
@@ -30,8 +29,16 @@ class W3DHub
       @@alive
     end
 
+    def self.busy?
+      instance&.busy?
+    end
+
     def self.shutdown!
       @@run = false
+    end
+
+    def self.kill!
+      @@thread.kill
     end
 
     def self.job(job, callback, error_handler = nil)
@@ -43,6 +50,7 @@ class W3DHub
     end
 
     def initialize
+      @busy = false
       @jobs = []
     end
 
@@ -50,11 +58,15 @@ class W3DHub
       while BackgroundWorker.run?
         job = @jobs.shift
 
+        @busy = true
+
         begin
           job&.do
         rescue => error
           job&.raise_error(error)
         end
+
+        @busy = !@jobs.empty?
 
         sleep 0.1
       end
@@ -65,6 +77,10 @@ class W3DHub
 
     def add_job(job)
       @jobs << job
+    end
+
+    def busy?
+      @busy
     end
 
     class Job
