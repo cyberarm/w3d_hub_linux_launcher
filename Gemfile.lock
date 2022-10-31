@@ -32,6 +32,8 @@ GEM
     websocket-client-simple (0.6.0)
       event_emitter
       websocket
+    win32-process (0.10.0)
+      ffi (>= 1.0.0)
     win32-security (0.5.0)
       ffi
       ffi-win32-extensions
@@ -51,6 +53,7 @@ DEPENDENCIES
   rexml
   thread-local
   websocket-client-simple
+  win32-process
   win32-security
 
 BUNDLED WITH

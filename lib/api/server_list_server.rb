@@ -42,17 +42,27 @@ class W3DHub
       end
 
       def send_ping(force_ping = false)
-        return
-
         if force_ping || Gosu.milliseconds - @last_pinged >= @ping_interval
           @last_pinged = Gosu.milliseconds
 
-          Thread.new do
-            ping = Net::Ping::External.new(@address)
-            @ping = (ping.duration * 1000.0).round if ping.ping?
+          W3DHub::BackgroundWorker.parallel_job(
+            lambda do
+              @ping = -1
 
-            States::Interface.instance&.update_server_ping(self)
-          end
+              W3DHub.captured_commmand("ping #{@address} #{W3DHub.windows? ? '-n 3' : '-c 3'}") do |line|
+                if W3DHub.windows? && line =~ /Minimum|Maximum|Maximum/i
+                  @ping = line.strip.split(",").last.split("=").last.sub("ms", "").to_i
+                elsif W3DHub.unix? && line.start_with?("rtt min/avg/max/mdev")
+                  @ping = line.strip.split("=").last.split("/")[1].to_i
+                end
+              end
+
+              @ping
+            end,
+            lambda do |_|
+              States::Interface.instance&.update_server_ping(self)
+            end
+          )
         end
       end
 

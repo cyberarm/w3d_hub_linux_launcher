@@ -40,11 +40,46 @@ class W3DHub
     end
   end
 
-  def self.commmand(command)
+  def self.captured_commmand(command, &block)
     if windows?
+      stdout_read, stdout_write = IO.pipe
 
+      process_info = Process.create(
+        command_line: command,
+        creation_flags: Process::DETACHED_PROCESS,
+        process_inherit: true,
+        thread_inherit: true,
+        inherit: true,
+        startup_info: {
+          stdout: stdout_write,
+          stderr: stdout_write
+        }
+      )
+
+      pid = process_info.process_id
+
+      until Process.get_exitcode(pid)
+        readable, _writable, _errorable = IO.select([stdout_read], [], [], 1)
+
+        readable&.each do |io|
+          line = io.readpartial(1024)
+
+          block&.call(line)
+        end
+      end
+
+      stdout_read.close
+      stdout_write.close
+
+      Process.get_exitcode(pid).zero?
     else
-      IO.popen(command)
+      IO.popen(command) do |io|
+        io.each_line do |line|
+          block&.call(line)
+        end
+      end
+
+      $CHILD_STATUS.success?
     end
   end
 

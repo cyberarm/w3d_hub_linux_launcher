@@ -39,10 +39,16 @@ class W3DHub
 
     def self.kill!
       @@thread.kill
+
+      @@instance.kill!
     end
 
     def self.job(job, callback, error_handler = nil)
       @@instance.add_job(Job.new(job: job, callback: callback, error_handler: error_handler))
+    end
+
+    def self.parallel_job(job, callback, error_handler = nil)
+      @@instance.add_parallel_job(Job.new(job: job, callback: callback, error_handler: error_handler))
     end
 
     def self.foreground_job(job, callback, error_handler = nil)
@@ -52,9 +58,40 @@ class W3DHub
     def initialize
       @busy = false
       @jobs = []
+
+      # Jobs which are order independent
+      @parallel_busy = false
+      @thread_pool = []
+      @parallel_jobs = []
+    end
+
+    def kill!
+      @thread_pool.each(&:kill)
     end
 
     def handle_jobs
+      8.times do |i|
+        Thread.new do |thread|
+          @thread_pool << thread
+
+          while BackgroundWorker.run?
+            job = @parallel_jobs.shift
+
+            @parallel_busy = true
+
+            begin
+              job&.do
+            rescue => e
+              job&.raise_error(e)
+            end
+
+            @parallel_busy = !@parallel_jobs.empty?
+
+            sleep 0.1
+          end
+        end
+      end
+
       while BackgroundWorker.run?
         job = @jobs.shift
 
@@ -62,8 +99,8 @@ class W3DHub
 
         begin
           job&.do
-        rescue => error
-          job&.raise_error(error)
+        rescue => e
+          job&.raise_error(e)
         end
 
         @busy = !@jobs.empty?
@@ -79,8 +116,12 @@ class W3DHub
       @jobs << job
     end
 
+    def add_parallel_job(job)
+      @parallel_jobs << job
+    end
+
     def busy?
-      @busy
+      @busy || @parallel_busy
     end
 
     class Job

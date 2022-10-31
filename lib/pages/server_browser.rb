@@ -249,6 +249,7 @@ class W3DHub
         server_map.value = server&.status&.map
         player_count.value = "#{server&.status&.player_count}/#{server&.status&.max_players}"
         server_ping.value = ping_icon(server)
+        server_ping.parent.parent.tip = ping_tip(server)
       end
 
       def update_server_ping(server)
