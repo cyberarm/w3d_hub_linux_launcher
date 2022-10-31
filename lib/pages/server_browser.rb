@@ -218,6 +218,8 @@ class W3DHub
       end
 
       def find_element_by_tag(container, tag, list = [])
+        return unless container
+
         container.children.each do |child|
           list << child if child.style.tag == tag
 

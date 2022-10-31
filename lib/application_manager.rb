@@ -298,12 +298,19 @@ class W3DHub
             exe_path = app_id == "ecw" ? "#{install_path}/game750.exe" : "#{install_path}/game.exe"
 
             if File.exist?(exe_path)
-              installed_version = reg["InstalledVersion"] unless app_id == "ren"
+              installed_version = app_id == "ren" ? "1.0.0.0" : reg["InstalledVersion"]
+
+              if (installed_app = installed?(app_id, channel_id))
+                current_version = Gem::Version.new(installed_app[:installed_version])
+                listed_version  = installed_version
+
+                next if current_version >= listed_version
+              end
 
               application_data = {
                 name: game.name,
                 install_directory: install_path,
-                installed_version: app_id == "ren" ? "1.0.0.0" : installed_version,
+                installed_version: installed_version,
                 install_path: exe_path,
                 wine_prefix: nil
               }
@@ -325,6 +332,33 @@ class W3DHub
 
         false
       end
+    end
+
+    def write_application_version_to_win32_registry(app_id, channel_id, version)
+      # TODO: Figure out how to trigger UAC, but only for this so games DO NOT spawn with admin privileges.
+      return
+      return unless W3DHub.windows?
+      return if app_id == "ren"
+
+      require "win32/registry"
+
+      registry_path ||= "SOFTWARE\\W3D Hub\\games\\#{app_id}-#{channel_id}"
+      reg_type = Win32::Registry::KEY_ALL_ACCESS
+
+      Win32::Registry::HKEY_LOCAL_MACHINE.open(registry_path, reg_type) do |reg|
+        reg.write_s("InstalledVersion", version)
+      end
+
+    rescue => e
+      puts e.class, e.message, e.backtrace
+      if Win32::Registry::Error
+        logger.warn(LOG_TAG) { "    Failed to update #{app_id}-#{channel_id} version in the registry" }
+      else
+        logger.warn(LOG_TAG) { "    An error occurred while tying to update #{app_id}-#{channel_id} version in the registry" }
+        logger.warn(LOG_TAG) { e }
+      end
+
+      false
     end
 
     def imported!(task, exe_path)
@@ -359,6 +393,8 @@ class W3DHub
       Store.settings[:games] ||= {}
       Store.settings[:games][:"#{task.app_id}_#{task.release_channel}"] = application_data
       Store.settings.save_settings
+
+      write_application_version_to_win32_registry(task.app_id, task.release_channel, task.target_version)
     end
 
     def installed?(app_id, channel)

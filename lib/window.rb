@@ -37,7 +37,7 @@ class W3DHub
       end
 
       # Manually sleep main thread so that the BackgroundWorker thread can be scheduled
-      sleep(update_interval / 1000.0) if W3DHub::BackgroundWorker.busy?
+      sleep(update_interval / 1000.0) if W3DHub::BackgroundWorker.busy? || Store.application_manager.busy?
     end
 
     def gain_focus

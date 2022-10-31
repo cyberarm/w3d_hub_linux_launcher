@@ -57,8 +57,9 @@ class W3DHub
       )
 
       pid = process_info.process_id
+      status = -1
 
-      until Process.get_exitcode(pid)
+      until (status = Process.get_exitcode(pid))
         readable, _writable, _errorable = IO.select([stdout_read], [], [], 1)
 
         readable&.each do |io|
@@ -71,7 +72,7 @@ class W3DHub
       stdout_read.close
       stdout_write.close
 
-      Process.get_exitcode(pid).zero?
+      status.zero?
     else
       IO.popen(command) do |io|
         io.each_line do |line|
