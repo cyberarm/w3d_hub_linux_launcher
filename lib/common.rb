@@ -40,7 +40,7 @@ class W3DHub
     end
   end
 
-  def self.captured_commmand(command, &block)
+  def self.command(command, &block)
     if windows?
       stdout_read, stdout_write = IO.pipe
 
@@ -60,23 +60,26 @@ class W3DHub
       status = -1
 
       until (status = Process.get_exitcode(pid))
-        readable, _writable, _errorable = IO.select([stdout_read], [], [], 1)
+        if block
+          readable, _writable, _errorable = IO.select([stdout_read], [], [], 1)
 
-        readable&.each do |io|
-          line = io.readpartial(1024)
+          readable&.each do |io|
+            line = io.readpartial(1024)
 
-          block&.call(line)
+            block&.call(line)
+          end
+        else
+          sleep 0.1
         end
       end
-
-      stdout_read.close
-      stdout_write.close
 
       status.zero?
     else
       IO.popen(command) do |io|
-        io.each_line do |line|
-          block&.call(line)
+        if block
+          io.each_line do |line|
+            block&.call(line)
+          end
         end
       end
 

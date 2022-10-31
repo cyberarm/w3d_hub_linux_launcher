@@ -147,12 +147,12 @@ class W3DHub
         # FIXME: Check that there is enough disk space
 
         # tar present?
-        bsdtar_present = system("#{W3DHub.tar_command} --help")
+        bsdtar_present = W3DHub.command("#{W3DHub.tar_command} --help")
         fail!("FAIL FAST: `#{W3DHub.tar_command} --help` command failed, #{W3DHub.tar_command} is not installed. Will be unable to unpack packages.") unless bsdtar_present
 
         # Wine present?
         if W3DHub.unix?
-          wine_present = system("which #{Store.settings[:wine_command]}")
+          wine_present = W3DHub.command("which #{Store.settings[:wine_command]}")
           fail!("FAIL FAST: `which #{Store.settings[:wine_command]}` command failed, wine is not installed. Will be unable to create prefixes or launch games.") unless wine_present
         end
       end
@@ -636,7 +636,7 @@ class W3DHub
         package_path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
 
         logger.info(LOG_TAG) { "      Running #{W3DHub.tar_command} command: #{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{path}\"" }
-        return system("#{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{path}\"")
+        return W3DHub.command("#{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{path}\"")
       end
 
       def apply_patch(package, path)
@@ -648,7 +648,7 @@ class W3DHub
         Cache.create_directories(temp_path, true)
 
         logger.info(LOG_TAG) { "      Running #{W3DHub.tar_command} command: #{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{temp_path}\"" }
-        system("#{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{temp_path}\"")
+        W3DHub.command("#{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{temp_path}\"")
 
         logger.info(LOG_TAG) { "      Loading #{temp_path}/#{manifest_file.name}.patch..." }
         patch_mix = W3DHub::Mixer::Reader.new(file_path: "#{temp_path}/#{manifest_file.name}.patch", ignore_crc_mismatches: false)
