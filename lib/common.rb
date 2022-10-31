@@ -42,19 +42,25 @@ class W3DHub
 
   def self.command(command, &block)
     if windows?
-      stdout_read, stdout_write = IO.pipe
+      stdout_read, stdout_write = IO.pipe if block
 
-      process_info = Process.create(
+      hash = {
         command_line: command,
         creation_flags: Process::DETACHED_PROCESS,
         process_inherit: true,
         thread_inherit: true,
-        inherit: true,
-        startup_info: {
+        close_handles: false,
+        inherit: true
+      }
+
+      if block
+        hash[:startup_info] = {
           stdout: stdout_write,
           stderr: stdout_write
         }
-      )
+      end
+
+      process_info = Process.create(**hash)
 
       pid = process_info.process_id
       status = -1
