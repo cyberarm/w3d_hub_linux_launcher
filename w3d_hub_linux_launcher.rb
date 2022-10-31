@@ -6,6 +6,7 @@ require "digest"
 require "rexml"
 require "logger"
 require "time"
+require "base64"
 
 class W3DHub
   W3DHUB_DEBUG = ARGV.join.include?("--debug")
@@ -127,6 +128,7 @@ require_relative "lib/pages/login"
 require_relative "lib/pages/settings"
 require_relative "lib/pages/download_manager"
 
+require_relative "lib/asterisk/irc_client"
 require_relative "lib/asterisk/config"
 require_relative "lib/asterisk/game"
 require_relative "lib/asterisk/irc_profile"

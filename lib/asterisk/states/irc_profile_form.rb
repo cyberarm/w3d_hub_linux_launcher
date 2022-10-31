@@ -70,7 +70,7 @@ class W3DHub
 
                 stack(width: 0.5, height: 66) do
                   para "Brenbot Auth Password:"
-                  @bot_auth_password = edit_line @profile ? Base64.strict_decode64(@profile.bot_auth_password) : "", width: 1.0, fill: true, type: :password
+                  @bot_auth_password = edit_line @profile && @profile.bot_auth_password ? Base64.strict_decode64(@profile.bot_auth_password) : "", width: 1.0, fill: true, type: :password
                 end
               end
 

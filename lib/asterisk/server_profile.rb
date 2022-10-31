@@ -2,7 +2,7 @@ class W3DHub
   class Asterisk
     class ServerProfile
       attr_accessor :name, :nickname, :password,
-                    :game, :launch_arguments,
+                    :game_title, :launch_arguments,
                     :server_profile, :server_hostname, :server_port,
                     :irc_profile
 
@@ -15,7 +15,7 @@ class W3DHub
         @server_profile = hash[:server_profile]
         @server_hostname = hash[:server_hostname]
         @server_port = hash[:server_port]
-        @game = hash[:game]
+        @game_title = hash[:game_title]
         @launch_arguments = hash[:launch_arguments]
         @irc_profile = hash[:irc_profile]
       end

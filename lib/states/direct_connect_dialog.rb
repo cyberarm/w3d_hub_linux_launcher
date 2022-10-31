@@ -115,7 +115,8 @@ class W3DHub
                   end
 
                   @game_delete_button = button get_image("#{GAME_ROOT_PATH}/media/ui_icons/minus.png"), image_height: 1.0, tip: "Remove selected game" do
-                    push_state(ConfirmDialog, message: "Remove game?")
+                    push_state(ConfirmDialog, title: "Are you sure?", message: "Remove game: #{@games_list.value}?", accept_callback: -> { delete_game(game_from_title(@games_list.value)) })
+
                   end
 
                   @game_edit_button = button get_image("#{GAME_ROOT_PATH}/media/ui_icons/gear.png"), image_height: 1.0, tip: "Edit selected game" do
@@ -135,7 +136,7 @@ class W3DHub
               end
 
               stack(width: 1.0, height: 66) do
-                para "IRC Profile:"
+                para "IRC Profile (Optional):"
 
                 flow(width: 1.0, fill: true) do
                   @irc_profiles_list = list_box items: W3DHub::Store[:asterisk_config].irc_profiles.map {| pf| pf.name }.insert(0, "None"), fill: true, height: 1.0
@@ -150,11 +151,11 @@ class W3DHub
                   end
 
                   @irc_delete_button = button get_image("#{GAME_ROOT_PATH}/media/ui_icons/minus.png"), image_height: 1.0, tip: "Remove selected IRC profile" do
-                    push_state(ConfirmDialog, message: "")
+                    push_state(ConfirmDialog, title: "Are you sure?", message: "Delete IRC Profile: #{@irc_profiles_list.value}?", accept_callback: -> { delete_irc_profile(irc_profile_from_name(@irc_profiles_list.value)) })
                   end
 
                   @irc_edit_button = button get_image("#{GAME_ROOT_PATH}/media/ui_icons/gear.png"), image_height: 1.0, tip: "Edit selected IRC profile" do
-                    push_state(Asterisk::States::IRCProfileForm, editing: W3DHub::Store[:asterisk_config].irc_profiles.find { |pf| pf.name == @irc_profiles_list.value }, save_callback: method(:save_irc_profile))
+                    push_state(Asterisk::States::IRCProfileForm, editing: irc_profile_from_name(@irc_profiles_list.value), save_callback: method(:save_irc_profile))
                   end
                 end
               end
@@ -164,14 +165,16 @@ class W3DHub
           flow(width: 1.0, height: 40, padding: 8) do
             button "Cancel", width: 0.25 do
               pop_state
-              @options[:cancel_callback]&.call
             end
 
             stack(fill: true)
 
-            button "Connect", width: 0.25 do
+            @connect_button = button "Connect", width: 0.25 do
               pop_state
-              @options[:accept_callback]&.call
+
+              join_server(game_from_title(@games_list.value).path, @server_nickname.value, @server_hostname.value, @server_port.value, @server_password.value, @launch_arguments.value)
+
+              handle_irc
             end
           end
         end
@@ -203,6 +206,12 @@ class W3DHub
           @irc_delete_button.enabled = true
           @irc_edit_button.enabled = true
         end
+
+        if @games_list.value.empty? || @server_nickname.value.empty? || @server_hostname.value.empty? || @server_port.value.empty?
+          @connect_button.enabled = false
+        else
+          @connect_button.enabled = true
+        end
       end
 
       def draw
@@ -219,7 +228,7 @@ class W3DHub
         @server_hostname.value = profile.server_hostname
         @server_port.value     = profile.server_port
 
-        @games_list.choose = profile.game if @games_list.items.find { |game| game == profile.game }
+        @games_list.choose = profile.game_title if @games_list.items.find { |game| game == profile.game_title }
         @launch_arguments.value = profile.launch_arguments
 
         @irc_profiles_list.choose = profile.irc_profile if @irc_profiles_list.items.find { |irc| irc == profile.irc_profile }
@@ -244,7 +253,7 @@ class W3DHub
           updated.server_profile = @server_profiles_list.value
           updated.server_hostname = @server_hostname.value
           updated.server_port = @server_port.value
-          updated.game = @games_list.value
+          updated.game_title = @games_list.value
           updated.launch_arguments = @launch_arguments.value
           updated.irc_profile = @irc_profiles_list.value
         else
@@ -274,6 +283,10 @@ class W3DHub
         @changes_made = false
       end
 
+      def game_from_title(title)
+        W3DHub::Store[:asterisk_config].games.find { |g| title == g.title }
+      end
+
       def save_game(updated, path, title)
         if updated
           updated.path = path
@@ -293,6 +306,21 @@ class W3DHub
         @games_list.choose = title
       end
 
+      def delete_game(game)
+        index = W3DHub::Store[:asterisk_config].games.index(game) || 0
+
+        W3DHub::Store[:asterisk_config].games.delete(game)
+
+        W3DHub::Store[:asterisk_config].save_config
+
+        @games_list.items = W3DHub::Store[:asterisk_config].games.map {|g| g.title }
+        @games_list.choose = W3DHub::Store[:asterisk_config].games[index - 1 > 0 ? index - 1 : 0].title
+      end
+
+      def irc_profile_from_name(name)
+        W3DHub::Store[:asterisk_config].irc_profiles.find { |pf| name == pf.name }
+      end
+
       def save_irc_profile(
                             updated, nickname, username, password,
                             server_hostname, server_port, server_ssl, server_verify_ssl,
@@ -310,8 +338,8 @@ class W3DHub
           updated.nickname = nickname
           updated.username = username
           updated.password = Base64.strict_encode64(password)
-          updated.server_hostname = hserver_hostname
-          updated.server_port = hserver_port
+          updated.server_hostname = server_hostname
+          updated.server_port = server_port
           updated.server_ssl = server_ssl
           updated.server_verify_ssl = server_verify_ssl
           updated.bot_username = bot_username
@@ -339,6 +367,75 @@ class W3DHub
 
         @irc_profiles_list.items = W3DHub::Store[:asterisk_config].irc_profiles.map {| pf| pf.name }.insert(0, "None")
         @irc_profiles_list.choose = generated_name
+      end
+
+      def delete_irc_profile(profile)
+        index = W3DHub::Store[:asterisk_config].irc_profiles.index(profile) || 0
+
+        W3DHub::Store[:asterisk_config].irc_profiles.delete(profile)
+
+        W3DHub::Store[:asterisk_config].save_config
+
+        @irc_profiles_list.items = W3DHub::Store[:asterisk_config].irc_profiles.map {| pf| pf.name }.insert(0, "None")
+        @irc_profiles_list.choose = W3DHub::Store[:asterisk_config].irc_profiles[index - 1 > 0 ? index - 1 : 0].name
+      end
+
+      def wine_command
+        return "" if W3DHub.windows?
+
+        "#{Store.settings[:wine_command]} "
+      end
+
+      # TODO
+      def mangohud_command
+        return "" if W3DHub.windows?
+
+        # TODO: Add game specific options
+        # OPENGL?
+        if false && system("which mangohud")
+          "MANGOHUD=1 MANGOHUD_DLSYM=1 DXVK_HUD=1 mangohud "
+        else
+          ""
+        end
+      end
+
+      # TODO
+      def dxvk_command
+        return "" if W3DHub.windows?
+
+        # Vulkan
+        # SETTING && WINE WILL USE DXVK?
+        if false && true#system()
+          _setting = "full"
+          "DXVK_HUD=#{_setting} "
+        else
+          ""
+        end
+      end
+
+      def run(game_path, *args)
+        pid = Process.spawn("#{dxvk_command}#{mangohud_command}#{wine_command}\"#{game_path}\" #{args.join(' ')}")
+        Process.detach(pid)
+      end
+
+      def join_server(game_path, nickname, server_address, server_port, server_password, launch_arguments)
+        server_password = nil if server_password.empty?
+        launch_arguments = nil if launch_arguments.empty?
+
+        run(
+          game_path,
+          "-launcher +connect #{server_address}:#{server_port} +netplayername #{nickname}#{server_password ? " +password \"#{server_password}\"" : ""}#{launch_arguments ? " #{launch_arguments}" : ''}"
+        )
+      end
+
+      def handle_irc
+        return unless (profile = irc_profile_from_name(@irc_profiles_list.value))
+
+        Thread.new do
+          sleep 15
+
+          W3DHub::Asterisk::IRCClient.new(profile)
+        end
       end
     end
   end
