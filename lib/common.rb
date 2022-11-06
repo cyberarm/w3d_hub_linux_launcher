@@ -81,15 +81,17 @@ class W3DHub
 
       status.zero?
     else
-      IO.popen(command) do |io|
-        if block
+      if block
+        IO.popen(command, "r") do |io|
           io.each_line do |line|
             block&.call(line)
           end
         end
-      end
 
-      $CHILD_STATUS.success?
+        $CHILD_STATUS.success?
+      else
+        system(command)
+      end
     end
   end
 
