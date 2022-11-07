@@ -55,6 +55,10 @@ class W3DHub
       @@instance.add_job(Job.new(job: job, callback: callback, error_handler: error_handler, deliver_to_queue: true))
     end
 
+    def self.foreground_parallel_job(job, callback, error_handler = nil)
+      @@instance.add_parallel_job(Job.new(job: job, callback: callback, error_handler: error_handler, deliver_to_queue: true))
+    end
+
     def initialize
       @busy = false
       @jobs = []

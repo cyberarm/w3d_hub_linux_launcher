@@ -45,7 +45,7 @@ class W3DHub
         if force_ping || Gosu.milliseconds - @last_pinged >= @ping_interval
           @last_pinged = Gosu.milliseconds
 
-          W3DHub::BackgroundWorker.parallel_job(
+          W3DHub::BackgroundWorker.foreground_parallel_job(
             lambda do
               @ping = -1
 
