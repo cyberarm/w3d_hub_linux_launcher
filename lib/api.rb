@@ -22,6 +22,10 @@ class W3DHub
       def success?
         false
       end
+
+      def status
+        -1
+      end
     end
 
     #! === W3D Hub API === !#
