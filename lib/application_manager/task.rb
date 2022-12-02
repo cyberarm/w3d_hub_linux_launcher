@@ -146,10 +146,7 @@ class W3DHub
 
         # FIXME: Check that there is enough disk space
 
-        # tar present?
-        bsdtar_present = W3DHub.command("#{W3DHub.tar_command} --help")
-        fail!("FAIL FAST: `#{W3DHub.tar_command} --help` command failed, #{W3DHub.tar_command} is not installed. Will be unable to unpack packages.") unless bsdtar_present
-
+        # TODO: Is missing wine/proton really a failure condition?
         # Wine present?
         if W3DHub.unix?
           wine_present = W3DHub.command("which #{Store.settings[:wine_command]}")
@@ -286,8 +283,8 @@ class W3DHub
 
           manifest.files.each do |file|
             safe_file_name = file.name.gsub("\\", "/")
-            # Fix borked data -> Data 'cause Windows don't care about capitalization
-            safe_file_name.sub!("data/", "Data/") # unless File.exist?("#{path}/#{safe_file_name}")
+            # Fix borked Data -> data 'cause Windows don't care about capitalization
+            safe_file_name.sub!("Data/", "data/")
 
             file_path = "#{path}/#{safe_file_name}"
 
@@ -490,8 +487,6 @@ class W3DHub
             unpack_package(package, path)
           end
 
-          repair_windows_case_insensitive(package, path)
-
           if status
             @status.operations[:"#{package.checksum}"].value = package.custom_is_patch ? "Patched" : "Unpacked"
             @status.operations[:"#{package.checksum}"].progress = 1.0
@@ -635,8 +630,9 @@ class W3DHub
         logger.info(LOG_TAG) { "    #{package.name}:#{package.version}" }
         package_path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
 
-        logger.info(LOG_TAG) { "      Running #{W3DHub.tar_command} command: #{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{path}\"" }
-        return W3DHub.command("#{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{path}\"")
+        logger.info(LOG_TAG) { "      Unpacking package \"#{package_path}\" in \"#{path}\"" }
+
+        return unzip(package_path, path)
       end
 
       def apply_patch(package, path)
@@ -647,19 +643,18 @@ class W3DHub
 
         Cache.create_directories(temp_path, true)
 
-        logger.info(LOG_TAG) { "      Running #{W3DHub.tar_command} command: #{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{temp_path}\"" }
-        W3DHub.command("#{W3DHub.tar_command} -xf \"#{package_path}\" -C \"#{temp_path}\"")
+        logger.info(LOG_TAG) { "      Unpacking patch \"#{package_path}\" in \"#{temp_path}\"" }
+        unzip(package_path, temp_path)
 
-        logger.info(LOG_TAG) { "      Loading #{temp_path}/#{manifest_file.name}.patch..." }
-        patch_mix = W3DHub::Mixer::Reader.new(file_path: "#{temp_path}/#{manifest_file.name}.patch", ignore_crc_mismatches: false)
+        # Fix borked Data -> data 'cause Windows don't care about capitalization
+        safe_file_name = "#{manifest_file.name.sub('Data/', 'data/')}"
+
+        logger.info(LOG_TAG) { "      Loading #{temp_path}/#{safe_file_name}.patch..." }
+        patch_mix = W3DHub::Mixer::Reader.new(file_path: "#{temp_path}/#{safe_file_name}.patch", ignore_crc_mismatches: false)
         patch_info = JSON.parse(patch_mix.package.files.find { |f| f.name == ".w3dhub.patch" || f.name == ".bhppatch" }.data, symbolize_names: true)
 
-        repaired_path = "#{path}/#{manifest_file.name}"
-        # Fix borked data -> Data 'cause Windows don't care about capitalization
-        repaired_path = "#{path}/#{manifest_file.name.sub('data', 'Data')}" unless File.exist?(repaired_path) && path
-
-        logger.info(LOG_TAG) { "      Loading #{repaired_path}..." }
-        target_mix = W3DHub::Mixer::Reader.new(file_path: repaired_path, ignore_crc_mismatches: false)
+        logger.info(LOG_TAG) { "      Loading #{path}/#{safe_file_name}..." }
+        target_mix = W3DHub::Mixer::Reader.new(file_path: "#{path}/#{safe_file_name}", ignore_crc_mismatches: false)
 
         logger.info(LOG_TAG) { "      Removing files..." } if patch_info[:removedFiles].size.positive?
         patch_info[:removedFiles].each do |file|
@@ -681,27 +676,38 @@ class W3DHub
           end
         end
 
-        logger.info(LOG_TAG) { "      Writing updated #{repaired_path}..." } if patch_info[:updatedFiles].size.positive?
-        W3DHub::Mixer::Writer.new(file_path: repaired_path, package: target_mix.package, memory_buffer: true)
+        logger.info(LOG_TAG) { "      Writing updated #{path}/#{safe_file_name}..." } if patch_info[:updatedFiles].size.positive?
+        W3DHub::Mixer::Writer.new(file_path: "#{path}/#{safe_file_name}", package: target_mix.package, memory_buffer: true)
 
         FileUtils.remove_dir(temp_path)
 
         true
       end
 
-      def repair_windows_case_insensitive(package, path)
-        # Windows is just confused
-        return true if W3DHub.windows?
+      def unzip(package_path, path)
+        stream = Zip::InputStream.new(File.open(package_path))
 
-        # Force data/ to Data/
-        return true unless File.exist?("#{path}/data") && File.directory?("#{path}/data")
+        while (entry = stream.get_next_entry)
 
-        logger.info(LOG_TAG) { "      Moving #{path}/data/ to #{path}/Data/" }
+          safe_file_name = entry.name.gsub("\\", "/")
+          # Fix borked Data -> data 'cause Windows don't care about capitalization
+          safe_file_name.sub!("Data/", "data/")
 
-        FileUtils.mv(Dir.glob("#{path}/data/**"), "#{path}/Data", force: true)
-        FileUtils.remove_dir("#{path}/data", force: true)
+          dir_path = "#{path}/#{File.dirname(safe_file_name)}"
+          unless dir_path.end_with?("/.") || Dir.exist?(dir_path)
+            FileUtils.mkdir_p(dir_path)
+          end
 
-        true
+          File.open("#{path}/#{safe_file_name}", "wb") do |f|
+            i = entry.get_input_stream
+            
+            while (chunk = i.read(32_000_000)) # Read up to ~32 MB per chunk
+              f.write chunk
+            end
+          end
+        end
+
+        return true
       end
     end
   end

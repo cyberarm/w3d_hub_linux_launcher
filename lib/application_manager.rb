@@ -231,7 +231,24 @@ class W3DHub
 
       return false unless server
 
-      join_server(app_id, channel, server)
+      if Store.settings[:server_list_username].to_s.length.zero?
+        W3DHub.prompt_for_nickname(
+          accept_callback: proc do |entry|
+            Store.settings[:server_list_username] = entry
+            Store.settings.save_settings
+
+            if server.status.password
+              W3DHub.prompt_for_password(
+                accept_callback: proc do |password|
+                  join_server(app_id, channel, server)
+                end
+              )
+            else
+              join_server(app_id, channel, server)
+            end
+          end
+        )
+      end
     end
 
     def favorive(app_id, bool)

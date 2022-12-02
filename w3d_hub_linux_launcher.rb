@@ -7,6 +7,7 @@ require "rexml"
 require "logger"
 require "time"
 require "base64"
+require "zip"
 
 class W3DHub
   W3DHUB_DEBUG = ARGV.join.include?("--debug")
@@ -55,8 +56,8 @@ end
 begin
   require_relative "../cyberarm_engine/lib/cyberarm_engine"
 rescue LoadError => e
-  logger.warn(W3D::LOG_TAG) { "Failed to load local cyberarm_engine:" }
-  logger.warn(W3D::LOG_TAG) { e }
+  logger.warn(W3DHub::LOG_TAG) { "Failed to load local cyberarm_engine:" }
+  logger.warn(W3DHub::LOG_TAG) { e }
 
   require "cyberarm_engine"
 end

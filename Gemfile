@@ -9,6 +9,7 @@ gem "ffi"
 gem "websocket-client-simple"
 gem "thread-local"
 gem "ircparser"
+gem "rubyzip"
 gem "win32-security", platforms: [:x64_mingw, :mingw]
 gem "win32-process", platforms: [:x64_mingw, :mingw]
 

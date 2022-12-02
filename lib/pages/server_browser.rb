@@ -80,7 +80,7 @@ class W3DHub
                 @nickname_label = inscription "#{Store.settings[:server_list_username]}"
                 image "#{GAME_ROOT_PATH}/media/ui_icons/wrench.png", height: 16, hover: { color: 0xaa_ffffff }, tip: I18n.t(:"server_browser.set_nickname") do
                   # Prompt for player name
-                  prompt_for_nickname(
+                  W3DHub.prompt_for_nickname(
                     accept_callback: proc do |entry|
                       @nickname_label.value = entry
                       Store.settings[:server_list_username] = entry
@@ -390,32 +390,32 @@ class W3DHub
                   #   prompt for password
                   # Launch game
                   if Store.settings[:server_list_username].to_s.length.zero?
-                    prompt_for_nickname(
+                    W3DHub.prompt_for_nickname(
                       accept_callback: proc do |entry|
                         @nickname_label.value = entry
                         Store.settings[:server_list_username] = entry
                         Store.settings.save_settings
 
                         if server.status.password
-                          prompt_for_password(
+                          W3DHub.prompt_for_password(
                             accept_callback: proc do |password|
-                              join_server(server, password)
+                              W3DHub.join_server(server, password)
                             end
                           )
                         else
-                          join_server(server, nil)
+                          W3DHub.join_server(server, nil)
                         end
                       end
                     )
                   else
                     if server.status.password
-                      prompt_for_password(
+                      W3DHub.prompt_for_password(
                         accept_callback: proc do |password|
-                          join_server(server, password)
+                          W3DHub.join_server(server, password)
                         end
                       )
                     else
-                      join_server(server, nil)
+                      W3DHub.join_server(server, nil)
                     end
                   end
                 end
@@ -597,49 +597,6 @@ class W3DHub
                       end
 
         data
-      end
-
-      def prompt_for_nickname(accept_callback: nil, cancel_callback: nil)
-        push_state(
-          W3DHub::States::PromptDialog,
-          title: I18n.t(:"server_browser.set_nickname"),
-          message: I18n.t(:"server_browser.set_nickname_message"),
-          prefill: Store.settings[:server_list_username],
-          accept_callback: accept_callback,
-          cancel_callback: cancel_callback,
-          # See: https://gitlab.com/danpaul88/brenbot/-/blob/master/Source/renlog.pm#L136-175
-          valid_callback: proc do |entry|
-            entry.length > 1 && entry.length < 30 && (entry =~ /(:|!|&|%| )/i).nil? &&
-              (entry =~ /[\001\002\037]/).nil? && (entry =~ /\\/).nil?
-          end
-        )
-      end
-
-      def prompt_for_password(accept_callback: nil, cancel_callback: nil)
-        push_state(
-          W3DHub::States::PromptDialog,
-          title: I18n.t(:"server_browser.enter_password"),
-          message: I18n.t(:"server_browser.enter_password_message"),
-          input_type: :password,
-          accept_callback: accept_callback,
-          cancel_callback: cancel_callback,
-          valid_callback: proc { |entry| entry.length.positive? }
-        )
-      end
-
-      def join_server(server, password)
-        if (
-          (server.status.password && password.length.positive?) ||
-          !server.status.password) &&
-           Store.settings[:server_list_username].to_s.length.positive?
-
-          Store.application_manager.join_server(
-            server.game,
-            server.channel, server, password
-          )
-        else
-          window.push_state(W3DHub::States::MessageDialog, type: "?", title: "?", message: "?")
-        end
       end
 
       def formatted_score(int)

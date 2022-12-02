@@ -45,7 +45,18 @@ class W3DHub
       end
 
       begin
-        Excon.post(url, headers: headers, body: body, tcp_nodelay: true, write_timeout: API_TIMEOUT, read_timeout: API_TIMEOUT, connection_timeout: API_TIMEOUT)
+        Excon.post(
+          url,
+          headers: headers,
+          body: body,
+          tcp_nodelay: true,
+          write_timeout: API_TIMEOUT,
+          read_timeout: API_TIMEOUT,
+          connection_timeout: API_TIMEOUT,
+          idempotent: true,
+          retry_limit: 6,
+          retry_interval: 5
+        )
       rescue Excon::Errors::Timeout
         logger.error(LOG_TAG) { "Connection to \"#{url}\" timed out after: #{API_TIMEOUT} seconds" }
         DummyResponse.new
@@ -233,7 +244,7 @@ class W3DHub
 
       logger.debug(LOG_TAG) { "Fetching GET \"#{url}\"..." }
 
-      Excon.get(url, headers: headers, body: body, persistent: true)
+      Excon.get(url, headers: headers, body: body, persistent: true, idempotent: true, retry_limit: 6, retry_interval: 5)
     end
 
     # Method: GET

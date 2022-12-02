@@ -11,7 +11,7 @@ GEM
     digest-crc (0.6.4)
       rake (>= 12.0.0, < 14.0.0)
     event_emitter (0.2.6)
-    excon (0.93.1)
+    excon (0.94.0)
     ffi (1.15.5)
     ffi (1.15.5-x64-mingw-ucrt)
     ffi (1.15.5-x64-mingw32)
@@ -27,6 +27,7 @@ GEM
     public_suffix (5.0.0)
     rake (13.0.6)
     rexml (3.2.5)
+    rubyzip (2.3.2)
     thread-local (1.1.0)
     websocket (1.2.9)
     websocket-client-simple (0.6.0)
@@ -51,10 +52,11 @@ DEPENDENCIES
   ircparser
   launchy
   rexml
+  rubyzip
   thread-local
   websocket-client-simple
   win32-process
   win32-security
 
 BUNDLED WITH
-   2.3.17
+   2.3.26

@@ -32,13 +32,48 @@ class W3DHub
     linux? || mac?
   end
 
-  def self.tar_command
-    if windows?
-      "tar"
-    else
-      "bsdtar"
-    end
-  end
+  def self.prompt_for_nickname(accept_callback: nil, cancel_callback: nil)
+        CyberarmEngine::Window.instance.push_state(
+          W3DHub::States::PromptDialog,
+          title: I18n.t(:"server_browser.set_nickname"),
+          message: I18n.t(:"server_browser.set_nickname_message"),
+          prefill: Store.settings[:server_list_username],
+          accept_callback: accept_callback,
+          cancel_callback: cancel_callback,
+          # See: https://gitlab.com/danpaul88/brenbot/-/blob/master/Source/renlog.pm#L136-175
+          valid_callback: proc do |entry|
+            entry.length > 1 && entry.length < 30 && (entry =~ /(:|!|&|%| )/i).nil? &&
+              (entry =~ /[\001\002\037]/).nil? && (entry =~ /\\/).nil?
+          end
+        )
+      end
+
+      def self.prompt_for_password(accept_callback: nil, cancel_callback: nil)
+        CyberarmEngine::Window.instance.push_state(
+          W3DHub::States::PromptDialog,
+          title: I18n.t(:"server_browser.enter_password"),
+          message: I18n.t(:"server_browser.enter_password_message"),
+          input_type: :password,
+          accept_callback: accept_callback,
+          cancel_callback: cancel_callback,
+          valid_callback: proc { |entry| entry.length.positive? }
+        )
+      end
+
+      def self.join_server(server, password)
+        if (
+          (server.status.password && password.length.positive?) ||
+          !server.status.password) &&
+           Store.settings[:server_list_username].to_s.length.positive?
+
+          Store.application_manager.join_server(
+            server.game,
+            server.channel, server, password
+          )
+        else
+          CyberarmEngine::Window.instance.push_state(W3DHub::States::MessageDialog, type: "?", title: "?", message: "?")
+        end
+      end
 
   def self.command(command, &block)
     if windows?
