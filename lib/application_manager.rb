@@ -248,6 +248,8 @@ class W3DHub
             end
           end
         )
+      else
+        join_server(app_id, channel, server)
       end
     end
 
