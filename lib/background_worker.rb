@@ -71,12 +71,15 @@ class W3DHub
 
     def kill!
       @thread_pool.each(&:kill)
+
+      logger.info(LOG_TAG) { "Forcefully killed background job worker." }
+      @@alive = false
     end
 
     def handle_jobs
       8.times do |i|
-        Thread.new do |thread|
-          @thread_pool << thread
+        Thread.new do
+          @thread_pool << Thread.current
 
           while BackgroundWorker.run?
             job = @parallel_jobs.shift
@@ -96,24 +99,28 @@ class W3DHub
         end
       end
 
-      while BackgroundWorker.run?
-        job = @jobs.shift
+      Thread.new do
+        @thread_pool << Thread.current
 
-        @busy = true
+        while BackgroundWorker.run?
+          job = @jobs.shift
 
-        begin
-          job&.do
-        rescue => e
-          job&.raise_error(e)
+          @busy = true
+
+          begin
+            job&.do
+          rescue => e
+            job&.raise_error(e)
+          end
+
+          @busy = !@jobs.empty?
+
+          sleep 0.1
         end
 
-        @busy = !@jobs.empty?
-
-        sleep 0.1
+        logger.info(LOG_TAG) { "Stopped background job worker." }
+        @@alive = false
       end
-
-      logger.info(LOG_TAG) { "Stopped background job worker." }
-      @@alive = false
     end
 
     def add_job(job)

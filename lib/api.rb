@@ -15,10 +15,14 @@ class W3DHub
     }.freeze
 
     def self.on_thread(method, *args, &callback)
-      BackgroundWorker.job(-> { Api.send(method, *args) }, callback)
+      BackgroundWorker.foreground_job(-> { Api.send(method, *args) }, callback)
     end
 
     class DummyResponse
+      def initialize(error)
+        @error = error
+      end
+
       def success?
         false
       end
@@ -26,16 +30,22 @@ class W3DHub
       def status
         -1
       end
+
+      def body
+        ""
+      end
+
+      def error
+        @error
+      end
     end
 
     #! === W3D Hub API === !#
 
     ENDPOINT = "https://secure.w3dhub.com".freeze
 
-    def self.post(url, headers = DEFAULT_HEADERS, body = nil)
-      # TODO: Check if session has expired and attempt to refresh session before submitting request
-
-      logger.debug(LOG_TAG) { "Fetching POST \"#{url}\"..." }
+    def self.excon(method, url, headers = DEFAULT_HEADERS, body = nil)
+      logger.debug(LOG_TAG) { "Fetching #{method.to_s.upcase} \"#{url}\"..." }
 
       # Inject Authorization header if account data is populated
       if Store.account
@@ -45,26 +55,35 @@ class W3DHub
       end
 
       begin
-        Excon.post(
+        Excon.send(
+          method,
           url,
           headers: headers,
           body: body,
+          nonblock: true,
           tcp_nodelay: true,
           write_timeout: API_TIMEOUT,
           read_timeout: API_TIMEOUT,
-          connection_timeout: API_TIMEOUT,
+          connect_timeout: API_TIMEOUT,
           idempotent: true,
-          retry_limit: 6,
-          retry_interval: 5
+          retry_limit: 3,
+          retry_interval: 1,
+          retry_errors: [Excon::Error::Socket, Excon::Error::HTTPStatus] # Don't retry on timeout
         )
-      rescue Excon::Errors::Timeout
+      rescue Excon::Errors::Timeout => e
         logger.error(LOG_TAG) { "Connection to \"#{url}\" timed out after: #{API_TIMEOUT} seconds" }
-        DummyResponse.new
-      rescue Excon::Socket::Error => e
+
+        DummyResponse.new(e)
+      rescue Excon::Error => e
         logger.error(LOG_TAG) { "Connection to \"#{url}\" errored:" }
         logger.error(LOG_TAG) { e }
-        DummyResponse.new
+
+        DummyResponse.new(e)
       end
+    end
+
+    def self.post(url, headers = DEFAULT_HEADERS, body = nil)
+      excon(:post, url, headers, body)
     end
 
     # Method: POST
@@ -240,11 +259,7 @@ class W3DHub
     SERVER_LIST_ENDPOINT = "https://gsh.w3dhub.com".freeze
 
     def self.get(url, headers = DEFAULT_HEADERS, body = nil)
-      @client ||= Excon.new(SERVER_LIST_ENDPOINT, persistent: true)
-
-      logger.debug(LOG_TAG) { "Fetching GET \"#{url}\"..." }
-
-      Excon.get(url, headers: headers, body: body, persistent: true, idempotent: true, retry_limit: 6, retry_interval: 5)
+      excon(:get, url, headers, body)
     end
 
     # Method: GET
