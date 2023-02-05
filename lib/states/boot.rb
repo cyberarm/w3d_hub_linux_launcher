@@ -70,6 +70,10 @@ class W3DHub
         @task_index += 1 if @tasks.dig(@tasks.keys[@task_index], :complete)
       end
 
+      def needs_repaint?
+        true
+      end
+
       def refresh_user_token
         if Store.settings[:account, :data]
           account = Api::Account.new(Store.settings[:account, :data], {})

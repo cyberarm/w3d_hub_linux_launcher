@@ -40,16 +40,8 @@ class W3DHub
       sleep(update_interval / 1000.0) if W3DHub::BackgroundWorker.busy? || Store.application_manager.busy?
     end
 
-    def gain_focus
-      super
-
-      self.update_interval = 1000.0 / 60
-    end
-
-    def lose_focus
-      super
-
-      self.update_interval = 1000.0 / 10
+    def needs_redraw?
+      states.any?(&:needs_repaint?)
     end
 
     def close
