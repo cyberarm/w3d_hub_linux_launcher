@@ -136,7 +136,7 @@ class W3DHub
                   flow(width: 1.0, height: 22, margin_bottom: 8) do
                     image "#{GAME_ROOT_PATH}/media/ui_icons/share1.png", width: 24
                     link item.name, text_size: 18 do
-                      Launchy.open(item.uri)
+                      W3DHub.url(item.uri)
                     end
                   end
                 end
@@ -426,7 +426,7 @@ class W3DHub
                   inscription item.blurb.gsub(/\n+/, "\n").strip[0..1024], fill: true
 
                   button I18n.t(:"games.read_more"), width: 1.0, margin_top: 8, margin_bottom: 0, padding_top: 4, padding_bottom: 4 do
-                    Launchy.open(item.uri)
+                    W3DHub.url(item.uri)
                   end
                 end
 
@@ -525,7 +525,7 @@ class W3DHub
 
               stack(width: 0.75, height: 1.0) do
                 stack(width: 1.0, height: 128 - 28) do
-                  link(mod[:name]) { Launchy.open(mod[:url]) }
+                  link(mod[:name]) { W3DHub.url(mod[:url]) }
                   inscription "Author: #{mod[:author]} | #{mod[:type]} | #{mod[:subtype]}"
                   para mod[:description][0..180]
                 end

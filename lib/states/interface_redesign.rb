@@ -91,7 +91,7 @@ class W3DHub
                   flow(width: 1.0) do
                     link(I18n.t(:"interface.log_in"), text_size: 16, width: 0.5) { page(W3DHub::Pages::Login) }
                     link I18n.t(:"interface.register"), text_size: 16, width: 0.49 do
-                      Launchy.open("https://secure.w3dhub.com/forum/index.php?app=core&module=global&section=register")
+                      W3DHub.url("https://secure.w3dhub.com/forum/index.php?app=core&module=global&section=register")
                     end
                   end
                 end

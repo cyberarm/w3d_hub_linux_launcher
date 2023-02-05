@@ -16,16 +16,16 @@ class W3DHub
 
               flow(width: 64 * 4 + (3 * 32), height: 1.0) do
                 image "#{GAME_ROOT_PATH}/media/icons/app.png", hover: { color: 0xaa_ffffff }, height: 1.0, tip: "#{I18n.t(:app_name)} Github Repository" do
-                  Launchy.open("https://github.com/cyberarm/w3d_hub_linux_launcher")
+                  W3DHub.url("https://github.com/cyberarm/w3d_hub_linux_launcher")
                 end
                 image "#{GAME_ROOT_PATH}/media/icons/w3dhub.png", hover: { color: 0xaa_ffffff }, height: 1.0, margin_left: 32, tip: "W3D Hub Forums" do
-                  Launchy.open("https://w3dhub.com/forum/")
+                  W3DHub.url("https://w3dhub.com/forum/")
                 end
                 image "#{GAME_ROOT_PATH}/media/social_media_icons/discord.png", hover: { color: 0xaa_ffffff }, height: 1.0, margin_left: 32, tip: "W3D Hub Discord Server" do
-                  Launchy.open("https://discord.com/invite/GYhW7eV")
+                  W3DHub.url("https://discord.com/invite/GYhW7eV")
                 end
                 image "#{GAME_ROOT_PATH}/media/social_media_icons/facebook.png", hover: { color: 0xaa_ffffff }, height: 1.0, margin_left: 32, tip: "W3D Hub Facebook Page" do
-                  Launchy.open("https://www.facebook.com/w3dhub")
+                  W3DHub.url("https://www.facebook.com/w3dhub")
                 end
               end
 
@@ -43,10 +43,10 @@ class W3DHub
               tagline "<b>Help & Support</b>"
               flow(width: 1.0) do
                 para "For help and support using this launcher or playing any W3D Hub game visit the"
-                link("W3D Hub forums", text_size: 16, tip: "https://w3dhub.com/forum/") { Launchy.open("https://w3dhub.com/forum/") }
+                link("W3D Hub forums", text_size: 16, tip: "https://w3dhub.com/forum/") { W3DHub.url("https://w3dhub.com/forum/") }
                 para "or join us in"
                 image "#{GAME_ROOT_PATH}/media/social_media_icons/discord.png", height: 16, padding_top: 4
-                link("#tech-support", text_size: 16, tip: "https://discord.com/invite/GYhW7eV") { Launchy.open("https://discord.com/invite/GYhW7eV") }
+                link("#tech-support", text_size: 16, tip: "https://discord.com/invite/GYhW7eV") { W3DHub.url("https://discord.com/invite/GYhW7eV") }
                 para "on the W3D Hub Discord server"
               end
             end
@@ -112,7 +112,7 @@ class W3DHub
             #     stack(width: 0.6, height: 1.0) do
             #       stack(width: 1.0, height: 112) do
             #         link "<b>#{item.title}</b>", text_size: 18 do
-            #           Launchy.open(item.uri)
+            #           W3DHub.url(item.uri)
             #         end
             #         inscription item.blurb.gsub(/\n+/, "\n").strip[0..180]
             #       end
@@ -120,7 +120,7 @@ class W3DHub
             #       flow(width: 1.0) do
             #         inscription item.timestamp.strftime("%Y-%m-%d"), width: 0.499
             #         link I18n.t(:"games.read_more"), width: 0.5, text_align: :right, text_size: 14 do
-            #           Launchy.open(item.uri)
+            #           W3DHub.url(item.uri)
             #         end
             #       end
             #     end
@@ -142,7 +142,7 @@ class W3DHub
                   inscription item.blurb.gsub(/\n+/, "\n").strip[0..1024], fill: true
 
                   button I18n.t(:"games.read_more"), width: 1.0, margin_top: 8, margin_bottom: 0, padding_top: 4, padding_bottom: 4 do
-                    Launchy.open(item.uri)
+                    W3DHub.url(item.uri)
                   end
                 end
 

@@ -32,6 +32,18 @@ class W3DHub
     linux? || mac?
   end
 
+  def self.url(path)
+    raise "Hazardous input: #{path}" if path.include?("&&") || path.include?(";")
+
+    if windows?
+      system("start #{path}")
+    elsif linux?
+      system("xdg-open #{path}")
+    elsif mac?
+      system("open #{path}")
+    end
+  end
+
   def self.prompt_for_nickname(accept_callback: nil, cancel_callback: nil)
         CyberarmEngine::Window.instance.push_state(
           W3DHub::States::PromptDialog,

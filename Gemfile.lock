@@ -1,8 +1,6 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    addressable (2.8.1)
-      public_suffix (>= 2.0.2, < 6.0)
     concurrent-ruby (1.2.0)
     cyberarm_engine (0.23.0)
       excon (~> 0.88)
@@ -20,13 +18,9 @@ GEM
     i18n (1.12.0)
       concurrent-ruby (~> 1.0)
     ircparser (1.0.0)
-    launchy (2.5.2)
-      addressable (~> 2.8)
-    public_suffix (5.0.1)
     rake (13.0.6)
     rexml (3.2.5)
     rubyzip (2.3.2)
-    thread-local (1.1.0)
     websocket (1.2.9)
     websocket-client-simple (0.6.0)
       event_emitter
@@ -45,13 +39,10 @@ PLATFORMS
 DEPENDENCIES
   cyberarm_engine
   digest-crc
-  ffi
   i18n
   ircparser
-  launchy
   rexml
   rubyzip
-  thread-local
   websocket-client-simple
   win32-process
   win32-security

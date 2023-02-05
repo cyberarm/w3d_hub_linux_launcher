@@ -68,7 +68,6 @@ class W3DHub
 end
 
 require "i18n"
-require "launchy"
 require "websocket-client-simple"
 require "English"
 
