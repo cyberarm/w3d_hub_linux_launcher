@@ -185,14 +185,19 @@ class W3DHub
         @status_label.value = I18n.t(:"server_browser.fetching_server_list")
 
         Api.on_thread(:server_list, 2) do |list|
-          Store.server_list = list.sort_by! { |s| s&.status&.players&.size }.reverse if list
+          if list
+            Store.server_list = list.sort_by! { |s| s&.status&.players&.size }.reverse
 
-          Store.server_list_last_fetch = Gosu.milliseconds
+            Store.server_list_last_fetch = Gosu.milliseconds
 
-          Api::ServerListUpdater.instance
+            Api::ServerListUpdater.instance
 
-          list.each do |server|
-            server.send_ping(true)
+            list.each do |server|
+              server.send_ping(true)
+            end
+          else
+            @offline_mode = true
+            Store.offline_mode = true
           end
 
           @tasks[:server_list][:complete] = true
