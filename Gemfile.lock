@@ -1,7 +1,7 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    concurrent-ruby (1.2.0)
+    concurrent-ruby (1.2.2)
     cyberarm_engine (0.23.0)
       excon (~> 0.88)
       gosu (~> 1.1)
@@ -13,16 +13,16 @@ GEM
     ffi (1.15.5)
     ffi-win32-extensions (1.0.4)
       ffi
-    gosu (1.4.5)
+    gosu (1.4.6)
     gosu_more_drawables (0.3.1)
-    i18n (1.12.0)
+    i18n (1.13.0)
       concurrent-ruby (~> 1.0)
     ircparser (1.0.0)
     rake (13.0.6)
     rexml (3.2.5)
     rubyzip (2.3.2)
     websocket (1.2.9)
-    websocket-client-simple (0.6.0)
+    websocket-client-simple (0.6.1)
       event_emitter
       websocket
     win32-process (0.10.0)
@@ -48,4 +48,4 @@ DEPENDENCIES
   win32-security
 
 BUNDLED WITH
-   2.4.3
+   2.4.13
