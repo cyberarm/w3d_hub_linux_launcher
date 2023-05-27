@@ -56,7 +56,10 @@ class W3DHub
 
         load_offline_applications_list if @offline_mode
 
-        push_state(States::Interface) if @offline_mode || (@progressbar.value >= 1.0 && @task_index == @tasks.size)
+        if @offline_mode || (@progressbar.value >= 1.0 && @task_index == @tasks.size)
+          pop_state
+          push_state(States::Interface)
+        end
 
         return if @offline_mode
 
