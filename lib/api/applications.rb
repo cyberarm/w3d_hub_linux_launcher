@@ -9,7 +9,7 @@ class W3DHub
         @games = []
 
         games.each { |hash| @games << Game.new(hash) }
-        @games.sort_by! { |a| a.name }.reverse
+        @games.sort_by!(&:name).reverse
       end
 
       def games
