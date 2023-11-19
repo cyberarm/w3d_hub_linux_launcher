@@ -39,7 +39,7 @@ class W3DHub
 
         path = Cache.install_path(@application, @channel)
 
-        log path
+        logger.info(LOG_TAG) { path }
         # TODO: Do some sanity checking, i.e. DO NOT start launcher if `whoami` returns root, path makes sense,
         #       we're not on Windows trying to uninstall a game likely installed by the official launcher
         FileUtils.remove_dir(path)
@@ -55,7 +55,7 @@ class W3DHub
 
         @status.step = :mark_application_uninstalled
 
-        log "#{@app_id} has been uninstalled."
+        logger.info(LOG_TAG) { "#{@app_id} has been uninstalled." }
       end
     end
   end

@@ -147,6 +147,9 @@ class W3DHub
           else
             # FIXME: Failed to retreive!
             BackgroundWorker.foreground_job(-> {}, ->(_){ @status_label.value = "FAILED TO RETREIVE APPS LIST" })
+
+            @offline_mode = true
+            Store.offline_mode = true
           end
         end
       end
@@ -160,6 +163,8 @@ class W3DHub
         end
 
         Api.on_thread(:package_details, packages) do |package_details|
+          package_details ||= nil
+
           package_details&.each do |package|
             path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
             generated_icon_path = "#{GAME_ROOT_PATH}/media/icons/#{package.subcategory}.png"

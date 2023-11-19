@@ -448,6 +448,14 @@ class W3DHub
       Store.settings.save_settings
     end
 
+    def color(app_id)
+      Store.applications.games.detect { |g| g.id == app_id }&.color
+    end
+
+    def name(app_id)
+      Store.applications.games.detect { |g| g.id == app_id }&.name
+    end
+
     # No application tasks are being done
     def idle?
       !busy?
