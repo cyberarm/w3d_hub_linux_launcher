@@ -1,6 +1,6 @@
 class W3DHub
   class States
-    class DirectConnectDialog < CyberarmEngine::GuiState
+    class DirectConnectDialog < Dialog
       def setup
         window.show_cursor = true
         W3DHub::Store[:asterisk_config] ||= Asterisk::Config.new
@@ -212,14 +212,6 @@ class W3DHub
         else
           @connect_button.enabled = true
         end
-      end
-
-      def draw
-        previous_state&.draw
-
-        Gosu.flush
-
-        super
       end
 
       def populate_from_server_profile(profile)

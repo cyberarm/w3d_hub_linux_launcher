@@ -1,6 +1,6 @@
 class W3DHub
   class States
-    class PromptDialog < CyberarmEngine::GuiState
+    class PromptDialog < Dialog
       def setup
         window.show_cursor = true
 
@@ -64,14 +64,6 @@ class W3DHub
             @prompt_entry.set_border_color
           end
         end
-      end
-
-      def draw
-        previous_state&.draw
-
-        Gosu.flush
-
-        super
       end
     end
   end

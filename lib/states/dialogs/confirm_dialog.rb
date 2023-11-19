@@ -1,6 +1,6 @@
 class W3DHub
   class States
-    class ConfirmDialog < CyberarmEngine::GuiState
+    class ConfirmDialog < Dialog
       def setup
         window.show_cursor = true
 
@@ -35,14 +35,6 @@ class W3DHub
             end
           end
         end
-      end
-
-      def draw
-        previous_state&.draw
-
-        Gosu.flush
-
-        super
       end
     end
   end

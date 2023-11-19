@@ -23,91 +23,84 @@ class W3DHub
         @page = nil
         @pages = {}
 
-        Store.application_manager.auto_import
+        Store.application_manager.auto_import # unless Store.offline_mode
 
         theme(W3DHub::THEME)
 
-        @interface_container = flow(width: 1.0, height: 1.0) do
-          # TODO: Override this background color to be a darkened version of the selected games
-          #       or a default color
-          background 0xff_212121..0xff_111111
+        @interface_container = stack(width: 1.0, height: 1.0, border_thickness: 1, border_color: W3DHub::BORDER_COLOR) do
+          background 0xff_252525
 
-          flow(fill: true, height: 1.0)
+          @header_container = flow(width: 1.0, height: 84, padding: 4, border_thickness_bottom: 1, border_color_bottom: W3DHub::BORDER_COLOR) do
+            flow(width: 148, height: 1.0) do
+              flow(fill: true)
+              image "#{GAME_ROOT_PATH}/media/icons/app.png", height: 84
+              flow(fill: true)
+            end
 
-          stack(width: 1.0, max_width: MAX_PAGE_WIDTH, height: 1.0, border_thickness: 1, border_color: 0xff_aaaaaa) do
-            background 0xff_252525
+            @navigation_container = stack(fill: true, height: 1.0) do
+              flow(width: 1.0, fill: true) do
+                # background 0xff_666666
 
-            @header_container = flow(width: 1.0, height: 100, padding: 4) do
-              image "#{GAME_ROOT_PATH}/media/icons/app.png", width: 108
-
-              stack(fill: true, height: 1.0) do
-                # background 0xff_885500
-
-                @app_info_container = flow(width: 1.0, height: 0.65) do
-                  # background 0xff_8855ff
-
-                  stack(fill: true, height: 1.0) do
-                    title "<b>#{I18n.t(:"app_name")}</b>", height: 0.5
-                    flow(width: 1.0, height: 0.5) do
-                      @application_taskbar_container = stack(width: 1.0, height: 1.0, margin_left: 16, margin_right: 16) do
-                        flow(width: 1.0, height: 0.65) do
-                          @application_taskbar_label = inscription "", width: 0.60, text_wrap: :none
-                          @application_taskbar_status_label = inscription "", width: 0.40, text_align: :right, text_wrap: :none
-                        end
-
-                        @application_taskbar_progressbar = progress fraction: 0.0, height: 2, width: 1.0
-                      end
-                    end
-                  end
-
-                  @account_container = flow(width: 256, height: 1.0) do
-                    stack(width: 1.0, height: 1.0) do
-                      tagline "<b>#{I18n.t(:"interface.not_logged_in")}</b>", text_wrap: :none
-
-                      flow(width: 1.0) do
-                        link(I18n.t(:"interface.log_in"), text_size: 16, width: 0.5) { page(W3DHub::Pages::Login) }
-                        link I18n.t(:"interface.register"), text_size: 16, width: 0.49 do
-                          W3DHub.url("https://secure.w3dhub.com/forum/index.php?app=core&module=global&section=register")
-                        end
-                      end
-                    end
-                  end
+                link I18n.t(:"interface.games").upcase, text_size: 34 do
+                  page(W3DHub::Pages::Games)
                 end
 
-                @navigation_container = flow(width: 1.0, height: 0.35) do
-                  # background 0xff_666666
-                  flow(width: 1.0, height: 1.0) do
-                    flow(fill: true, height: 1.0) # Hacky centering
-                    link I18n.t(:"interface.games") do
-                      page(W3DHub::Pages::Games)
-                    end
+                link I18n.t(:"interface.servers").upcase, text_size: 34, margin_left: 12 do
+                  page(W3DHub::Pages::ServerBrowser)
+                end
 
-                    link I18n.t(:"interface.server_browser"), margin_left: 18 do
-                      page(W3DHub::Pages::ServerBrowser)
-                    end
+                link I18n.t(:"interface.community").upcase, text_size: 34, margin_left: 12 do
+                  page(W3DHub::Pages::Community)
+                end
 
-                    link I18n.t(:"interface.community"), margin_left: 18 do
-                      page(W3DHub::Pages::Community)
-                    end
+                link I18n.t(:"interface.downloads").upcase, text_size: 34, margin_left: 12 do
+                  page(W3DHub::Pages::DownloadManager)
+                end
 
-                    link I18n.t(:"interface.downloads"), margin_left: 18 do
-                      page(W3DHub::Pages::DownloadManager)
-                    end
+                link I18n.t(:"interface.settings").upcase, text_size: 34, margin_left: 12 do
+                  page(W3DHub::Pages::Settings)
+                end
+              end
 
-                    link I18n.t(:"interface.settings"), margin_left: 18 do
-                      page(W3DHub::Pages::Settings)
-                    end
-                    flow(fill: true, height: 1.0) # Hacky centering
+              # Installer task display
+              flow(width: 1.0, height: 0.5) do
+                @application_taskbar_container = stack(width: 1.0, height: 1.0, margin_left: 16, margin_right: 16) do
+                  flow(width: 1.0, height: 0.65) do
+                    @application_taskbar_label = inscription "", width: 0.60, text_wrap: :none
+                    @application_taskbar_status_label = inscription "", width: 0.40, text_align: :right, text_wrap: :none
                   end
+
+                  @application_taskbar_progressbar = progress fraction: 0.0, height: 2, width: 1.0
                 end
               end
             end
 
-            @content_container = flow(width: 1.0, fill: true) do
+            @account_container = flow(width: 256, height: 1.0) do
+              if Store.offline_mode
+                stack(width: 1.0, height: 1.0) do
+                  flow(fill: true)
+
+                  title "<b>OFFLINE</b>", text_wrap: :none, width: 1.0, text_align: :center
+
+                  flow(fill: true)
+                end
+              else
+                stack(width: 1.0, height: 1.0) do
+                  tagline "<b>#{I18n.t(:"interface.not_logged_in")}</b>", text_wrap: :none
+
+                  flow(width: 1.0) do
+                    link(I18n.t(:"interface.log_in"), text_size: 16, width: 0.5) { page(W3DHub::Pages::Login) }
+                    link I18n.t(:"interface.register"), text_size: 16, width: 0.49 do
+                      W3DHub.url("https://secure.w3dhub.com/forum/index.php?app=core&module=global&section=register")
+                    end
+                  end
+                end
+              end
             end
           end
 
-          flow(fill: true, height: 1.0)
+          @content_container = flow(width: 1.0, fill: true) do
+          end
         end
 
         if Store.account
@@ -170,6 +163,12 @@ class W3DHub
         return unless @page.is_a?(Pages::ServerBrowser)
 
         @page.refresh_server_list(server)
+      end
+
+      def update_server_ping(server)
+        return unless @page.is_a?(Pages::ServerBrowser)
+
+        @page.update_server_ping(server)
       end
 
       def show_application_taskbar
