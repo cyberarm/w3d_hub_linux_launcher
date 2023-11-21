@@ -78,6 +78,8 @@ I18n.default_locale = :en
 # GUI_DEBUG = true
 require_relative "lib/gui_state_ext"
 
+require_relative "lib/win32_stub" unless Gem.win_platform?
+
 require_relative "lib/version"
 require_relative "lib/theme"
 require_relative "lib/common"

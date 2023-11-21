@@ -6,8 +6,19 @@ class W3DHub
       @data = {
         displays: [],
         system: {
-          motherboard: {},
-          operating_system: {},
+          motherboard: {
+            manufacturer: "Unknown",
+            model: "Unknown",
+            bios_vendor: "Unknown",
+            bios_release_date: "Unknown",
+            bios_version: "Unknown"
+          },
+          operating_system: {
+            name: "Unknown",
+            build: "Unknown",
+            version: "Unknown",
+            edition: "Unknown"
+          },
           cpus: [],
           cpu_instruction_sets: {},
           ram: 0,
@@ -16,12 +27,13 @@ class W3DHub
       }
 
       # Hardware survey only works on Windows atm
-      return unless RbConfig::CONFIG["host_os"] =~ /mswin|msys|mingw|cygwin/
 
-      lib_dir = File.dirname($LOADED_FEATURES.find { |file| file.include?("gosu.so") })
-      SDL.load_lib("#{lib_dir}64/SDL2.dll")
-      # Gosu already handles this
-      # SDL.VideoInit(nil)
+      if Gem::win_platform?
+        lib_dir = File.dirname($LOADED_FEATURES.find { |file| file.include?("gosu.so") })
+        SDL.load_lib("#{lib_dir}64/SDL2.dll")
+      else
+        SDL.load_lib("libSDL2")
+      end
 
       query_displays
       query_motherboard
@@ -56,6 +68,8 @@ class W3DHub
     end
 
     def query_motherboard
+      return unless Gem::win_platform?
+
       Win32::Registry::HKEY_LOCAL_MACHINE.open("HARDWARE\\DESCRIPTION\\System\\BIOS", Win32::Registry::KEY_READ) do |reg|
         @data[:system][:motherboard][:manufacturer]      = safe_reg(reg, "SystemManufacturer")
         @data[:system][:motherboard][:model]             = safe_reg(reg, "SystemProductName")
@@ -72,6 +86,8 @@ class W3DHub
     end
 
     def query_operating_system
+      return unless Gem::win_platform?
+
       Win32::Registry::HKEY_LOCAL_MACHINE.open("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", Win32::Registry::KEY_READ) do |reg|
         @data[:system][:operating_system][:name]    = safe_reg(reg, "ProductName")
         @data[:system][:operating_system][:build]   = safe_reg(reg, "CurrentBuild")
@@ -86,24 +102,26 @@ class W3DHub
     end
 
     def query_cpus
-      begin
-        Win32::Registry::HKEY_LOCAL_MACHINE.open("HARDWARE\\DESCRIPTION\\System\\CentralProcessor", Win32::Registry::KEY_READ) do |reg|
-          i = 0
+      if Gem::win_platform?
+        begin
+          Win32::Registry::HKEY_LOCAL_MACHINE.open("HARDWARE\\DESCRIPTION\\System\\CentralProcessor", Win32::Registry::KEY_READ) do |reg|
+            i = 0
 
-          reg.each_key do |key|
-            reg.open(key) do |cpu|
-              @data[:system][:cpus] << {
-                manufacturer: safe_reg(cpu, "VendorIdentifier", "Unknown"),
-                model: safe_reg(cpu, "ProcessorNameString").strip,
-                mhz: safe_reg(cpu, "~MHz"),
-                family: safe_reg(cpu, "Identifier")
-              }
+            reg.each_key do |key|
+              reg.open(key) do |cpu|
+                @data[:system][:cpus] << {
+                  manufacturer: safe_reg(cpu, "VendorIdentifier", "Unknown"),
+                  model: safe_reg(cpu, "ProcessorNameString").strip,
+                  mhz: safe_reg(cpu, "~MHz"),
+                  family: safe_reg(cpu, "Identifier")
+                }
 
-              i += 1
+                i += 1
+              end
             end
           end
+        rescue Win32::Registry::Error
         end
-      rescue Win32::Registry::Error
       end
 
       instruction_sets = %w[ HasRDTSC HasAltiVec HasMMX Has3DNow HasSSE HasSSE2 HasSSE3 HasSSE41 HasSSE42 HasAVX HasAVX2 HasAVX512F HasARMSIMD HasNEON ] # HasLSX HasLASX # These cause a crash atm
@@ -122,6 +140,8 @@ class W3DHub
     end
 
     def query_gpus
+      return unless Gem::win_platform?
+
       Win32::Registry::HKEY_LOCAL_MACHINE.open("SYSTEM\\ControlSet001\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}", Win32::Registry::KEY_READ) do |reg|
         i = 0
 

@@ -1,6 +1,7 @@
 source "https://rubygems.org"
 
 gem "cyberarm_engine"
+gem "sdl2-bindings"
 gem "digest-crc"
 gem "i18n"
 gem "ircparser"

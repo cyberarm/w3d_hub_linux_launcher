@@ -21,6 +21,8 @@ GEM
     rake (13.1.0)
     rexml (3.2.6)
     rubyzip (2.3.2)
+    sdl2-bindings (0.2.2)
+      ffi (~> 1.15)
     websocket (1.2.10)
     websocket-client-simple (0.8.0)
       event_emitter
@@ -43,6 +45,7 @@ DEPENDENCIES
   ircparser
   rexml
   rubyzip
+  sdl2-bindings
   websocket-client-simple
   win32-process
   win32-security
