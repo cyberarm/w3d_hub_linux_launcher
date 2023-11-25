@@ -204,8 +204,8 @@ class W3DHub
               server.send_ping(true)
             end
           else
-            @offline_mode = true
-            Store.offline_mode = true
+            Store.server_list = []
+            Store.server_list_last_fetch = Gosu.milliseconds
           end
 
           @tasks[:server_list][:complete] = true
