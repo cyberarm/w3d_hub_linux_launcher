@@ -484,12 +484,14 @@ class W3DHub
         return unless @focused_game == game
 
         if (events = @game_events[game.id])
+          events = events.select { |e| e.end_time > Time.now.utc }
+
           @game_events_container.show unless events.empty?
           @game_events_container.hide if events.empty?
 
           @game_events_container.clear do
             events.flatten.each do |event|
-              stack(width: 300, height: 1.0, margin_left: 8, margin_right: 8, border_thickness: 1, border_color: lighten(Gosu::Color.new(game.color))) do
+              stack(width: 1.0, height: 1.0, margin_left: 8, margin_right: 8, border_thickness: 1, border_color: lighten(Gosu::Color.new(game.color))) do
                 background 0xaa_222222
 
                 title event.title, width: 1.0, text_align: :center
