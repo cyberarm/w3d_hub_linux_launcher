@@ -1,6 +1,12 @@
 # Hint to SDL that we're not a game and that the system may sleep
 ENV["SDL_VIDEO_ALLOW_SCREENSAVER"] = "1"
 
+BUNDLER_USED = ARGV.join.include?("--bundler")
+if BUNDLER_USED
+  require "bundler/setup"
+  Bundler.require
+end
+
 require "fileutils"
 require "digest"
 require "rexml"
@@ -53,13 +59,15 @@ module Kernel
   end
 end
 
-begin
-  require_relative "../cyberarm_engine/lib/cyberarm_engine"
-rescue LoadError => e
-  logger.warn(W3DHub::LOG_TAG) { "Failed to load local cyberarm_engine:" }
-  logger.warn(W3DHub::LOG_TAG) { e }
+unless BUNDLER_USED
+  begin
+    require_relative "../cyberarm_engine/lib/cyberarm_engine"
+  rescue LoadError => e
+    logger.warn(W3DHub::LOG_TAG) { "Failed to load local cyberarm_engine:" }
+    logger.warn(W3DHub::LOG_TAG) { e }
 
-  require "cyberarm_engine"
+    require "cyberarm_engine"
+  end
 end
 
 class W3DHub
