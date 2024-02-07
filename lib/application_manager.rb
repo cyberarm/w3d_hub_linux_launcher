@@ -200,7 +200,7 @@ class W3DHub
 
     def run(app_id, channel, *args)
       if (app_data = installed?(app_id, channel))
-        pid = Process.spawn("#{dxvk_command(app_id, channel)}#{mangohud_command(app_id, channel)}#{wine_command(app_id, channel)}\"#{app_data[:install_path]}\" #{args.join(' ')}")
+        pid = Process.spawn("#{dxvk_command(app_id, channel)}#{mangohud_command(app_id, channel)}#{wine_command(app_id, channel)}\"#{app_data[:install_path]}\" -launcher #{args.join(' ')}")
         Process.detach(pid)
       end
     end
@@ -209,7 +209,7 @@ class W3DHub
       if installed?(app_id, channel) && Store.settings[:server_list_username].to_s.length.positive?
         run(
           app_id, channel,
-          "-launcher +connect #{server.address}:#{server.port} +netplayername #{Store.settings[:server_list_username]}#{password ? " +password \"#{password}\"" : ""}"
+          "+connect #{server.address}:#{server.port} +netplayername #{Store.settings[:server_list_username]}#{password ? " +password \"#{password}\"" : ""}"
         )
       end
     end
