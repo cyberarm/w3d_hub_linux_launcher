@@ -146,6 +146,7 @@ class W3DHub
 
       # TODO: Change if this correct on Linux
       user_data_path = "#{Dir.home}/Documents/W3D Hub/games/#{app_id}-#{channel}"
+      user_data_path = "#{Dir.home}/Documents/Renegade" if app_id == "ren"
 
       path = case type
       when :installation
@@ -153,7 +154,9 @@ class W3DHub
       when :user_data
         user_data_path
       when :screenshots
-        Dir.exist?("#{user_data_path}/Screenshots") ? "#{user_data_path}/Screenshots" : user_data_path
+        screenshots_path = "#{user_data_path}/Screenshots"
+        screenshots_path = "#{user_data_path}/Client/Screenshots" if app_id == "ren"
+        Dir.exist?(screenshots_path) ? screenshots_path : user_data_path
       else
         raise "Unknown folder type: #{type.inspect}"
       end
