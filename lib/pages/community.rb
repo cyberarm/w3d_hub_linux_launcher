@@ -121,7 +121,7 @@ class W3DHub
 
             #       flow(width: 1.0) do
             #         inscription item.timestamp.strftime("%Y-%m-%d"), width: 0.499
-            #         link I18n.t(:"games.read_more"), width: 0.5, text_align: :right, text_size: 14 do
+            #         link I18n.t(:"games.read_more"), width: 0.5, text_align: :right, text_size: 16 do
             #           W3DHub.url(item.uri)
             #         end
             #       end
@@ -133,21 +133,18 @@ class W3DHub
               image_path = Cache.path(item.image)
 
               flow(width: 1.0, max_width: 1230, height: 200, margin: 8, border_thickness: 1, border_color: lighten(Gosu::Color.new(0xff_252525))) do
-                background 0x22_000000
+                background 0x44_000000
 
                 image image_path, height: 1.0
 
-                stack(fill: true, height: 1.0, background: 0x44_000000, padding: 4, border_thickness_left: 1, border_color_left: lighten(Gosu::Color.new(0xff_252525))) do
+                stack(fill: true, height: 1.0, padding: 4, border_thickness_left: 1, border_color_left: lighten(Gosu::Color.new(0xff_252525))) do
                   tagline "<b>#{item.title}</b>", width: 1.0
                   inscription item.blurb.gsub(/\n+/, "\n").strip[0..1024], fill: true
-
-                  flow(fill: true)
 
                   flow(width: 1.0, height: 32, margin_top: 8) do
                     stack(fill: true, height: 1.0) do
                       flow(fill: true)
                       inscription "#{item.author} • #{item.timestamp.strftime("%Y-%m-%d")}"
-                      flow(fill: true)
                     end
 
                     button I18n.t(:"games.read_more"), width: 1.0, max_width: 128, padding_top: 4, padding_bottom: 4 do

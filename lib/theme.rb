@@ -28,6 +28,7 @@ class W3DHub
     },
     TextBlock: {
       font: BOLD_FONT,
+      text_color: 0xff_f2f2f2,
       text_border: false,
       text_shadow: true,
       text_shadow_size: 1,
@@ -53,13 +54,18 @@ class W3DHub
       padding_left: 16,
       padding_right: 16,
       padding_bottom: 8,
+      border_thickness: 2,
       border_color: Gosu::Color::NONE,
-      background: 0xff_00acff,
+      background: 0xff_0074e0,
       hover: {
-        background: 0xff_bee6fd
+        text_color: 0xff_f2f2f2,
+        background: 0xff_004c94,
+        border_color: 0xff_0074e0
       },
       active: {
-        background: 0xff_add5ec
+        text_color: 0xff_aaaaaa,
+        background: 0xff_005aad,
+        border_color: 0xff_0074e0
       }
     },
     ToggleButton: {
@@ -70,7 +76,7 @@ class W3DHub
       checkmark_image: "#{GAME_ROOT_PATH}/media/ui_icons/checkmark.png"
     },
     Progress: {
-      fraction_background: 0xff_00acff,
+      fraction_background: 0xff_0074e0,
       border_thickness: 0
     },
     ListBox: {
@@ -78,7 +84,7 @@ class W3DHub
       padding_right: 8
     },
     Slider: {
-      border_color: 0xff_00acff
+      border_color: 0xff_0074e0
     },
     Handle: {
       text_size: 18,
@@ -87,12 +93,12 @@ class W3DHub
       padding_right: 2,
       padding_bottom: 8,
       border_color: Gosu::Color::NONE,
-      background: 0xff_00acff,
+      background: 0xff_0074e0,
       hover: {
-        background: 0xff_bee6fd
+        background: 0xff_004c94
       },
       active: {
-        background: 0xff_add5ec
+        background: 0xff_005aad
       }
     }
   }

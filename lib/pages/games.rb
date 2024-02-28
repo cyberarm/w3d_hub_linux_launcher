@@ -51,7 +51,7 @@ class W3DHub
             selected = game == @focused_game
 
             game_button = stack(width: 64, height: 1.0, border_thickness_bottom: 4,
-                                border_color_bottom: selected ? 0xff_00acff : 0x00_000000,
+                                border_color_bottom: selected ? 0xff_0074e0 : 0x00_000000,
                                 hover: { background: selected ? game.color : 0xff_444444 },
                                 padding_left: 4, padding_right: 4, tip: game.name) do
               background game.color if selected
@@ -63,7 +63,7 @@ class W3DHub
                 image "#{GAME_ROOT_PATH}/media/ui_icons/import.png", width: 24, margin_left: -4, margin_top: -6, color: 0xff_ff8800 if Store.application_manager.updateable?(game.id, game.channels.first.id)
               end
 
-              # inscription game.name, width: 1.0, text_align: :center, text_size: 14
+              # inscription game.name, width: 1.0, text_align: :center, text_size: 16
             end
 
             def game_button.hit_element?(x, y)
@@ -159,17 +159,17 @@ class W3DHub
               end
 
               # Play buttons
-              flow(width: 1.0, height: 48, padding_top: 6, margin_bottom: 16) do
+              flow(width: 1.0, height: 52, padding_top: 6) do
                 # background 0xff_551100
 
                 if Store.application_manager.installed?(game.id, channel.id)
                   if Store.application_manager.updateable?(game.id, channel.id)
-                    button "<b>#{I18n.t(:"interface.install_update")}</b>", fill: true, text_size: 32, **UPDATE_BUTTON do
+                    button "<b>#{I18n.t(:"interface.install_update")}</b>", fill: true, text_size: 30, **UPDATE_BUTTON do
                       Store.application_manager.update(game.id, channel.id)
                     end
                   else
                     play_now_server = Store.application_manager.play_now_server(game.id, channel.id)
-                    play_now_button = button "<b>#{I18n.t(:"interface.play")}</b>", fill: true, text_size: 32, enabled: !play_now_server.nil? do
+                    play_now_button = button "<b>#{I18n.t(:"interface.play")}</b>", fill: true, text_size: 30, enabled: !play_now_server.nil? do
                       Store.application_manager.play_now(game.id, channel.id)
                     end
 
@@ -418,24 +418,21 @@ class W3DHub
               image_path = Cache.path(item.image)
 
               flow(width: 1.0, max_width: 869, height: 200, margin: 8, border_thickness: 1, border_color: lighten(Gosu::Color.new(game.color))) do
-                background 0x88_000000
+                background 0x44_000000
 
                 image image_path, height: 1.0
 
-                stack(fill: true, height: 1.0, background: 0x44_000000, padding: 4, border_thickness_left: 1, border_color_left: lighten(Gosu::Color.new(game.color))) do
+                stack(fill: true, height: 1.0, padding: 4, border_thickness_left: 1, border_color_left: lighten(Gosu::Color.new(game.color))) do
                   tagline "<b>#{item.title}</b>", width: 1.0
                   inscription item.blurb.gsub(/\n+/, "\n").strip[0..1024], fill: true
-
-                  flow(fill: true)
 
                   flow(width: 1.0, height: 32, margin_top: 8) do
                     stack(fill: true, height: 1.0) do
                       flow(fill: true)
                       inscription "#{item.author} • #{item.timestamp.strftime("%Y-%m-%d")}"
-                      flow(fill: true)
                     end
 
-                    button I18n.t(:"games.read_more"), width: 1.0, max_width: 128, padding_top: 4, padding_bottom: 4 do
+                    button I18n.t(:"games.read_more"), width: 1.0, max_width: 128, padding_top: 4, padding_bottom: 4, margin_left: 0, margin_top: 0, margin_bottom: 0, margin_right: 0 do
                       W3DHub.url(item.uri)
                     end
                   end
@@ -472,7 +469,7 @@ class W3DHub
           @game_events_container.clear do
             events.flatten.each do |event|
               stack(fill: true, height: 1.0, margin_left: 8, margin_right: 8, border_thickness: 1, border_color: lighten(Gosu::Color.new(game.color))) do
-                background 0xaa_222222
+                background 0x44_000000
 
                 title event.title, width: 1.0, text_align: :center
                 tagline event.start_time.strftime("%A"), text_size: 36, width: 1.0, text_align: :center

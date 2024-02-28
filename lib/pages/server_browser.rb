@@ -318,8 +318,8 @@ class W3DHub
                 inscription "<b>#{server&.status&.name}</b>", tag: :server_name
 
                 flow(width: 1.0, height: 1.0) do
-                  inscription server.channel, margin_right: 64, text_size: 14, tag: :server_channel
-                  inscription server.region, text_size: 14, tag: :server_region
+                  inscription server.channel, margin_right: 64, text_size: 16, tag: :server_channel
+                  inscription server.region, text_size: 16, tag: :server_region
                 end
               end
 
@@ -492,11 +492,11 @@ class W3DHub
                     background 0xff_333333 if i.even?
 
                     stack(width: 0.6, height: 1.0) do
-                      inscription player.nick, text_size: 14, text_wrap: :none
+                      inscription player.nick, text_size: 16, text_wrap: :none
                     end
 
                     stack(width: 0.4, height: 1.0) do
-                      inscription formatted_score(player.score), text_size: 14, width: 1.0, text_align: :right, text_wrap: :none
+                      inscription formatted_score(player.score), text_size: 16, width: 1.0, text_align: :right, text_wrap: :none
                     end
                   end
                 end
@@ -508,11 +508,11 @@ class W3DHub
                     background 0xff_333333 if i.even?
 
                     stack(width: 0.6, height: 1.0) do
-                      inscription player.nick, text_size: 14, text_wrap: :none
+                      inscription player.nick, text_size: 16, text_wrap: :none
                     end
 
                     stack(width: 0.4, height: 1.0) do
-                      inscription formatted_score(player.score), text_size: 14, width: 1.0, text_align: :right, text_wrap: :none
+                      inscription formatted_score(player.score), text_size: 16, width: 1.0, text_align: :right, text_wrap: :none
                     end
                   end
                 end
