@@ -9,7 +9,11 @@ class W3DHub
 
         unless task
           body.clear do
-            tagline "No operations pending.", width: 1.0, text_align: :center, margin: 128
+            stack(width: 1.0, height: 1.0) do
+              background 0xaa_252525
+
+              tagline "No operations pending.", width: 1.0, text_align: :center, margin: 128
+            end
           end
 
           return
@@ -23,6 +27,8 @@ class W3DHub
 
         body.clear do
           stack(width: 1.0, height: 1.0) do
+            background 0xaa_252525
+
             # TODO: Show correct application details here
             flow(width: 1.0, height: 0.1, padding: 8) do
               background task.application.color

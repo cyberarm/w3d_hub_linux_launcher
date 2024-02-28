@@ -6,6 +6,8 @@ class W3DHub
 
         body.clear do
           stack(width: 1.0, height: 1.0, padding: 8) do
+            background 0xaa_252525
+
             stack(width: 1.0) do
               tagline "<b>Welcome to #{I18n.t(:app_name)}</b>"
               para "The #{I18n.t(:app_name_simple)} is a one-stop shop for your W3D gaming needs, providing game downloads, automatic updating, an integrated server browser, and centralized management of in-game options."
@@ -129,52 +131,29 @@ class W3DHub
 
             feed.items.sort_by { |i| i.timestamp }.reverse[0..9].each do |item|
               image_path = Cache.path(item.image)
-              news_blurb_container = nil
-              news_title_container = nil
 
-              news_container = stack(width: 300, height: 300, margin: 8, background_image: image_path, border_thickness: 1, border_color: lighten(Gosu::Color.new(0xff_252525))) do
-                background 0x88_000000
+              flow(width: 1.0, max_width: 1230, height: 200, margin: 8, border_thickness: 1, border_color: lighten(Gosu::Color.new(0xff_252525))) do
+                background 0x22_000000
 
-                # Detailed view
-                news_blurb_container = stack(width: 1.0, height: 1.0, background: 0xaa_000000, padding: 4) do
+                image image_path, height: 1.0
+
+                stack(fill: true, height: 1.0, background: 0x44_000000, padding: 4, border_thickness_left: 1, border_color_left: lighten(Gosu::Color.new(0xff_252525))) do
                   tagline "<b>#{item.title}</b>", width: 1.0
-                  inscription "#{item.author} • #{item.timestamp.strftime("%Y-%m-%d")}"
                   inscription item.blurb.gsub(/\n+/, "\n").strip[0..1024], fill: true
 
-                  button I18n.t(:"games.read_more"), width: 1.0, margin_top: 8, margin_bottom: 0, padding_top: 4, padding_bottom: 4 do
-                    W3DHub.url(item.uri)
-                  end
-                end
-
-                # Just title
-                news_title_container = stack(width: 1.0, height: 1.0) do
                   flow(fill: true)
 
-                  tagline "<b>#{item.title}</b>", width: 1.0, background: 0xaa_000000, padding: 4
-                end
-              end
+                  flow(width: 1.0, height: 32, margin_top: 8) do
+                    stack(fill: true, height: 1.0) do
+                      flow(fill: true)
+                      inscription "#{item.author} • #{item.timestamp.strftime("%Y-%m-%d")}"
+                      flow(fill: true)
+                    end
 
-              news_blurb_container.hide
-
-              def news_container.hit_element?(x, y)
-                return unless hit?(x, y)
-
-                if @children.first.visible? && (btn = @children.first.children.find { |child| child.visible? && child.is_a?(CyberarmEngine::Element::Button) && child.hit?(x, y) })
-                  btn
-                else
-                  self
-                end
-              end
-
-              news_container.subscribe(:enter) do
-                news_title_container.hide
-                news_blurb_container.show
-              end
-
-              news_container.subscribe(:leave) do
-                unless news_container.hit?(window.mouse_x, window.mouse_y)
-                  news_title_container.show
-                  news_blurb_container.hide
+                    button I18n.t(:"games.read_more"), width: 1.0, max_width: 128, padding_top: 4, padding_bottom: 4 do
+                      W3DHub.url(item.uri)
+                    end
+                  end
                 end
               end
             end

@@ -105,7 +105,15 @@ class W3DHub
 
           flow(fill: true, height: 1.0) do
             flow(fill: true) # Fill empty space to push image over to container edge
-            image Cache.path(Store.account.avatar_uri), height: 1.0
+            avatar_image = get_image(Cache.path(Store.account.avatar_uri))
+            mask_image = get_image("#{GAME_ROOT_PATH}/media/textures/circle_mask.png")
+
+            composite_image = Gosu.render(256, 256) do
+              avatar_image.draw(0, 0, 0)
+              mask_image.draw(0, 0, 1, 1, 1, 0xff_ffffff, :multiply)
+            end
+
+            image composite_image, width: 1.0
           end
         end
       end

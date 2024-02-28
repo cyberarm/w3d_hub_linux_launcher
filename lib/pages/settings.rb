@@ -4,6 +4,8 @@ class W3DHub
       def setup
         body.clear do
           stack(width: 1.0, height: 1.0, padding: 16, scroll: true) do
+            background 0xaa_252525
+
             para "<b>Language</b>"
             flow(width: 1.0, height: 0.12) do
               para "<b>Launcher Language</b>", width: 0.249, margin_left: 32, margin_top: 12

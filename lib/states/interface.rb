@@ -27,7 +27,7 @@ class W3DHub
 
         theme(W3DHub::THEME)
 
-        @interface_container = stack(width: 1.0, height: 1.0, border_thickness: 1, border_color: W3DHub::BORDER_COLOR) do
+        @interface_container = stack(width: 1.0, height: 1.0, border_thickness: 1, border_color: W3DHub::BORDER_COLOR, background_image: "#{GAME_ROOT_PATH}/media/banners/background.png", background_image_color: 0xff_525252, background_image_mode: :fill) do
           background 0xff_252525
 
           @header_container = flow(width: 1.0, height: 84, padding: 4, border_thickness_bottom: 1, border_color_bottom: W3DHub::BORDER_COLOR) do

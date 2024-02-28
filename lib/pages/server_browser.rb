@@ -20,6 +20,8 @@ class W3DHub
 
         body.clear do
           stack(width: 1.0, height: 1.0, padding: 8) do
+            background 0xaa_252525
+
             stack(width: 1.0, height: 18) do
               inscription "<b>#{I18n.t(:"server_browser.filters")}</b>"
             end
