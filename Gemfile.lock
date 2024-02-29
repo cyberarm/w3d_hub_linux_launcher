@@ -3,7 +3,7 @@ GEM
   specs:
     base64 (0.2.0)
     concurrent-ruby (1.2.3)
-    cyberarm_engine (0.24.1)
+    cyberarm_engine (0.24.2)
       excon (~> 0.88)
       gosu (~> 1.1)
       gosu_more_drawables (~> 0.3)
