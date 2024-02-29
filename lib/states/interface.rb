@@ -38,7 +38,9 @@ class W3DHub
             end
 
             @navigation_container = stack(fill: true, height: 1.0) do
-              flow(width: 1.0, fill: true) do
+              @nav_padding_top_container = flow(fill: true)
+
+              flow(width: 1.0, height: 36) do
                 # background 0xff_666666
 
                 link I18n.t(:"interface.games").upcase, text_size: 34, font: BOLD_FONT do
@@ -62,9 +64,11 @@ class W3DHub
                 end
               end
 
+              @nav_padding_bottom_container = flow(fill: true)
+
               # Installer task display
-              flow(width: 1.0, height: 0.5) do
-                @application_taskbar_container = stack(width: 1.0, height: 1.0, margin_left: 16, margin_right: 16) do
+              @application_taskbar_container = flow(width: 1.0, height: 0.5) do
+                stack(width: 1.0, height: 1.0, margin_left: 16, margin_right: 16) do
                   flow(width: 1.0, height: 0.65) do
                     @application_taskbar_label = para "", width: 0.60, text_wrap: :none
                     @application_taskbar_status_label = para "", width: 0.40, text_align: :right, text_wrap: :none
@@ -172,11 +176,15 @@ class W3DHub
       end
 
       def show_application_taskbar
+        @nav_padding_top_container.hide
+        @nav_padding_bottom_container.hide
         @application_taskbar_container.show
       end
 
       def hide_application_taskbar
         @application_taskbar_container.hide
+        @nav_padding_top_container.show
+        @nav_padding_bottom_container.show
       end
 
       def update_interface_task_status(task)

@@ -105,13 +105,11 @@ class W3DHub
           end
 
           stack(width: 0.7, height: 1.0, margin_left: 8) do
-            link Store.account.username, text_size: 24, font: BOLD_FONT, tip: I18n.t(:"interface.profile"), width: 1.0, text_wrap: :none do
+            link Store.account.username, text_size: 24, font: BOLD_FONT, tip: I18n.t(:"interface.profile"), margin_top: 16, width: 1.0, text_wrap: :none do
               W3DHub.url("https://secure.w3dhub.com/forum/index.php?showuser=#{Store.account.id}")
             end
 
-            flow(width: 1.0) do
-              link(I18n.t(:"interface.log_out"), text_size: 22, width: 0.5) { depopulate_account_info }
-            end
+            link(I18n.t(:"interface.log_out"), text_size: 22) { depopulate_account_info }
           end
         end
       end

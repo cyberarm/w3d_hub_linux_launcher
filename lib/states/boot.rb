@@ -8,8 +8,6 @@ class W3DHub
 
         theme(W3DHub::THEME)
 
-        background 0xff_252525
-
         @fraction = 0.0
         @w3dhub_logo = get_image("#{GAME_ROOT_PATH}/media/icons/app.png")
         @tasks = {
@@ -25,23 +23,23 @@ class W3DHub
 
         @task_index = 0
 
-        stack(width: 1.0, height: 1.0, border_thickness: 1, border_color: W3DHub::BORDER_COLOR) do
+        stack(width: 1.0, height: 1.0, border_thickness: 1, border_color: W3DHub::BORDER_COLOR, background_image: "#{GAME_ROOT_PATH}/media/banners/background.png", background_image_color: 0xff_525252, background_image_mode: :fill) do
           stack(width: 1.0, fill: true) do
           end
 
-          stack(width: 1.0, height: 75) do
-            @progressbar = progress height: 25, width: 1.0
-
-            flow(width: 1.0, fill: true, padding_left: 16, padding_right: 16, padding_bottom: 8, padding_top: 8) do
+          stack(width: 1.0, height: 60) do
+            flow(width: 1.0, height: 26, margin_left: 16, margin_right: 16, margin_bottom: 8, margin_top: 8) do
               @status_label = caption "Starting #{I18n.t(:app_name_simple)}...", width: 0.5
               para "#{I18n.t(:app_name)} #{W3DHub::VERSION}", width: 0.5, text_align: :right
             end
+
+            @progressbar = progress height: 4, width: 1.0, margin_left: 16, margin_right: 16, margin_bottom: 8
           end
         end
       end
 
       def draw
-        Gosu.draw_circle(window.width / 2, window.height / 2, @w3dhub_logo.width * (0.6 + Math.cos(Gosu.milliseconds / 1000.0 * Math::PI).abs * 0.05), 128, 0x44_000000, 32)
+        Gosu.draw_circle(window.width / 2, window.height / 2, @w3dhub_logo.width * (0.6 + Math.cos(Gosu.milliseconds / 1000.0 * Math::PI).abs * 0.05), 128, 0xaa_353535, 32)
         @w3dhub_logo.draw_rot(window.width / 2, window.height / 2, 32)
 
         super

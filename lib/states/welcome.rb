@@ -5,14 +5,13 @@ class W3DHub
         window.show_cursor = true
 
         theme(W3DHub::THEME)
-        background 0x88_252525
 
 
-        flow(width: 1.0, height: 1.0) do
+        flow(width: 1.0, height: 1.0, background_image: "#{GAME_ROOT_PATH}/media/banners/background.png", background_image_color: 0xff_525252, background_image_mode: :fill) do
           flow(fill: true)
 
           @card_container = stack(width: 1.0, max_width: MAX_PAGE_WIDTH, height: 1.0, max_height: 720, margin: 128, padding: 16) do
-            background 0xff_252525
+            background 0xaa_353535
           end
 
           flow(fill: true)
@@ -30,7 +29,7 @@ class W3DHub
           caption "The #{I18n.t(:app_name_simple)} is a one-stop shop for your W3D gaming needs, providing game downloads, automatic updating, an integrated server browser, and centralized management of in-game options.", width: 1.0, margin_left: 32
         end
 
-        flow(width: 1.0, height: 40) do
+        flow(width: 1.0, height: 46) do
           stack(fill: true, height: 1.0) do
             link "Skip", border_color_bottom: 0xff_777777 do
               pop_state
@@ -55,7 +54,7 @@ class W3DHub
           caption "Browse our selection of games from the left panel of the Games tab.\n• Interim Apex - Renegade but with hundreds of vehicles and characters.\n• Red Alert: A Path Beyond - DESCRIPTION\n• Tiberian Sun: Reborn - DESCRIPTION\n\nAnd more... Check out the left panel on the Games tab.", width: 1.0, margin_left: 32
         end
 
-        flow(width: 1.0, height: 40) do
+        flow(width: 1.0, height: 46) do
           flow(fill: true, height: 1.0) do
             button "< Back" do
               @card_container.clear { card_welcome }
@@ -88,7 +87,7 @@ class W3DHub
           caption "Subscribe to our YouTube channel", margin_left: 32
         end
 
-        flow(width: 1.0, height: 40) do
+        flow(width: 1.0, height: 46) do
           flow(fill: true, height: 1.0) do
             button "< Back" do
               @card_container.clear { card_getting_started }

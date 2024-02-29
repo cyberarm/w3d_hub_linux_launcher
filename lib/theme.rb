@@ -104,6 +104,7 @@ class W3DHub
       checkmark_image: "#{GAME_ROOT_PATH}/media/ui_icons/checkmark.png"
     },
     Progress: {
+      background: 0xff_353535,
       fraction_background: 0xff_0074e0,
       border_thickness: 0
     },

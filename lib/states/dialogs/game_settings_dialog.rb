@@ -13,13 +13,13 @@ class W3DHub
 
         @game_settings = GameSettings.new(@app_id, @channel)
 
-        background 0xee_444444
+        background 0xaa_525252
 
         stack(width: 1.0, max_width: 720, height: 1.0, max_height: 680, v_align: :center, h_align: :center, background: 0xee_222222, border_thickness: 2, border_color: 0xff_444444, padding: 10) do
-          flow(width: 1.0, height: 0.1, padding: 8) do
+          flow(width: 1.0, height: 36, padding: 8) do
             background Store.application_manager.color(@app_id)
 
-            title @options[:title] || Store.application_manager.name(@app_id) || "Game Settings", fill: true, text_align: :center
+            title @options[:title] || Store.application_manager.name(@app_id) || "Game Settings", fill: true, text_align: :center, font: BOLD_FONT
           end
 
           stack(width: 1.0, fill: true, padding: 16, margin_top: 10) do
@@ -28,49 +28,49 @@ class W3DHub
                 tagline "General"
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Default to First Person", fill: true
+                  para "Default to First Person", fill: true, text_wrap: :none
                   toggle_button tip: "Default to First Person", checked: @game_settings.get_value(:default_to_first_person), **BUTTON_STYLE do |btn|
                     @game_settings.set_value(:default_to_first_person, btn.value)
                   end
                 end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Background Downloads", fill: true
+                  para "Background Downloads", fill: true, text_wrap: :none
                   toggle_button tip: "Background Downloads", checked: @game_settings.get_value(:background_downloads), **BUTTON_STYLE do |btn|
                     @game_settings.set_value(:background_downloads, btn.value)
                   end
                 end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Enable Hints", fill: true
+                  para "Enable Hints", fill: true, text_wrap: :none
                   toggle_button tip: "Enable Hints", checked: @game_settings.get_value(:hints_enabled), **BUTTON_STYLE do |btn|
                     @game_settings.set_value(:hints_enabled, btn.value)
                   end
                 end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Enable Chat Log", fill: true
+                  para "Enable Chat Log", fill: true, text_wrap: :none
                   toggle_button tip: "Enable Chat Log", checked: @game_settings.get_value(:chat_log), **BUTTON_STYLE do |btn|
                     @game_settings.set_value(:chat_log, btn.value)
                   end
                 end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Show FPS", fill: true
+                  para "Show FPS", fill: true, text_wrap: :none
                   toggle_button tip: "Show FPS", checked: @game_settings.get_value(:show_fps), **BUTTON_STYLE do |btn|
                     @game_settings.set_value(:show_fps, btn.value)
                   end
                 end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Show Velocity", fill: true
+                  para "Show Velocity", fill: true, text_wrap: :none
                   toggle_button tip: "Show Velocity", checked: @game_settings.get_value(:show_velocity), **BUTTON_STYLE do |btn|
                     @game_settings.set_value(:show_velocity, btn.value)
                   end
                 end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Show Damage Numbers", fill: true
+                  para "Show Damage Numbers", fill: true, text_wrap: :none
                   toggle_button tip: "Show Damage Numbers", checked: @game_settings.get_value(:show_damage_numbers), **BUTTON_STYLE do |btn|
                     @game_settings.set_value(:show_damage_numbers, btn.value)
                   end
@@ -87,7 +87,7 @@ class W3DHub
 
                   current_res = "#{@game_settings.get_value(:resolution_width)}x#{@game_settings.get_value(:resolution_height)}"
 
-                  para "Resolution", fill: true
+                  para "Resolution", fill: true, text_wrap: :none
                   list_box items: res_options, choose: current_res, width: 172, **BUTTON_STYLE do |value|
                     w, h = value.split("x", 2)
 
@@ -97,21 +97,21 @@ class W3DHub
                 end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Windowed Mode", fill: true
+                  para "Windowed Mode", fill: true, text_wrap: :none
                   list_box items: @game_settings.get(:windowed_mode).options.map { |v| v[0] }, choose: @game_settings.get_value(:windowed_mode), width: 172, **BUTTON_STYLE do |value|
                     @game_settings.set_value(:windowed_mode, value)
                   end
                 end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Enable VSync", fill: true
+                  para "Enable VSync", fill: true, text_wrap: :none
                   toggle_button tip: "Enable VSync", checked: @game_settings.get_value(:vsync), **BUTTON_STYLE do |btn|
                     @game_settings.set_value(:vsync, btn.value)
                   end
                 end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Anti-aliasing", fill: true
+                  para "Anti-aliasing", fill: true, text_wrap: :none
                   list_box items: @game_settings.get(:anti_aliasing).options.map { |v| v[0] }, choose: @game_settings.get_value(:anti_aliasing), width: 72, **BUTTON_STYLE do |value|
                     @game_settings.set_value(:anti_aliasing, value)
                   end
@@ -124,7 +124,7 @@ class W3DHub
                 tagline "Audio"
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Master Volume", fill: true
+                  para "Master Volume", fill: true, text_wrap: :none
                   slider(height: 1.0, width: 172, value: @game_settings.get_value(:master_volume), margin_right: 8).subscribe(:changed) do |slider|
                     @game_settings.set_value(:master_volume, slider.value)
                   end
@@ -135,7 +135,7 @@ class W3DHub
                 end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Sound Effects", fill: true
+                  para "Sound Effects", fill: true, text_wrap: :none
                   slider(height: 1.0, width: 172, value: @game_settings.get_value(:sound_effects_volume), margin_right: 8).subscribe(:changed) do |slider|
                     @game_settings.set_value(:sound_effects_volume, slider.value)
                   end
@@ -146,7 +146,7 @@ class W3DHub
                 end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Dialogue", fill: true
+                  para "Dialogue", fill: true, text_wrap: :none
                   slider(height: 1.0, width: 172, value: @game_settings.get_value(:sound_dialog_volume), margin_right: 8).subscribe(:changed) do |slider|
                     @game_settings.set_value(:sound_dialog_volume, slider.value)
                   end
@@ -157,7 +157,7 @@ class W3DHub
                 end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Music", fill: true
+                  para "Music", fill: true, text_wrap: :none
                   slider(height: 1.0, width: 172, value: @game_settings.get_value(:sound_music_volume), margin_right: 8).subscribe(:changed) do |slider|
                     @game_settings.set_value(:sound_music_volume, slider.value)
                   end
@@ -168,7 +168,7 @@ class W3DHub
                 end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Cinematic", fill: true
+                  para "Cinematic", fill: true, text_wrap: :none
                   slider(height: 1.0, width: 172, value: @game_settings.get_value(:sound_cinematic_volume), margin_right: 8).subscribe(:changed) do |slider|
                     @game_settings.set_value(:sound_cinematic_volume, slider.value)
                   end
@@ -179,7 +179,7 @@ class W3DHub
                 end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Play Sound with Game in Background", fill: true
+                  para "Play Sound with Game in Background", fill: true, text_wrap: :none
                   toggle_button tip: "Play Sound with Game in Background", checked: @game_settings.get_value(:sound_in_background), **BUTTON_STYLE do |btn|
                     @game_settings.set_value(:sound_in_background, btn.value)
                   end
@@ -190,14 +190,14 @@ class W3DHub
                 tagline "Performance"
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Texture Detail", fill: true
+                  para "Texture Detail", fill: true, text_wrap: :none
                   list_box items: @game_settings.get(:texture_detail).options.map { |v| v[0] }, choose: @game_settings.get_value(:texture_detail), width: 172, **BUTTON_STYLE do |value|
                     @game_settings.set_value(:texture_detail, value)
                   end
                 end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Texture Filtering", fill: true
+                  para "Texture Filtering", fill: true, text_wrap: :none
                   list_box items: @game_settings.get(:texture_filtering).options.map { |v| v[0] }, choose: @game_settings.get_value(:texture_filtering), width: 172, **BUTTON_STYLE do |value|
                     @game_settings.set_value(:texture_filtering, value)
                   end
@@ -218,21 +218,21 @@ class W3DHub
                 # end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "Shadow Resolution", fill: true
+                  para "Shadow Resolution", fill: true, text_wrap: :none
                   list_box items: @game_settings.get(:shadow_resolution).options.map { |v| v[0] }, choose: @game_settings.get_value(:shadow_resolution), width: 172, **BUTTON_STYLE do |value|
                     @game_settings.set_value(:shadow_resolution, value)
                   end
                 end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "High Quality Shadows", fill: true
+                  para "High Quality Shadows", fill: true, text_wrap: :none
                   toggle_button tip: "High Quality Shadows", checked: @game_settings.get_value(:background_downloads), **BUTTON_STYLE do |btn|
                     @game_settings.set_value(:background_downloads, btn.value)
                   end
                 end
 
                 flow(width: 1.0, height: 24, margin: 4, margin_left: 10) do
-                  para "FPS Limit", fill: true
+                  para "FPS Limit", fill: true, text_wrap: :none
                   list_box items: @game_settings.get(:fps).options.map { |v| v[0] }, choose: @game_settings.get_value(:fps), width: 172, **BUTTON_STYLE do |value|
                     @game_settings.set_value(:fps, value.to_i)
                   end

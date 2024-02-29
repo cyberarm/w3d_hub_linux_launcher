@@ -7,16 +7,16 @@ class W3DHub
 
         theme(W3DHub::THEME)
 
-        background 0xee_444444
+        background 0xaa_525252
 
         stack(width: 1.0, max_width: 720, height: 1.0, max_height: 540, v_align: :center, h_align: :center, background: 0xee_222222) do
           # Title bar
-          flow(width: 1.0, height: 32, padding: 8) do
+          flow(width: 1.0, height: 36, padding: 8) do
             background 0x88_000000
 
-            image "#{GAME_ROOT_PATH}/media/ui_icons/export.png", width: 32, align: :center, color: 0xaa_ffffff
+            image "#{GAME_ROOT_PATH}/media/ui_icons/export.png", height: 1.0, align: :center, color: 0xaa_ffffff
 
-            tagline "<b>#{I18n.t(:"server_browser.direct_connect")}</b>", fill: true, text_align: :center
+            title "<b>#{I18n.t(:"server_browser.direct_connect")}</b>", fill: true, text_align: :center, font: BOLD_FONT
           end
 
           stack(width: 1.0, fill: true, scroll: true) do
