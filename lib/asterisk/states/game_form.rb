@@ -7,26 +7,26 @@ class W3DHub
 
           theme W3DHub::THEME
 
-          background 0xaa_444444
+          background 0x88_525252
 
-          stack(width: 1.0, max_width: 760, height: 1.0, max_height: 256, v_align: :center, h_align: :center, background: 0xff_222222) do
+          stack(width: 1.0, max_width: 760, height: 1.0, max_height: 268, v_align: :center, h_align: :center, background: 0xee_222222) do
             # Title bar
-            flow(width: 1.0, height: 32, padding: 8) do
+            flow(width: 1.0, height: 36, padding: 8) do
               background 0x88_000000
 
               # image "#{GAME_ROOT_PATH}/media/ui_icons/export.png", width: 32, align: :center, color: 0xaa_ffffff
 
               # tagline "<b>#{I18n.t(:"server_browser.direct_connect")}</b>", fill: true, text_align: :center
-              tagline @game ? "Update Game" : "Add Game", width: 1.0, text_align: :center
+              title @game ? "Update Game" : "Add Game", width: 1.0, text_align: :center, font: BOLD_FONT
             end
 
             stack(width: 1.0, fill: true, padding_left: 8, padding_right: 8) do
-              stack(width: 1.0, height: 66) do
+              stack(width: 1.0, height: 72) do
                 para "Game or Mod Title:"
                 @game_title = edit_line "#{@game&.title}", width: 1.0, fill: true
               end
 
-              stack(width: 1.0, height: 66) do
+              stack(width: 1.0, height: 72) do
                 para "Path to Executable:"
 
                 flow(width: 1.0, fill: true) do
@@ -40,7 +40,7 @@ class W3DHub
 
               flow(fill: true)
 
-              flow(width: 1.0, margin_top: 8, height: 40, padding_bottom: 8) do
+              flow(width: 1.0, margin_top: 8, height: 46, padding_bottom: 8) do
                 button "Cancel", fill: true, margin_right: 4 do
                   pop_state
                 end

@@ -29,8 +29,8 @@ class W3DHub
     },
     TextBlock: {
       font: REGULAR_FONT,
+      color: 0xff_f2f2f2,
       text_static: true,
-      text_color: 0xff_f2f2f2,
       text_border: false,
       text_shadow: true,
       text_shadow_size: 1,
@@ -61,11 +61,6 @@ class W3DHub
     Inscription: { # < TextBlock
       text_size: 18
     },
-    EditLine: {
-      border_thickness: 2,
-      border_color: Gosu::Color::WHITE,
-      hover: { color: Gosu::Color::WHITE }
-    },
     Link: {
       color: 0xff_cdcdcd,
       hover: {
@@ -77,6 +72,7 @@ class W3DHub
     },
     Button: {
       font: BOLD_FONT,
+      color: 0xff_f2f2f2,
       text_size: 22,
       padding_top: 8,
       padding_left: 16,
@@ -86,13 +82,30 @@ class W3DHub
       border_color: Gosu::Color::NONE,
       background: 0xff_0074e0,
       hover: {
-        text_color: 0xff_f2f2f2,
+        color: 0xff_f2f2f2,
         background: 0xff_004c94,
         border_color: 0xff_0074e0
       },
       active: {
-        text_color: 0xff_aaaaaa,
+        color: 0xff_aaaaaa,
         background: 0xff_005aad,
+        border_color: 0xff_0074e0
+      }
+    },
+    EditLine: {
+      font: REGULAR_FONT,
+      color: 0xff_f2f2f2,
+      background: 0xff_383838,
+      border_thickness: 2,
+      border_color: 0xff_0074e0,
+      hover: {
+        color: 0xff_f2f2f2,
+        background: 0xff_323232,
+        border_color: 0xff_0074e0
+      },
+      active: {
+        color: 0xff_f2f2f2,
+        background: 0xff_4b4b4b,
         border_color: 0xff_0074e0
       }
     },

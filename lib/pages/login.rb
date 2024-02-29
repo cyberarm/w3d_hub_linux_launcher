@@ -4,11 +4,9 @@ class W3DHub
       def setup
         body.clear do
           flow(width: 1.0, height: 1.0, padding: 32) do
-            background 0xff_252535
+            background 0xaa_25253f
 
-            stack(width: 0.28)
-
-            stack(width: 0.48) do
+            stack(width: 610, height: 380, v_align: :center, h_align: :center) do
               flow(width: 1.0) do
                 stack(width: 0.4)
                 image "#{GAME_ROOT_PATH}/media/icons/w3dhub.png", width: 0.20
@@ -20,14 +18,14 @@ class W3DHub
                 @username = edit_line "", width: 0.75, autofocus: true, focus: true
               end
 
-              flow(width: 1.0) do
+              flow(width: 1.0, margin_top: 8) do
                 tagline "Password", width: 0.25, text_align: :right
                 @password = edit_line "", width: 0.75, type: :password
               end
 
               flow(width: 1.0) do
                 tagline "", width: 0.25
-                button "Log In" do |btn|
+                @action_button = button "Log In" do |btn|
                   @username.enabled = false
                   @password.enabled = false
                   btn.enabled = false
@@ -87,6 +85,19 @@ class W3DHub
               page(W3DHub::Pages::Games)
             }
           )
+        end
+      end
+
+      def button_down(id)
+        case id
+        when Gosu::KB_TAB
+          if @username.focused?
+            window.current_state.request_focus(@password)
+          else
+            window.current_state.request_focus(@username)
+          end
+        when Gosu::KB_ENTER, Gosu::KB_RETURN
+          @action_button.enabled? && @action_button.clicked_left_mouse_button(@action_button, 0, 0)
         end
       end
 

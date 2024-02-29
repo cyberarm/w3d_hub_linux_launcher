@@ -9,7 +9,7 @@ class W3DHub
 
         background 0xaa_525252
 
-        stack(width: 1.0, max_width: 720, height: 1.0, max_height: 540, v_align: :center, h_align: :center, background: 0xee_222222) do
+        stack(width: 1.0, max_width: 720, height: 1.0, max_height: 576, v_align: :center, h_align: :center, background: 0xee_222222) do
           # Title bar
           flow(width: 1.0, height: 36, padding: 8) do
             background 0x88_000000
@@ -20,7 +20,7 @@ class W3DHub
           end
 
           stack(width: 1.0, fill: true, scroll: true) do
-            stack(width: 1.0, height: 66, margin_left: 8, margin_right: 8) do
+            stack(width: 1.0, height: 72, margin_left: 8, margin_right: 8) do
               para "Server profiles", text_align: :center, width: 1.0
 
               flow(width: 1.0, fill: true) do
@@ -51,7 +51,7 @@ class W3DHub
             end
 
             stack(width: 1.0, fill: true, margin_top: 8, padding: 8, border_color: 0xff_111111, border_thickness: 1) do
-              flow(width: 1.0, height: 66) do
+              flow(width: 1.0, height: 72) do
                 stack(width: 0.5, height: 1.0) do
                   para "Nickname:"
                   @server_nickname = edit_line "", width: 1.0, fill: true
@@ -73,7 +73,7 @@ class W3DHub
                 end
               end
 
-              flow(width: 1.0, height: 66) do
+              flow(width: 1.0, height: 72) do
                 stack(width: 0.5, height: 1.0) do
                   para "Server IP or Hostname:"
                   @server_hostname = edit_line "", width: 1.0, fill: true
@@ -95,7 +95,7 @@ class W3DHub
                 end
               end
 
-              stack(width: 1.0, height: 66) do
+              stack(width: 1.0, height: 72) do
                 para "Game or Mod:"
 
                 flow(width: 1.0, fill: true) do
@@ -125,7 +125,7 @@ class W3DHub
                 end
               end
 
-              stack(width: 1.0, height: 66) do
+              stack(width: 1.0, height: 72) do
                 para "Launch arguments (Optional):"
                 @launch_arguments = edit_line "", width: 1.0, fill: true
                 @launch_arguments.subscribe(:changed) do |e|
@@ -135,7 +135,7 @@ class W3DHub
                 end
               end
 
-              stack(width: 1.0, height: 66) do
+              stack(width: 1.0, height: 72) do
                 para "IRC Profile (Optional):"
 
                 flow(width: 1.0, fill: true) do

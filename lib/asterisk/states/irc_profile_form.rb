@@ -7,24 +7,24 @@ class W3DHub
 
           theme W3DHub::THEME
 
-          background 0xaa_444444
+          background 0x88_525252
 
-          stack(width: 1.0, max_width: 760, height: 1.0, max_height: 560, v_align: :center, h_align: :center, background: 0xff_222222) do
+          stack(width: 1.0, max_width: 760, height: 1.0, max_height: 610, v_align: :center, h_align: :center, background: 0xee_222222) do
             # Title bar
-            flow(width: 1.0, height: 32, padding: 8) do
+            flow(width: 1.0, height: 36, padding: 8) do
               background 0x88_000000
 
               # tagline "<b>#{I18n.t(:"server_browser.direct_connect")}</b>", fill: true, text_align: :center
-              tagline @profile ? "Update IRC Profile" : "Add IRC Profile", width: 1.0, fill: true, text_align: :center
+              title @profile ? "Update IRC Profile" : "Add IRC Profile", width: 1.0, fill: true, text_align: :center, font: BOLD_FONT
             end
 
             stack(width: 1.0, fill: true, padding_left: 8, padding_right: 8) do
-              stack(width: 1.0, height: 66) do
+              stack(width: 1.0, height: 72) do
                 para "IRC Nickname:"
                 @nickname = edit_line "#{@profile&.nickname}", width: 1.0, fill: true
               end
 
-              stack(width: 1.0, height: 66) do
+              stack(width: 1.0, height: 72) do
                 flow(width: 1.0, height: 1.0) do
                   stack(width: 0.5, height: 1.0) do
                     para "IRC Username (Optional):"
@@ -38,7 +38,7 @@ class W3DHub
                 end
               end
 
-              stack(width: 1.0, height: 66, margin_top: 32) do
+              stack(width: 1.0, height: 72, margin_top: 32) do
                 flow(width: 1.0, height: 1.0) do
                   stack(width: 0.75, height: 1.0) do
                     para "IRC Server IP or Hostname:"
@@ -52,23 +52,30 @@ class W3DHub
                 end
               end
 
-              flow(width: 1.0, height: 66, margin_top: 8) do
-                @server_ssl = check_box "IRC Server Use SSL", checked: @profile&.server_ssl, text_size: 18, width: 0.5, height: 66
-                @server_verify_ssl = check_box "IRC Verify Server SSL Certificate", checked: @profile ? @profile.server_verify_ssl : true, text_size: 18, width: 0.5, height: 66
+              flow(width: 1.0, height: 72, margin_top: 8) do
+                flow(width: 0.5, height: 1.0) do
+                  @server_ssl = toggle_button checked: @profile&.server_ssl, text_size: 18, height: 18
+                  para "IRC Server Use SSL", fill: true, text_wrap: :none, margin_left: 8
+                end
+
+                flow(width: 0.5, height: 1.0) do
+                  @server_verify_ssl = toggle_button checked: @profile ? @profile.server_verify_ssl : true, text_size: 18, height: 18
+                  para "IRC Verify Server SSL Certificate", fill: true, text_wrap: :none, margin_left: 8
+                end
               end
 
-              stack(width: 1.0, height: 66) do
+              stack(width: 1.0, height: 72) do
                 para "Brenbot Bot Name:"
                 @bot_username = edit_line "#{@profile&.bot_username}", width: 1.0, fill: true
               end
 
-              flow(width: 1.0, height: 66) do
-                stack(width: 0.5, height: 66) do
+              flow(width: 1.0, height: 72) do
+                stack(width: 0.5, height: 72) do
                   para "Brenbot Auth Username:"
                   @bot_auth_username = edit_line "#{@profile&.bot_auth_username}", width: 1.0, fill: true
                 end
 
-                stack(width: 0.5, height: 66) do
+                stack(width: 0.5, height: 72) do
                   para "Brenbot Auth Password:"
                   @bot_auth_password = edit_line @profile && @profile.bot_auth_password ? Base64.strict_decode64(@profile.bot_auth_password) : "", width: 1.0, fill: true, type: :password
                 end
@@ -76,7 +83,7 @@ class W3DHub
 
               flow(fill: true)
 
-              flow(width: 1.0, margin_top: 8, height: 40, padding_bottom: 8) do
+              flow(width: 1.0, margin_top: 8, height: 46, padding_bottom: 8) do
                 button "Cancel", fill: true, margin_right: 4 do
                   pop_state
                 end
