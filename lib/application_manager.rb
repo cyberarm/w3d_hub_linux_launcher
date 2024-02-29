@@ -459,6 +459,13 @@ class W3DHub
       Store.applications.games.detect { |g| g.id == app_id }&.name
     end
 
+    def channel_name(app_id, channel_id)
+      app = Store.applications.games.detect { |g| g.id.to_s == app_id.to_s }
+      return unless app
+
+      app.channels.detect { |g| g.id.to_s == channel_id.to_s }&.name
+    end
+
     # No application tasks are being done
     def idle?
       !busy?

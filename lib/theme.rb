@@ -20,19 +20,46 @@ class W3DHub
 
   THEME = {
     ToolTip: {
-      background: 0xff_dedede,
-      color: 0xaa_000000,
-      text_size: 18,
+      background: 0xff_222222,
+      color: 0xff_f2f2f2,
+      text_size: 22,
+      text_static: true,
       text_border: false,
       text_shadow: false
     },
     TextBlock: {
-      font: BOLD_FONT,
+      font: REGULAR_FONT,
+      text_static: true,
       text_color: 0xff_f2f2f2,
       text_border: false,
       text_shadow: true,
       text_shadow_size: 1,
       text_shadow_color: 0x88_000000
+    },
+    Banner: { # < TextBlock
+      text_size: 48,
+      font: BOLD_FONT
+    },
+    Title: { # < TextBlock
+      text_size: 34,
+      font: BOLD_FONT
+    },
+    Subtitle: { # < TextBlock
+      text_size: 28,
+      font: BOLD_FONT
+    },
+    Tagline: { # < TextBlock
+      text_size: 26,
+      font: BOLD_FONT
+    },
+    Caption: { # < TextBlock
+      text_size: 24
+    },
+    Para: { # < TextBlock
+      text_size: 22
+    },
+    Inscription: { # < TextBlock
+      text_size: 18
     },
     EditLine: {
       border_thickness: 2,
@@ -42,14 +69,15 @@ class W3DHub
     Link: {
       color: 0xff_cdcdcd,
       hover: {
-        color: Gosu::Color::WHITE
+        color: 0xff_f2f2f2
       },
       active: {
         color: 0xff_eeeeee
       }
     },
     Button: {
-      text_size: 18,
+      font: BOLD_FONT,
+      text_size: 22,
       padding_top: 8,
       padding_left: 16,
       padding_right: 16,
@@ -87,7 +115,7 @@ class W3DHub
       border_color: 0xff_0074e0
     },
     Handle: {
-      text_size: 18,
+      text_size: 22,
       padding_top: 8,
       padding_left: 2,
       padding_right: 2,

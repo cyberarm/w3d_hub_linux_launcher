@@ -45,10 +45,10 @@ class W3DHub
               tagline "<b>Help & Support</b>"
               flow(width: 1.0) do
                 para "For help and support using this launcher or playing any W3D Hub game visit the"
-                link("W3D Hub forums", text_size: 16, tip: "https://w3dhub.com/forum/") { W3DHub.url("https://w3dhub.com/forum/") }
+                link("W3D Hub forums", text_size: 22, tip: "https://w3dhub.com/forum/") { W3DHub.url("https://w3dhub.com/forum/") }
                 para "or join us in"
                 image "#{GAME_ROOT_PATH}/media/social_media_icons/discord.png", height: 16, padding_top: 4
-                link("#tech-support", text_size: 16, tip: "https://discord.com/invite/GYhW7eV") { W3DHub.url("https://discord.com/invite/GYhW7eV") }
+                link("#tech-support", text_size: 22, tip: "https://discord.com/invite/GYhW7eV") { W3DHub.url("https://discord.com/invite/GYhW7eV") }
                 para "on the W3D Hub Discord server"
               end
             end
@@ -113,15 +113,15 @@ class W3DHub
 
             #     stack(width: 0.6, height: 1.0) do
             #       stack(width: 1.0, height: 112) do
-            #         link "<b>#{item.title}</b>", text_size: 18 do
+            #         link "<b>#{item.title}</b>", text_size: 22 do
             #           W3DHub.url(item.uri)
             #         end
-            #         inscription item.blurb.gsub(/\n+/, "\n").strip[0..180]
+            #         para item.blurb.gsub(/\n+/, "\n").strip[0..180]
             #       end
 
             #       flow(width: 1.0) do
-            #         inscription item.timestamp.strftime("%Y-%m-%d"), width: 0.499
-            #         link I18n.t(:"games.read_more"), width: 0.5, text_align: :right, text_size: 16 do
+            #         para item.timestamp.strftime("%Y-%m-%d"), width: 0.499
+            #         link I18n.t(:"games.read_more"), width: 0.5, text_align: :right, text_size: 22 do
             #           W3DHub.url(item.uri)
             #         end
             #       end
@@ -139,12 +139,12 @@ class W3DHub
 
                 stack(fill: true, height: 1.0, padding: 4, border_thickness_left: 1, border_color_left: lighten(Gosu::Color.new(0xff_252525))) do
                   tagline "<b>#{item.title}</b>", width: 1.0
-                  inscription item.blurb.gsub(/\n+/, "\n").strip[0..1024], fill: true
+                  para item.blurb.gsub(/\n+/, "\n").strip[0..1024], fill: true
 
-                  flow(width: 1.0, height: 32, margin_top: 8) do
+                  flow(width: 1.0, height: 36, margin_top: 8) do
                     stack(fill: true, height: 1.0) do
                       flow(fill: true)
-                      inscription "#{item.author} • #{item.timestamp.strftime("%Y-%m-%d")}"
+                      para "#{item.author} • #{item.timestamp.strftime("%Y-%m-%d")}"
                     end
 
                     button I18n.t(:"games.read_more"), width: 1.0, max_width: 128, padding_top: 4, padding_bottom: 4 do

@@ -39,19 +39,19 @@ class W3DHub
 
                 stack(margin_left: 8, width: 0.75) do
                   @application_name_label = tagline "#{task.application.name}"
-                  @application_version_label = inscription "Version: #{task.target_version} (#{task.channel.id})"
+                  @application_version_label = para "Version: #{task.target_version} (#{task.channel.id})"
                 end
               end
 
               flow(width: 0.30, height: 1.0) do
                 stack(width: 0.499, height: 1.0) do
                   para "Download Speed", width: 1.0, text_align: :center
-                  @download_speed_label = inscription "- b/s", width: 1.0, text_align: :center
+                  @download_speed_label = para "- b/s", width: 1.0, text_align: :center
                 end
 
                 stack(width: 0.5, height: 1.0) do
                   para "Downloaded", width: 1.0, text_align: :center
-                  inscription "---- b / ---- b", width: 1.0, text_align: :center
+                  para "---- b / ---- b", width: 1.0, text_align: :center
                 end
               end
             end
@@ -68,8 +68,8 @@ class W3DHub
                   background 0xff_333333 if i.odd?
 
                   flow(width: 1.0, height: 22) do
-                    @operation_info["#{key}_name"] = inscription operation.label, width: 0.7, text_wrap: :none, tag: "#{key}_name"
-                    @operation_info["#{key}_status"] = inscription operation.value, width: 0.3, text_align: :right, text_wrap: :none, tag: "#{key}_status"
+                    @operation_info["#{key}_name"] = para operation.label, width: 0.7, text_wrap: :none, tag: "#{key}_name"
+                    @operation_info["#{key}_status"] = para operation.value, width: 0.3, text_align: :right, text_wrap: :none, tag: "#{key}_status"
                   end
 
                   @operation_info["#{key}_progress"] = progress fraction: operation.progress, height: 2, width: 1.0, tag: "#{key}_progress"

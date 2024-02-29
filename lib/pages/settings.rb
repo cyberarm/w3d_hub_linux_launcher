@@ -11,7 +11,7 @@ class W3DHub
               para "<b>Launcher Language</b>", width: 0.249, margin_left: 32, margin_top: 12
               stack(width: 0.75) do
                 @language_menu = list_box items: I18n.available_locales.map { |l| expand_language_code(l.to_s) }, choose: expand_language_code(Store.settings[:language]), width: 1.0
-                inscription "Select the UI language you'd like to use in the W3D Hub Launcher."
+                para "Select the UI language you'd like to use in the W3D Hub Launcher."
               end
             end
 
@@ -22,7 +22,7 @@ class W3DHub
 
                 stack(width: 0.75) do
                   @app_install_dir_input = edit_line Store.settings[:app_install_dir], width: 1.0
-                  inscription "The folder into which new games and apps will be installed by the launcher"
+                  para "The folder into which new games and apps will be installed by the launcher"
                 end
               end
 
@@ -31,7 +31,7 @@ class W3DHub
 
                 stack(width: 0.75) do
                   @package_cache_dir_input = edit_line Store.settings[:package_cache_dir], width: 1.0
-                  inscription "A folder which will be used to cache downloaded packages used to install games and apps"
+                  para "A folder which will be used to cache downloaded packages used to install games and apps"
                 end
               end
             end
@@ -42,7 +42,7 @@ class W3DHub
                 para "<b>Wine Command</b>", width: 0.249, margin_left: 32, margin_top: 12
                 stack(width: 0.75) do
                   @wine_command_input = edit_line Store.settings[:wine_command], width: 1.0
-                  inscription "Command to use to for Windows compatiblity layer"
+                  para "Command to use to for Windows compatiblity layer"
                 end
               end
 
@@ -50,7 +50,7 @@ class W3DHub
                 para "<b>Wine Prefix</b>", width: 0.249, margin_left: 32, margin_top: 12
                 stack(width: 0.75) do
                   @wine_prefix_toggle = toggle_button checked: Store.settings[:wine_prefix]
-                  inscription "Whether each game gets its own prefix. Uses global/default prefix by default."
+                  para "Whether each game gets its own prefix. Uses global/default prefix by default."
                 end
               end
             end

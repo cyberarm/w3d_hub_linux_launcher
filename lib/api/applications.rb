@@ -22,7 +22,7 @@ class W3DHub
         def initialize(hash)
           @data = hash
 
-          @id = @data[:id]
+          @id = @data[:id].to_s
           @name = @data[:name]
           @type = @data[:type]
           @category = @data[:category]
@@ -44,7 +44,7 @@ class W3DHub
           def initialize(hash)
             @data = hash
 
-            @id = @data[:id]
+            @id = @data[:id].to_s
             @name = @data[:name]
             @user_level = @data[:"user-level"]
             @current_version = @data[:"current-version"]

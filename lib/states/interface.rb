@@ -41,23 +41,23 @@ class W3DHub
               flow(width: 1.0, fill: true) do
                 # background 0xff_666666
 
-                link I18n.t(:"interface.games").upcase, text_size: 34 do
+                link I18n.t(:"interface.games").upcase, text_size: 34, font: BOLD_FONT do
                   page(W3DHub::Pages::Games)
                 end
 
-                link I18n.t(:"interface.servers").upcase, text_size: 34, margin_left: 12 do
+                link I18n.t(:"interface.servers").upcase, text_size: 34, font: BOLD_FONT, margin_left: 12 do
                   page(W3DHub::Pages::ServerBrowser)
                 end
 
-                link I18n.t(:"interface.community").upcase, text_size: 34, margin_left: 12 do
+                link I18n.t(:"interface.community").upcase, text_size: 34, font: BOLD_FONT, margin_left: 12 do
                   page(W3DHub::Pages::Community)
                 end
 
-                link I18n.t(:"interface.downloads").upcase, text_size: 34, margin_left: 12 do
+                link I18n.t(:"interface.downloads").upcase, text_size: 34, font: BOLD_FONT, margin_left: 12 do
                   page(W3DHub::Pages::DownloadManager)
                 end
 
-                link I18n.t(:"interface.settings").upcase, text_size: 34, margin_left: 12 do
+                link I18n.t(:"interface.settings").upcase, text_size: 34, font: BOLD_FONT, margin_left: 12 do
                   page(W3DHub::Pages::Settings)
                 end
               end
@@ -66,8 +66,8 @@ class W3DHub
               flow(width: 1.0, height: 0.5) do
                 @application_taskbar_container = stack(width: 1.0, height: 1.0, margin_left: 16, margin_right: 16) do
                   flow(width: 1.0, height: 0.65) do
-                    @application_taskbar_label = inscription "", width: 0.60, text_wrap: :none
-                    @application_taskbar_status_label = inscription "", width: 0.40, text_align: :right, text_wrap: :none
+                    @application_taskbar_label = para "", width: 0.60, text_wrap: :none
+                    @application_taskbar_status_label = para "", width: 0.40, text_align: :right, text_wrap: :none
                   end
 
                   @application_taskbar_progressbar = progress fraction: 0.0, height: 2, width: 1.0
@@ -89,8 +89,8 @@ class W3DHub
                   tagline "<b>#{I18n.t(:"interface.not_logged_in")}</b>", text_wrap: :none
 
                   flow(width: 1.0) do
-                    link(I18n.t(:"interface.log_in"), text_size: 16, width: 0.5) { page(W3DHub::Pages::Login) }
-                    link I18n.t(:"interface.register"), text_size: 16, width: 0.49 do
+                    link(I18n.t(:"interface.log_in"), text_size: 22, width: 0.5) { page(W3DHub::Pages::Login) }
+                    link I18n.t(:"interface.register"), text_size: 22, width: 0.49 do
                       W3DHub.url("https://secure.w3dhub.com/forum/index.php?app=core&module=global&section=register")
                     end
                   end

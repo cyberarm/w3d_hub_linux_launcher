@@ -92,19 +92,7 @@ class W3DHub
 
       def populate_account_info
         @host.instance_variable_get(:"@account_container").clear do
-          stack(width: 0.7, height: 1.0) do
-            tagline "<b>#{Store.account.username}</b>"
-
-            flow(width: 1.0) do
-              link(I18n.t(:"interface.log_out"), text_size: 16, width: 0.5) { depopulate_account_info }
-              link I18n.t(:"interface.profile"), text_size: 16, width: 0.49 do
-                W3DHub.url("https://secure.w3dhub.com/forum/index.php?showuser=#{Store.account.id}")
-              end
-            end
-          end
-
           flow(fill: true, height: 1.0) do
-            flow(fill: true) # Fill empty space to push image over to container edge
             avatar_image = get_image(Cache.path(Store.account.avatar_uri))
             mask_image = get_image("#{GAME_ROOT_PATH}/media/textures/circle_mask.png")
 
@@ -114,6 +102,16 @@ class W3DHub
             end
 
             image composite_image, width: 1.0
+          end
+
+          stack(width: 0.7, height: 1.0, margin_left: 8) do
+            link Store.account.username, text_size: 24, font: BOLD_FONT, tip: I18n.t(:"interface.profile"), width: 1.0, text_wrap: :none do
+              W3DHub.url("https://secure.w3dhub.com/forum/index.php?showuser=#{Store.account.id}")
+            end
+
+            flow(width: 1.0) do
+              link(I18n.t(:"interface.log_out"), text_size: 22, width: 0.5) { depopulate_account_info }
+            end
           end
         end
       end
@@ -137,8 +135,8 @@ class W3DHub
                 tagline "<b>#{I18n.t(:"interface.not_logged_in")}</b>", text_wrap: :none
 
                 flow(width: 1.0) do
-                  link(I18n.t(:"interface.log_in"), text_size: 16, width: 0.5) { page(W3DHub::Pages::Login) }
-                  link I18n.t(:"interface.register"), text_size: 16, width: 0.49 do
+                  link(I18n.t(:"interface.log_in"), text_size: 22, width: 0.5) { page(W3DHub::Pages::Login) }
+                  link I18n.t(:"interface.register"), text_size: 22, width: 0.49 do
                     W3DHub.url("https://secure.w3dhub.com/forum/index.php?app=core&module=global&section=register")
                   end
                 end

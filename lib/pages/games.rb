@@ -63,7 +63,7 @@ class W3DHub
                 image "#{GAME_ROOT_PATH}/media/ui_icons/import.png", width: 24, margin_left: -4, margin_top: -6, color: 0xff_ff8800 if Store.application_manager.updateable?(game.id, game.channels.first.id)
               end
 
-              # inscription game.name, width: 1.0, text_align: :center, text_size: 16
+              # para game.name, width: 1.0, text_align: :center
             end
 
             def game_button.hit_element?(x, y)
@@ -128,7 +128,7 @@ class W3DHub
                     flow(width: 1.0, height: 22, margin_bottom: 8) do
                       image "#{GAME_ROOT_PATH}/media/ui_icons/#{hash[:icon]}.png", width: 24 if hash[:icon]
                       image EMPTY_IMAGE, width: 24 unless hash[:icon]
-                      link key, text_size: 18, enabled: hash.key?(:enabled) ? hash[:enabled] : true do
+                      link key, text_size: 22, enabled: hash.key?(:enabled) ? hash[:enabled] : true do
                         hash[:block]&.call
                       end
                     end
@@ -138,7 +138,7 @@ class W3DHub
                 game.web_links.each do |item|
                   flow(width: 1.0, height: 22, margin_bottom: 8) do
                     image "#{GAME_ROOT_PATH}/media/ui_icons/share1.png", width: 24
-                    link item.name, text_size: 18 do
+                    link item.name, text_size: 22 do
                       W3DHub.url(item.uri)
                     end
                   end
@@ -148,7 +148,7 @@ class W3DHub
               if game.channels.count > 1
                 # Release channel
 
-                inscription I18n.t(:"games.game_version"), width: 1.0, text_align: :center
+                para I18n.t(:"games.game_version"), width: 1.0, text_align: :center
 
                 flow(width: 1.0, height: 48) do
                   # background 0xff_444411
@@ -225,7 +225,7 @@ class W3DHub
                 # Height should match Game Banner container height
                 stack(width: 1.0, padding: 16) do
                   title "About #{game.name}", border_bottom_color: 0xff_666666, border_bottom_thickness: 1, width: 1.0
-                  para "Command & Conquer: Tiberian Sun is a 1999 real-time stretegy video game by Westwood Studios, published by Electronic Arts, releaseed exclusively for Microsoft Windows on August 27th, 1999. The game is the sequel to the 1995 game Command & Conquer. It featured new semi-3D graphics, a more futuristic sci-fi setting, and new gameplay features such as vehicles capable of hovering and burrowing.", width: 1.0, text_size: 20
+                  para "Command & Conquer: Tiberian Sun is a 1999 real-time stretegy video game by Westwood Studios, published by Electronic Arts, releaseed exclusively for Microsoft Windows on August 27th, 1999. The game is the sequel to the 1995 game Command & Conquer. It featured new semi-3D graphics, a more futuristic sci-fi setting, and new gameplay features such as vehicles capable of hovering and burrowing.", width: 1.0
                 end
               end
 
@@ -325,7 +325,7 @@ class W3DHub
                   stack(width: 166, height: 224, margin: 8, background: 0x88_151515, border_color: game.color, border_thickness: 1) do
                     flow(width: 1.0, height: 24, padding: 8) do
                       para "Favorite", fill: true
-                      toggle_button checked: Store.application_manager.favorite?(game.id), text_size: 18, padding_top: 3, padding_right: 3, padding_bottom: 3, padding_left: 3 do |btn|
+                      toggle_button checked: Store.application_manager.favorite?(game.id), text_size: 22, padding_top: 3, padding_right: 3, padding_bottom: 3, padding_left: 3 do |btn|
                         Store.application_manager.favorive(game.id, btn.value)
                         Store.settings.save_settings
 
@@ -424,12 +424,12 @@ class W3DHub
 
                 stack(fill: true, height: 1.0, padding: 4, border_thickness_left: 1, border_color_left: lighten(Gosu::Color.new(game.color))) do
                   tagline "<b>#{item.title}</b>", width: 1.0
-                  inscription item.blurb.gsub(/\n+/, "\n").strip[0..1024], fill: true
+                  para item.blurb.gsub(/\n+/, "\n").strip[0..1024], fill: true
 
-                  flow(width: 1.0, height: 32, margin_top: 8) do
+                  flow(width: 1.0, height: 36, margin_top: 8) do
                     stack(fill: true, height: 1.0) do
                       flow(fill: true)
-                      inscription "#{item.author} • #{item.timestamp.strftime("%Y-%m-%d")}"
+                      para "#{item.author} • #{item.timestamp.strftime("%Y-%m-%d")}"
                     end
 
                     button I18n.t(:"games.read_more"), width: 1.0, max_width: 128, padding_top: 4, padding_bottom: 4, margin_left: 0, margin_top: 0, margin_bottom: 0, margin_right: 0 do
@@ -472,7 +472,7 @@ class W3DHub
                 background 0x44_000000
 
                 title event.title, width: 1.0, text_align: :center
-                tagline event.start_time.strftime("%A"), text_size: 36, width: 1.0, text_align: :center
+                title event.start_time.strftime("%A"), width: 1.0, text_align: :center
                 caption event.start_time.strftime("%B %e, %Y %l:%M %p"), width: 1.0, text_align: :center
               end
             end
@@ -505,12 +505,12 @@ class W3DHub
               stack(width: 0.75, height: 1.0) do
                 stack(width: 1.0, height: 128 - 28) do
                   link(mod[:name]) { W3DHub.url(mod[:url]) }
-                  inscription "Author: #{mod[:author]} | #{mod[:type]} | #{mod[:subtype]}"
+                  para "Author: #{mod[:author]} | #{mod[:type]} | #{mod[:subtype]}"
                   para mod[:description][0..180]
                 end
 
                 flow(width: 1.0, height: 28, padding: 4) do
-                  inscription "Version", width: 0.25, text_align: :center
+                  para "Version", width: 0.25, text_align: :center
                   list_box items: mod[:versions], width: 0.5, enabled: mod[:versions].size > 1, padding_top: 0, padding_bottom: 0
                   button "Install", width: 0.25, padding_top: 0, padding_bottom: 0
                 end
