@@ -41,7 +41,7 @@ class W3DHub
                 end
 
                 @server_delete_button = button get_image("#{GAME_ROOT_PATH}/media/ui_icons/minus.png"), image_height: 1.0, tip: "Remove selected profile" do
-                  push_state(ConfirmDialog, message: "Purge server profile")
+                  push_state(ConfirmDialog, title: "Are you sure?", message: "Remove Server Profile: \"#{@server_profiles_list.value}\"?", accept_callback: -> { delete_server_profile(server_profile_from_name(@server_profiles_list.value)) })
                 end
 
                 @server_edit_button = button get_image("#{GAME_ROOT_PATH}/media/ui_icons/save.png"), image_height: 1.0, tip: "Edit and save selected profile" do
@@ -162,7 +162,7 @@ class W3DHub
             end
           end
 
-          flow(width: 1.0, height: 40, padding: 8) do
+          flow(width: 1.0, height: 46, padding: 8) do
             button "Cancel", width: 0.25 do
               pop_state
             end
@@ -257,7 +257,7 @@ class W3DHub
               server_profile: @server_profiles_list.value,
               server_hostname: @server_hostname.value,
               server_port: @server_port.value,
-              game: @games_list.value,
+              game_title: @games_list.value,
               launch_arguments: @launch_arguments.value,
               irc_profile: @irc_profiles_list.value
             }
@@ -273,6 +273,24 @@ class W3DHub
         @server_profiles_list.choose = name
 
         @changes_made = false
+      end
+
+      def delete_server_profile(profile)
+        index = W3DHub::Store[:asterisk_config].server_profiles.index(profile)
+        return unless index
+
+        W3DHub::Store[:asterisk_config].server_profiles.delete(profile)
+
+        W3DHub::Store[:asterisk_config].save_config
+
+        @server_profiles_list.items = W3DHub::Store[:asterisk_config].server_profiles.map { |pf| pf.name }
+        if W3DHub::Store[:asterisk_config].server_profiles.size.positive?
+          @server_profiles_list.choose = W3DHub::Store[:asterisk_config].server_profiles[index - 1 > 0 ? index - 1 : 0].name
+        end
+      end
+
+      def server_profile_from_name(name)
+        W3DHub::Store[:asterisk_config].server_profiles.find { |pf| name == pf.name }
       end
 
       def game_from_title(title)
@@ -362,7 +380,8 @@ class W3DHub
       end
 
       def delete_irc_profile(profile)
-        index = W3DHub::Store[:asterisk_config].irc_profiles.index(profile) || 0
+        index = W3DHub::Store[:asterisk_config].irc_profiles.index(profile)
+        return unless index
 
         W3DHub::Store[:asterisk_config].irc_profiles.delete(profile)
 
