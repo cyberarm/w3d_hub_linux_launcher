@@ -22,16 +22,16 @@ class W3DHub
 
       def update(hash)
         if @status
-          @status.instance_variable_set(:@name, hash[:name])
-          @status.instance_variable_set(:@password, hash[:password] || false)
-          @status.instance_variable_set(:@map, hash[:map])
-          @status.instance_variable_set(:@max_players, hash[:maxplayers])
-          @status.instance_variable_set(:@player_count, hash[:numplayers] || 0)
-          @status.instance_variable_set(:@started, hash[:started])
-          @status.instance_variable_set(:@remaining, hash[:remaining])
+          @status.name = hash[:name]
+          @status.password = hash[:password] || false
+          @status.map = hash[:map]
+          @status.max_players = hash[:maxplayers]
+          @status.player_count = hash[:numplayers] || 0
+          @status.started = hash[:started]
+          @status.remaining = hash[:remaining]
 
-          @status.instance_variable_set(:@teams, hash[:teams]&.map { |t| Team.new(t) }) if hash[:teams]
-          @status.instance_variable_set(:@players, hash[:players]&.select { |t| t[:nick] != "Nod" && t[:nick] != "GDI" }&.map { |t| Player.new(t) }) if hash[:players]
+          @status.teams = hash[:teams]&.map { |t| Team.new(t) } if hash[:teams]
+          @status.players = hash[:players]&.select { |t| t[:nick] != "Nod" && t[:nick] != "GDI" }&.map { |t| Player.new(t) } if hash[:players]
 
           send_ping
 
@@ -47,8 +47,6 @@ class W3DHub
 
           W3DHub::BackgroundWorker.foreground_parallel_job(
             lambda do
-              @ping = -1
-
               W3DHub.command("ping #{@address} #{W3DHub.windows? ? '-n 3' : '-c 3'}") do |line|
                 if W3DHub.windows? && line =~ /Minimum|Maximum|Maximum/i
                   @ping = line.strip.split(",").last.split("=").last.sub("ms", "").to_i
@@ -56,6 +54,8 @@ class W3DHub
                   @ping = line.strip.split("=").last.split("/")[1].to_i
                 end
               end
+
+              @ping = -1 if @ping.zero?
 
               @ping
             end,
@@ -67,7 +67,7 @@ class W3DHub
       end
 
       class Status
-        attr_reader :name, :password, :map, :max_players, :player_count, :started, :remaining, :teams, :players
+        attr_accessor :name, :password, :map, :max_players, :player_count, :started, :remaining, :teams, :players
 
         def initialize(hash)
           @data = hash
@@ -86,7 +86,7 @@ class W3DHub
       end
 
       class Team
-        attr_reader :id, :name, :score, :kills, :deaths
+        attr_accessor :id, :name, :score, :kills, :deaths
 
         def initialize(hash)
           @data = hash
@@ -100,7 +100,7 @@ class W3DHub
       end
 
       class Player
-        attr_reader :nick, :team, :score, :kills, :deaths
+        attr_accessor :nick, :team, :score, :kills, :deaths
 
         def initialize(hash)
           @data = hash

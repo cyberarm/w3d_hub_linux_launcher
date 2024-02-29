@@ -270,10 +270,6 @@ class W3DHub
       end
 
       def stylize_selected_server(server_container)
-        server_container.style.server_item_background = server_container.style.default[:background]
-        server_container.style.server_item_hover_background = server_container.style.hover[:background]
-        server_container.style.server_item_active_background = server_container.style.active[:background]
-
         server_container.style.background = @selected_color
 
         server_container.style.default[:background] = @selected_color
@@ -285,10 +281,15 @@ class W3DHub
         @server_list_container.children.sort_by! do |child|
           s = Store.server_list.find { |s| s.id == child.style.tag }
 
-          [s&.status&.player_count, s&.id]
+          [s.status.player_count, s.id]
         end.reverse!.each_with_index do |child, i|
-          child.style.background = 0xff_333333 if i.even?
-          child.style.background = 0 if i.odd?
+          next if @selected_server_container && child == @selected_server_container
+
+          child.style.hover[:background] = 0xaa_555566
+          child.style.hover[:active] = 0xaa_555588
+
+          child.style.default[:background] = 0xaa_333333 if i.even?
+          child.style.default[:background] = 0x00_000000 if i.odd?
         end
 
         @server_list_container.recalculate
@@ -341,18 +342,13 @@ class W3DHub
             end
 
             server_container.subscribe(:clicked_left_mouse_button) do
-              if @selected_server_container
-                @selected_server_container.style.background = @selected_server_container.style.server_item_background
-                @selected_server_container.style.default[:background] = @selected_server_container.style.server_item_background
-                @selected_server_container.style.hover[:background] = @selected_server_container.style.server_item_hover_background
-                @selected_server_container.style.active[:background] = @selected_server_container.style.server_item_active_background
-              end
-
               stylize_selected_server(server_container)
 
               @selected_server_container = server_container
 
               @selected_server = server
+
+              reorder_server_list if @selected_server_container
 
               BackgroundWorker.foreground_job(
                 -> { fetch_server_details(server) },

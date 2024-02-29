@@ -203,7 +203,12 @@ class W3DHub
 
     def run(app_id, channel, *args)
       if (app_data = installed?(app_id, channel))
-        pid = Process.spawn("#{dxvk_command(app_id, channel)}#{mangohud_command(app_id, channel)}#{wine_command(app_id, channel)}\"#{app_data[:install_path]}\" -launcher #{args.join(' ')}")
+        install_directory = app_data[:install_directory]
+        exe_path = app_id == "ecw" ? "#{install_directory}/game500.exe" : "#{install_directory}/game.exe"
+        exe_path.gsub!("/", "\\") if W3DHub.windows?
+        exe_path.gsub!("\\", "/") if W3DHub.unix?
+
+        pid = Process.spawn("#{dxvk_command(app_id, channel)}#{mangohud_command(app_id, channel)}#{wine_command(app_id, channel)}\"#{exe_path}\" -launcher #{args.join(' ')}")
         Process.detach(pid)
       end
     end
@@ -317,7 +322,7 @@ class W3DHub
           if (install_path = reg["InstallDir"])
             install_path.gsub!("\\", "/")
 
-            exe_path = app_id == "ecw" ? "#{install_path}/game750.exe" : "#{install_path}/game.exe"
+            exe_path = app_id == "ecw" ? "#{install_path}/game500.exe" : "#{install_path}/game.exe"
 
             if File.exist?(exe_path)
               installed_version = app_id == "ren" ? "1.0.0.0" : reg["InstalledVersion"]
@@ -404,6 +409,8 @@ class W3DHub
       # wine_prefix # optional
 
       install_directory = Cache.install_path(task.application, task.channel)
+      install_directory.gsub!("\\", "/")
+
       application_data = {
         name: task.application.name,
         install_directory: install_directory,
