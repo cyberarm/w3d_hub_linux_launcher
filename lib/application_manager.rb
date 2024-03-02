@@ -319,7 +319,8 @@ class W3DHub
 
       begin
         reg_constant.open(registry_path, reg_type) do |reg|
-          if (install_path = reg["InstallDir"])
+          if (install_path = reg["InstallPath"])
+            install_path = File.dirname(install_path)
             install_path.gsub!("\\", "/")
 
             exe_path = app_id == "ecw" ? "#{install_path}/game500.exe" : "#{install_path}/game.exe"
