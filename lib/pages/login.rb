@@ -108,7 +108,22 @@ class W3DHub
             mask_image = get_image("#{GAME_ROOT_PATH}/media/textures/circle_mask.png")
 
             composite_image = Gosu.render(256, 256) do
-              avatar_image.draw(0, 0, 0)
+              scale = 1.0
+
+              if avatar_image.width > avatar_image.height
+                # avatar image is wider than tall, use `height` for scaling to ensure we fill the canvas
+                scale = 256.0 / avatar_image.height
+              elsif avatar_image.width < avatar_image.height
+                # avatar image is taller than wide, use `width` for scaling to ensure we fill the canvas
+                scale = 256.0 / avatar_image.width
+              else
+                # avatar image is square, use width for scale to ensure we fit to the canvas
+                scale = 256.0 / avatar_image.width
+              end
+
+              # Position image center in middle of composite
+              avatar_image.draw_rot(128, 128, 0, 0, 0.5, 0.5, scale, scale)
+              # Render mask image with mode :multiply so we get a clean circle cutout of the scaled avatar image
               mask_image.draw(0, 0, 1, 1, 1, 0xff_ffffff, :multiply)
             end
 

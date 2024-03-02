@@ -11,13 +11,13 @@ Releasy::Project.new do
   version W3DHub::VERSION
 
   executable "w3d_hub_linux_launcher.rb"
-  files ["lib/**/*.*", "locales/*", "media/**/**", "data/.gitkeep", "data/cache/.gitkeep"]
-  exclude_encoding # Applications that don't use advanced encoding (e.g. Japanese characters) can save build size with this.
+  files ["lib/**/*.*", "locales/*", "media/**/**", "data/.gitkeep", "data/cache/.gitkeep", "data/logs/.gitkeep"]
+  # exclude_encoding # Applications that don't use advanced encoding (e.g. Japanese characters) can save build size with this.
   verbose
 
   add_build :windows_folder do
     icon "media/icons/app.ico"
-    executable_type :console # Assuming you don't want it to run with a console window.
+    executable_type :windows # :console # Assuming you don't want it to run with a console window.
     add_package :exe # Windows self-extracting archive.
   end
 end

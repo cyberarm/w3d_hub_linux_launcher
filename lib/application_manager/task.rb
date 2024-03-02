@@ -61,7 +61,7 @@ class W3DHub
               status = execute_task
             rescue FailFast
               # no-op
-            rescue StandardError, ERRNO::EACCES => e
+            rescue StandardError, Errno::EACCES => e
               status = false
               @task_failure_reason = e.message[0..512]
 
@@ -700,7 +700,7 @@ class W3DHub
 
           File.open("#{path}/#{safe_file_name}", "wb") do |f|
             i = entry.get_input_stream
-            
+
             while (chunk = i.read(32_000_000)) # Read up to ~32 MB per chunk
               f.write chunk
             end

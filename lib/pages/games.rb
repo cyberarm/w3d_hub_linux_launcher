@@ -205,14 +205,14 @@ class W3DHub
                   installing = Store.application_manager.task?(:installer, game.id, channel.id)
 
                   unless game.id == "ren"
-                    button "<b>#{I18n.t(:"interface.install")}</b>", fill: true, margin_right: 8, text_size: 32, enabled: !installing do |button|
+                    button "<b>#{I18n.t(:"interface.install")}</b>", fill: true, margin_right: 8, text_size: 30, enabled: !installing do |button|
                       button.enabled = false
                       @import_button.enabled = false
                       Store.application_manager.install(game.id, channel.id)
                     end
                   end
 
-                  @import_button = button "<b>#{I18n.t(:"interface.import")}</b>", fill: true, margin_left: 8, text_size: 32, enabled: !installing do
+                  @import_button = button "<b>#{I18n.t(:"interface.import")}</b>", fill: true, margin_left: 8, text_size: 30, enabled: !installing do
                     Store.application_manager.import(game.id, channel.id)
                   end
                 end
