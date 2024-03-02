@@ -71,7 +71,9 @@ class W3DHub
             end
 
             game_button.subscribe(:clicked_left_mouse_button) do
-              populate_game_page(game, game.channels.first)
+              channel = @focused_game == game ? @focused_channel : game.channels.first
+
+              populate_game_page(game, channel)
               populate_games_list
             end
           end
@@ -323,9 +325,9 @@ class W3DHub
               flow(width: 1.0, fill: true, scroll: true) do
                 Store.applications.games.each do |game|
                   stack(width: 166, height: 224, margin: 8, background: 0x88_151515, border_color: game.color, border_thickness: 1) do
-                    flow(width: 1.0, height: 24, padding: 8) do
+                    flow(width: 1.0, height: 28, padding: 8) do
                       para "Favorite", fill: true
-                      toggle_button checked: Store.application_manager.favorite?(game.id), text_size: 22, padding_top: 3, padding_right: 3, padding_bottom: 3, padding_left: 3 do |btn|
+                      toggle_button checked: Store.application_manager.favorite?(game.id), height: 18, padding_top: 3, padding_right: 3, padding_bottom: 3, padding_left: 3 do |btn|
                         Store.application_manager.favorive(game.id, btn.value)
                         Store.settings.save_settings
 
