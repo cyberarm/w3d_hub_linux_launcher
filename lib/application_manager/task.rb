@@ -224,7 +224,9 @@ class W3DHub
 
         @status.step = :build_package_list
 
+        files = []
         packages = []
+        deleted_files = [] # TODO: remove removed files
 
         manifests.reverse.each do |manifest|
           logger.info(LOG_TAG) { "#{manifest.game}-#{manifest.type}: #{manifest.version} (#{manifest.base_version})" }
@@ -232,31 +234,35 @@ class W3DHub
           manifest.files.each do |file|
             @files["#{file.name}:#{manifest.version}"] = file
 
-            next if file.removed? # No package data
-
-            # if file.patch?
-            #   fail!("#{@application.name} requires patches. Patching is not yet supported.")
-            #   break
-            # end
-
-            next if packages.detect do |pkg|
-              pkg.category == "games" &&
-              pkg.subcategory == @app_id &&
-              pkg.name == file.package &&
-              pkg.version == manifest.version
+            if file.removed? # No package data
+              files.delete_if { |f| f.name == file.name }
+              deleted_files.push(file)
+              next
             end
 
-            packages.push(
-              Api::Package.new(
-                { category: "games", subcategory: @app_id, name: file.package, version: manifest.version }
-              )
-            )
+            files.delete_if { |f| f.name == file.name } unless file.patch?
 
-            packages.last.is_patch = file if file.patch?
+            files.push(file)
           end
 
           # TODO: Dependencies
         end
+
+        files.each do |file|
+          next if packages.detect do |pkg|
+            pkg.category == "games" &&
+            pkg.subcategory == @app_id &&
+            pkg.name == file.package &&
+            pkg.version == file.version
+          end
+
+          package = Api::Package.new({ category: "games", subcategory: @app_id, name: file.package, version: file.version })
+
+          package.is_patch = file if file.patch?
+
+          packages.push(package)
+        end
+
 
         packages
       end
@@ -326,6 +332,7 @@ class W3DHub
         selected_packages = []
         selected_packages_hash = {}
 
+        # FIXME: Refactoring `build_package_list` has broken this bit since we no longer fetch EVERYTHING and actually DON'T download REMOVED files
         rejected_files.each do |hash|
           next if selected_packages_hash["#{hash[:file].package}_#{hash[:manifest_version]}"]
 

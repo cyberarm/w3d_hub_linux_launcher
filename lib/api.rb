@@ -222,6 +222,7 @@ class W3DHub
 
       if response.status == 200
         hash = JSON.parse(response.body, symbolize_names: true)
+
         hash[:packages].map { |pkg| Package.new(pkg) }
       else
         logger.error(LOG_TAG) { "Failed to fetch package details for:" }

@@ -30,7 +30,7 @@ class W3DHub
 
       def parse_files
         @document.root.elements.each("//File") do |element|
-          @files.push(ManifestFile.new(element))
+          @files.push(ManifestFile.new(element, @version))
         end
       end
 
@@ -42,9 +42,9 @@ class W3DHub
 
       # TODO: Support patches
       class ManifestFile
-        attr_reader :name, :checksum, :package, :removed_since, :from
+        attr_reader :name, :checksum, :package, :removed_since, :from, :version
 
-        def initialize(xml)
+        def initialize(xml, version)
           @data = xml
 
           @name = @data["name"]
@@ -58,6 +58,8 @@ class W3DHub
             @from = patch["from"]
             @package = patch["package"]
           end
+
+          @version = version
         end
 
         def removed?
