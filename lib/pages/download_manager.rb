@@ -31,7 +31,9 @@ class W3DHub
 
             # TODO: Show correct application details here
             flow(width: 1.0, height: 0.1, padding: 8) do
-              background task.application.color
+              app_color = Gosu::Color.new(task.application.color)
+              app_color.alpha = 0x88
+              background app_color
 
               flow(width: 0.70, height: 1.0) do
                 image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{task.app_id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{task.app_id}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
@@ -64,15 +66,15 @@ class W3DHub
               task.status.operations.each do |key, operation|
                 i += 1
 
-                stack(width: 1.0, height: 24, padding: 8) do
-                  background 0xff_333333 if i.odd?
+                stack(width: 1.0, height: 26, padding: 8) do
+                  background 0xaa_333333 if i.odd?
 
                   flow(width: 1.0, height: 22) do
                     @operation_info["#{key}_name"] = para operation.label, width: 0.7, text_wrap: :none, tag: "#{key}_name"
                     @operation_info["#{key}_status"] = para operation.value, width: 0.3, text_align: :right, text_wrap: :none, tag: "#{key}_status"
                   end
 
-                  @operation_info["#{key}_progress"] = progress fraction: operation.progress, height: 2, width: 1.0, tag: "#{key}_progress"
+                  @operation_info["#{key}_progress"] = progress fraction: operation.progress, height: 2, width: 1.0, margin_top: 2, tag: "#{key}_progress"
                 end
               end
             end
