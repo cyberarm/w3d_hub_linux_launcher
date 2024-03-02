@@ -27,8 +27,9 @@ class W3DHub
         @bytes_downloaded = -1
 
         @manifests = []
-        @files = {}
+        @files = []
         @packages = []
+        @deleted_files = [] # TODO: remove removed files
 
         @wine_prefix = nil
 
@@ -216,7 +217,7 @@ class W3DHub
         @manifests
       end
 
-      def build_package_list(manifests)
+      def build_package_list
         @status.operations.clear
         @status.label = "Downloading #{@application.name}..."
         @status.value = "Building package list..."
@@ -224,31 +225,29 @@ class W3DHub
 
         @status.step = :build_package_list
 
-        files = []
-        packages = []
-        deleted_files = [] # TODO: remove removed files
-
-        manifests.reverse.each do |manifest|
+        # Process manifest game files in OLDEST to NEWEST order so we can simply remove preceeding files from the array that aren't needed
+        @manifests.reverse.each do |manifest|
           logger.info(LOG_TAG) { "#{manifest.game}-#{manifest.type}: #{manifest.version} (#{manifest.base_version})" }
 
           manifest.files.each do |file|
-            @files["#{file.name}:#{manifest.version}"] = file
-
             if file.removed? # No package data
-              files.delete_if { |f| f.name == file.name }
-              deleted_files.push(file)
+              @files.delete_if { |f| f.name.casecmp?(file.name) }
+              @deleted_files.push(file)
               next
             end
 
-            files.delete_if { |f| f.name == file.name } unless file.patch?
+            @files.delete_if { |f| f.name.casecmp?(file.name) } unless file.patch?
 
-            files.push(file)
+            # If file has been recreated in a newer patch, don't delete it; A full file package will exist for it so it will get completely replaced.
+            @deleted_files.delete_if { |f| f.name.casecmp?(file.name) }
+
+            @files.push(file)
           end
 
           # TODO: Dependencies
         end
 
-        files.each do |file|
+        @files.each do |file|
           next if packages.detect do |pkg|
             pkg.category == "games" &&
             pkg.subcategory == @app_id &&
@@ -263,11 +262,10 @@ class W3DHub
           packages.push(package)
         end
 
-
-        packages
+        @packages = packages
       end
 
-      def verify_files(manifests, packages)
+      def verify_files
         @status.operations.clear
         @status.label = "Downloading #{@application.name}..."
         @status.value = "Verifying installed files..."
@@ -284,46 +282,46 @@ class W3DHub
 
         folder_exists = File.directory?(path)
 
-        manifests.each do |manifest|
+        # Process manifest game files in NEWEST to OLDEST order so that we don't erroneously flag
+        #   valid files as invalid due to an OLDER version of the file being checked FIRST.
+        @files.reverse.each do |file|
           break unless folder_exists
 
-          manifest.files.each do |file|
-            safe_file_name = file.name.gsub("\\", "/")
-            # Fix borked Data -> data 'cause Windows don't care about capitalization
-            safe_file_name.sub!("Data/", "data/")
+          safe_file_name = file.name.gsub("\\", "/")
+          # Fix borked Data -> data 'cause Windows don't care about capitalization
+          safe_file_name.sub!("Data/", "data/")
 
-            file_path = "#{path}/#{safe_file_name}"
+          file_path = "#{path}/#{safe_file_name}"
 
-            processed_files += 1
-            @status.progress = processed_files.to_f / file_count
+          processed_files += 1
+          @status.progress = processed_files.to_f / file_count
 
-            next if file.removed_since
-            next if accepted_files.key?(safe_file_name)
+          next if file.removed_since
+          next if accepted_files.key?(safe_file_name)
 
-            unless File.exist?(file_path)
-              rejected_files << { file: file, manifest_version: manifest.version }
-              logger.info(LOG_TAG) { "[#{manifest.version}] File missing: #{file_path}" }
-              next
-            end
+          unless File.exist?(file_path)
+            rejected_files << { file: file, manifest_version: file.version }
+            logger.info(LOG_TAG) { "[#{file.version}] File missing: #{file_path}" }
+            next
+          end
 
-            digest = Digest::SHA256.new
-            f = File.open(file_path)
+          digest = Digest::SHA256.new
+          f = File.open(file_path)
 
-            while (chunk = f.read(32_000_000))
-              digest.update(chunk)
-            end
+          while (chunk = f.read(32_000_000))
+            digest.update(chunk)
+          end
 
-            f.close
+          f.close
 
-            logger.info(LOG_TAG) { file.inspect } if file.checksum.nil?
+          logger.info(LOG_TAG) { file.inspect } if file.checksum.nil?
 
-            if digest.hexdigest.upcase == file.checksum.upcase
-              accepted_files[safe_file_name] = manifest.version
-              logger.info(LOG_TAG) { "[#{manifest.version}] Verified file: #{file_path}" }
-            else
-              rejected_files << { file: file, manifest_version: manifest.version }
-              logger.info(LOG_TAG) { "[#{manifest.version}] File failed Verification: #{file_path}" }
-            end
+          if digest.hexdigest.upcase == file.checksum.upcase
+            accepted_files[safe_file_name] = file.version
+            logger.info(LOG_TAG) { "[#{file.version}] Verified file: #{file_path}" }
+          else
+            rejected_files << { file: file, manifest_version: file.version }
+            logger.info(LOG_TAG) { "[#{file.version}] File failed Verification: #{file_path}" }
           end
         end
 
@@ -332,11 +330,10 @@ class W3DHub
         selected_packages = []
         selected_packages_hash = {}
 
-        # FIXME: Refactoring `build_package_list` has broken this bit since we no longer fetch EVERYTHING and actually DON'T download REMOVED files
         rejected_files.each do |hash|
           next if selected_packages_hash["#{hash[:file].package}_#{hash[:manifest_version]}"]
 
-          package = packages.find { |pkg| pkg.name == hash[:file].package && pkg.version == hash[:manifest_version] }
+          package = @packages.find { |pkg| pkg.name.casecmp?(hash[:file].package) && pkg.version == hash[:manifest_version] }
 
           if package
             selected_packages_hash["#{hash[:file].package}_#{hash[:manifest_version]}"] = true
@@ -347,13 +344,15 @@ class W3DHub
         end
 
         # Removed packages that don't need to be fetched or processed
-        packages.delete_if { |package| !selected_packages.find { |pkg| pkg == package } } if folder_exists
+        @packages.delete_if { |package| !selected_packages.find { |pkg| pkg == package } } if folder_exists
 
-        packages
+        @packages
       end
 
-      def fetch_packages(packages)
-        hashes = packages.map do |pkg|
+      def fetch_packages
+        return if @packages.empty?
+
+        hashes = @packages.map do |pkg|
           {
             category: pkg.category,
             subcategory: pkg.subcategory,
@@ -364,96 +363,96 @@ class W3DHub
 
         package_details = Api.package_details(hashes)
 
-        if package_details
-          @packages = [package_details].flatten
-          @packages.each do |rich|
-            package = packages.find do |pkg|
-              pkg.category == rich.category &&
-              pkg.subcategory == rich.subcategory &&
-              "#{pkg.name}.zip" == rich.name &&
-              pkg.version == rich.version
-            end
-
-            package.instance_variable_set(:"@name", rich.name)
-            package.instance_variable_set(:"@size", rich.size)
-            package.instance_variable_set(:"@checksum", rich.checksum)
-            package.instance_variable_set(:"@checksum_chunk_size", rich.checksum_chunk_size)
-            package.instance_variable_set(:"@checksum_chunks", rich.checksum_chunks)
-          end
-
-          @packages_to_download = []
-
-          @status.label = "Downloading #{@application.name}..."
-          @status.value = "Verifying local packages..."
-          @status.progress = 0.0
-
-          package_details.each do |pkg|
-            @status.operations[:"#{pkg.checksum}"] = Status::Operation.new(
-              label: pkg.name,
-              value: "Pending...",
-              progress: 0.0
-            )
-          end
-
-          @status.step = :prefetch_verifying_packages
-
-          package_details.each_with_index.each do |pkg, i|
-            operation = @status.operations[:"#{pkg.checksum}"]
-
-            if verify_package(pkg)
-              operation.value = "Verified"
-              operation.progress = 1.0
-            else
-              @packages_to_download << pkg
-
-              operation.value = "#{W3DHub.format_size(pkg.custom_partially_valid_at_bytes)} / #{W3DHub.format_size(pkg.size)}"
-              operation.progress = pkg.custom_partially_valid_at_bytes.to_f / pkg.size
-            end
-
-            @status.progress = i.to_f / package_details.count
-
-            update_interface_task_status
-          end
-
-          @status.operations.delete_if { |key, o| o.progress >= 1.0 }
-
-          @status.step = :fetch_packages
-
-          @total_bytes_to_download = @packages_to_download.sum { |pkg| pkg.size - pkg.custom_partially_valid_at_bytes }
-          @bytes_downloaded = 0
-
-          pool = Pool.new(workers: Store.settings[:parallel_downloads])
-
-          @packages_to_download.each do |pkg|
-            pool.add_job Pool::Job.new( proc {
-              package_bytes_downloaded = pkg.custom_partially_valid_at_bytes
-
-              package_fetch(pkg) do |chunk, remaining_bytes, total_bytes|
-                @bytes_downloaded += chunk.to_s.length
-                package_bytes_downloaded += chunk.to_s.length
-
-                @status.value = "#{W3DHub.format_size(@bytes_downloaded)} / #{W3DHub.format_size(@total_bytes_to_download)}"
-                @status.progress = @bytes_downloaded.to_f / @total_bytes_to_download
-
-                operation = @status.operations[:"#{pkg.checksum}"]
-                operation.value = "#{W3DHub.format_size(package_bytes_downloaded)} / #{W3DHub.format_size(pkg.size)}"
-                operation.progress = package_bytes_downloaded.to_f / pkg.size # total_bytes
-
-                update_interface_task_status
-              end
-            })
-          end
-
-          pool.manage_pool
-        else
+        unless package_details
           fail!("Failed to fetch package details")
+          return
         end
+
+        [package_details].flatten.each do |rich|
+          package = @packages.find do |pkg|
+            pkg.category == rich.category &&
+            pkg.subcategory == rich.subcategory &&
+            "#{pkg.name}.zip" == rich.name &&
+            pkg.version == rich.version
+          end
+
+          package.instance_variable_set(:"@name", rich.name)
+          package.instance_variable_set(:"@size", rich.size)
+          package.instance_variable_set(:"@checksum", rich.checksum)
+          package.instance_variable_set(:"@checksum_chunk_size", rich.checksum_chunk_size)
+          package.instance_variable_set(:"@checksum_chunks", rich.checksum_chunks)
+        end
+
+        @packages_to_download = []
+
+        @status.label = "Downloading #{@application.name}..."
+        @status.value = "Verifying local packages..."
+        @status.progress = 0.0
+
+        package_details.each do |pkg|
+          @status.operations[:"#{pkg.checksum}"] = Status::Operation.new(
+            label: pkg.name,
+            value: "Pending...",
+            progress: 0.0
+          )
+        end
+
+        @status.step = :prefetch_verifying_packages
+
+        package_details.each_with_index.each do |pkg, i|
+          operation = @status.operations[:"#{pkg.checksum}"]
+
+          if verify_package(pkg)
+            operation.value = "Verified"
+            operation.progress = 1.0
+          else
+            @packages_to_download << pkg
+
+            operation.value = "#{W3DHub.format_size(pkg.custom_partially_valid_at_bytes)} / #{W3DHub.format_size(pkg.size)}"
+            operation.progress = pkg.custom_partially_valid_at_bytes.to_f / pkg.size
+          end
+
+          @status.progress = i.to_f / package_details.count
+
+          update_interface_task_status
+        end
+
+        @status.operations.delete_if { |key, o| o.progress >= 1.0 }
+
+        @status.step = :fetch_packages
+
+        @total_bytes_to_download = @packages_to_download.sum { |pkg| pkg.size - pkg.custom_partially_valid_at_bytes }
+        @bytes_downloaded = 0
+
+        pool = Pool.new(workers: Store.settings[:parallel_downloads])
+
+        @packages_to_download.each do |pkg|
+          pool.add_job Pool::Job.new( proc {
+            package_bytes_downloaded = pkg.custom_partially_valid_at_bytes
+
+            package_fetch(pkg) do |chunk, remaining_bytes, total_bytes|
+              @bytes_downloaded += chunk.to_s.length
+              package_bytes_downloaded += chunk.to_s.length
+
+              @status.value = "#{W3DHub.format_size(@bytes_downloaded)} / #{W3DHub.format_size(@total_bytes_to_download)}"
+              @status.progress = @bytes_downloaded.to_f / @total_bytes_to_download
+
+              operation = @status.operations[:"#{pkg.checksum}"]
+              operation.value = "#{W3DHub.format_size(package_bytes_downloaded)} / #{W3DHub.format_size(pkg.size)}"
+              operation.progress = package_bytes_downloaded.to_f / pkg.size # total_bytes
+
+              update_interface_task_status
+            end
+          })
+        end
+
+        pool.manage_pool
       end
 
-      def verify_packages(packages)
+      def verify_packages
       end
 
-      def unpack_packages(packages)
+      def unpack_packages
         path = Cache.install_path(@application, @channel)
         logger.info(LOG_TAG) { "Unpacking packages in '#{path}'..." }
         Cache.create_directories(path, true)
@@ -463,7 +462,7 @@ class W3DHub
         @status.value = "Unpacking..."
         @status.progress = 0.0
 
-        packages.each do |pkg|
+        @packages.each do |pkg|
           # FIXME: can't add a new key into hash during iteration (RuntimeError)
           @status.operations[:"#{pkg.checksum}"] = Status::Operation.new(
             label: pkg.name,
@@ -475,7 +474,7 @@ class W3DHub
         @status.step = :unpacking
 
         i = -1
-        packages.each do |package|
+        @packages.each do |package|
           i += 1
 
           status = if package.custom_is_patch
@@ -508,6 +507,23 @@ class W3DHub
         end
       end
 
+      def remove_deleted_files
+        return unless @deleted_files.size.positive?
+
+        logger.info(LOG_TAG) { "Removing dead files..." }
+
+        @deleted_files.each do |file|
+          logger.info(LOG_TAG) { "    #{file.name}" }
+
+          path = Cache.install_path(@application, @channel)
+          file_path = "#{path}/#{file.name}".sub('Data/', 'data/')
+
+          File.delete(file_path) if File.exist?(file_path)
+
+          logger.info(LOG_TAG) { "        removed." }
+        end
+      end
+
       def create_wine_prefix
         if W3DHub.unix? && @wine_prefix
           # TODO: create a wine prefix if configured
@@ -520,7 +536,7 @@ class W3DHub
         end
       end
 
-      def install_dependencies(packages)
+      def install_dependencies
         # TODO: install dependencies
         @status.operations.clear
         @status.label = "Installing #{@application.name}..."
@@ -658,7 +674,7 @@ class W3DHub
 
         logger.info(LOG_TAG) { "      Loading #{temp_path}/#{safe_file_name}.patch..." }
         patch_mix = W3DHub::Mixer::Reader.new(file_path: "#{temp_path}/#{safe_file_name}.patch", ignore_crc_mismatches: false)
-        patch_info = JSON.parse(patch_mix.package.files.find { |f| f.name == ".w3dhub.patch" || f.name == ".bhppatch" }.data, symbolize_names: true)
+        patch_info = JSON.parse(patch_mix.package.files.find { |f| f.name.casecmp?(".w3dhub.patch") || f.name.casecmp?(".bhppatch") }.data, symbolize_names: true)
 
         logger.info(LOG_TAG) { "      Loading #{path}/#{safe_file_name}..." }
         target_mix = W3DHub::Mixer::Reader.new(file_path: "#{path}/#{safe_file_name}", ignore_crc_mismatches: false)
@@ -666,15 +682,15 @@ class W3DHub
         logger.info(LOG_TAG) { "      Removing files..." } if patch_info[:removedFiles].size.positive?
         patch_info[:removedFiles].each do |file|
           logger.debug(LOG_TAG) { "        #{file}" }
-          target_mix.package.files.delete_if { |f| f.name == file }
+          target_mix.package.files.delete_if { |f| f.name.casecmp?(file) }
         end
 
         logger.info(LOG_TAG) { "      Adding/Updating files..." } if patch_info[:updatedFiles].size.positive?
         patch_info[:updatedFiles].each do |file|
           logger.debug(LOG_TAG) { "        #{file}" }
 
-          patch = patch_mix.package.files.find { |f| f.name == file }
-          target = target_mix.package.files.find { |f| f.name == file }
+          patch = patch_mix.package.files.find { |f| f.name.casecmp?(file) }
+          target = target_mix.package.files.find { |f| f.name.casecmp?(file) }
 
           if target
             target_mix.package.files[target_mix.package.files.index(target)] = patch

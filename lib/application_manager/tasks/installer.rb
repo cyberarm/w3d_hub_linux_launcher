@@ -13,28 +13,31 @@ class W3DHub
         fail_fast
         return false if failed?
 
-        manifests = fetch_manifests
+        fetch_manifests
         return false if failed?
 
-        packages = build_package_list(manifests)
+        build_package_list
         return false if failed?
 
-        verify_files(manifests, packages)
+        remove_deleted_files
         return false if failed?
 
-        fetch_packages(packages)
+        verify_files
         return false if failed?
 
-        verify_packages(packages)
+        fetch_packages
         return false if failed?
 
-        unpack_packages(packages)
+        verify_packages
+        return false if failed?
+
+        unpack_packages
         return false if failed?
 
         create_wine_prefix
         return false if failed?
 
-        install_dependencies(packages)
+        install_dependencies
         return false if failed?
 
         mark_application_installed
