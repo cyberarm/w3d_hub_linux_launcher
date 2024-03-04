@@ -14,6 +14,7 @@ require "logger"
 require "time"
 require "base64"
 require "zip"
+require "excon"
 
 class W3DHub
   W3DHUB_DEBUG = ARGV.join.include?("--debug")
@@ -110,7 +111,6 @@ require_relative "lib/application_manager/tasks/installer"
 require_relative "lib/application_manager/tasks/updater"
 require_relative "lib/application_manager/tasks/uninstaller"
 require_relative "lib/application_manager/tasks/repairer"
-require_relative "lib/application_manager/tasks/importer"
 require_relative "lib/states/demo_input_delay"
 require_relative "lib/states/boot"
 require_relative "lib/states/interface"
@@ -121,6 +121,7 @@ require_relative "lib/states/dialogs/prompt_dialog"
 require_relative "lib/states/dialogs/confirm_dialog"
 require_relative "lib/states/dialogs/direct_connect_dialog"
 require_relative "lib/states/dialogs/game_settings_dialog"
+require_relative "lib/states/dialogs/import_game_dialog"
 
 require_relative "lib/api"
 require_relative "lib/api/service_status"

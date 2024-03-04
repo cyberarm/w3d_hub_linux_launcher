@@ -44,7 +44,7 @@ class W3DHub
       # if auto-import fails ask user for path to game exe
       # mark app as imported/installed
 
-      @tasks.push(Importer.new(app_id, channel))
+      push_state(W3DHub::States::ImportGameDialog, app_id: app_id, channel: channel)
     end
 
     def settings(app_id, channel)
@@ -389,17 +389,19 @@ class W3DHub
       false
     end
 
-    def imported!(task, exe_path)
+    def imported!(application, channel, exe_path)
+      exe_path.gsub!("\\", "/")
+
       application_data = {
-        name: task.application.name,
+        name: application.name,
         install_directory: File.dirname(exe_path),
-        installed_version: task.channel.current_version,
+        installed_version: channel.current_version,
         install_path: exe_path,
-        wine_prefix: task.wine_prefix
+        wine_prefix: nil
       }
 
       Store.settings[:games] ||= {}
-      Store.settings[:games][:"#{task.app_id}_#{task.release_channel}"] = application_data
+      Store.settings[:games][:"#{application.id}_#{channel.id}"] = application_data
       Store.settings.save_settings
     end
 

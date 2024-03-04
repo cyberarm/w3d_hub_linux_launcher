@@ -1,6 +1,7 @@
 class W3DHub
   class Window < CyberarmEngine::Window
     def setup
+      self.show_stats_plotter = false
       self.caption = I18n.t(:app_name)
 
       Store[:server_list] = []

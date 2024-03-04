@@ -238,7 +238,8 @@ class W3DHub
 
             @files.delete_if { |f| f.name.casecmp?(file.name) } unless file.patch?
 
-            # If file has been recreated in a newer patch, don't delete it; A full file package will exist for it so it will get completely replaced.
+            # If file has been recreated in a newer patch, don't delete it;
+            # A full file package will exist for it so it will get completely replaced.
             @deleted_files.delete_if { |f| f.name.casecmp?(file.name) }
 
             @files.push(file)
