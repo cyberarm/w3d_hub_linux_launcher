@@ -104,7 +104,11 @@ class W3DHub
       def populate_account_info
         @host.instance_variable_get(:"@account_container").clear do
           flow(fill: true, height: 1.0) do
-            avatar_image = get_image(Cache.path(Store.account.avatar_uri))
+            avatar_image = begin
+              get_image(Cache.path(Store.account.avatar_uri))
+            rescue
+              get_image("#{GAME_ROOT_PATH}/media/icons/default_icon.png")
+            end
             mask_image = get_image("#{GAME_ROOT_PATH}/media/textures/circle_mask.png")
 
             composite_image = Gosu.render(256, 256) do
