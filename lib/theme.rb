@@ -142,6 +142,16 @@ class W3DHub
       active: {
         background: 0xff_005aad
       }
+    },
+    Menu: {
+      width: 200,
+      border_color: 0xaa_efefef,
+      border_thickness: 1
+    },
+    MenuItem: {
+      width: 1.0,
+      text_left: :left,
+      margin: 0
     }
   }
 end

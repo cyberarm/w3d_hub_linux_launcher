@@ -187,26 +187,36 @@ class W3DHub
                   end
 
                   button get_image("#{GAME_ROOT_PATH}/media/ui_icons/gear.png"), tip: I18n.t(:"games.game_options"), image_height: 32, margin_left: 0 do |btn|
-                    items = []
-
-                    items << { label: I18n.t(:"games.game_settings"), block: proc do
-                      if game.uses_engine_cfg?
-                        push_state(States::GameSettingsDialog, app_id: game.id, channel: channel.id)
-                      else
-                        Store.application_manager.wwconfig(game.id, channel.id)
+                    menu(parent: btn) do
+                      menu_item(I18n.t(:"games.game_settings")) do
+                        if game.uses_engine_cfg?
+                          push_state(States::GameSettingsDialog, app_id: game.id, channel: channel.id)
+                        else
+                          Store.application_manager.wwconfig(game.id, channel.id)
+                        end
                       end
-                    end}
-                    # items << { label: I18n.t(:"games.game_settings"), block: proc { Store.application_manager.settings(game.id, channel.id) } }
-                    items << { label: I18n.t(:"games.wine_configuration"), block: proc { Store.application_manager.wine_configuration(game.id, channel.id) } } if W3DHub.unix?
-                    items << { label: I18n.t(:"games.game_modifications"), block: proc { populate_game_modifications(game, channel) } } unless Store.offline_mode
-                    if game.id != "ren"
-                      items << { label: I18n.t(:"games.repair_installation"), block: proc { Store.application_manager.repair(game.id, channel.id) } } unless Store.offline_mode
-                      items << { label: I18n.t(:"games.uninstall_game"), block: proc { Store.application_manager.uninstall(game.id, channel.id) } } unless Store.offline_mode
-                    end
 
-                    # From gui_state_ext.rb
-                    # TODO: Implement in engine proper
-                    menu(btn, items: items)
+                      if W3DHub.unix?
+                        menu_item(I18n.t(:"games.wine_configuration")) do
+                          Store.application_manager.wine_configuration(game.id, channel.id)
+                        end
+                      end
+
+                      unless Store.offline_mode
+                        menu_item(I18n.t(:"games.game_modifications")) do
+                          populate_game_modifications(game, channel)
+                        end
+
+                        if game.id != "ren"
+                          menu_item(I18n.t(:"games.repair_installation")) do
+                            Store.application_manager.repair(game.id, channel.id)
+                          end
+                          menu_item(I18n.t(:"games.uninstall_game")) do
+                            Store.application_manager.uninstall(game.id, channel.id)
+                          end
+                        end
+                      end
+                    end.show
                   end
 
                 else

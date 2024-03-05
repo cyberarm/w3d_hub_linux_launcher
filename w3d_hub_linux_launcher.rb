@@ -85,8 +85,6 @@ I18n.load_path << Dir["#{W3DHub::GAME_ROOT_PATH}/locales/*.yml"]
 I18n.default_locale = :en
 
 # GUI_DEBUG = true
-require_relative "lib/gui_state_ext"
-
 require_relative "lib/win32_stub" unless Gem.win_platform?
 
 require_relative "lib/version"

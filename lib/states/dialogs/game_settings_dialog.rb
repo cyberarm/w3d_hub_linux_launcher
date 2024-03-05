@@ -2,6 +2,10 @@ class W3DHub
   class States
     class GameSettingsDialog < Dialog
       BUTTON_STYLE = { text_size: 18, padding_top: 3, padding_bottom: 3, padding_left: 3, padding_right: 3, height: 18 }
+      LIST_ITEM_THEME = Marshal.load(Marshal.dump(THEME))
+      BUTTON_STYLE.each do |key, value|
+        LIST_ITEM_THEME[:Button][key] = value
+      end
 
       def setup
         window.show_cursor = true
@@ -88,7 +92,7 @@ class W3DHub
                   current_res = "#{@game_settings.get_value(:resolution_width)}x#{@game_settings.get_value(:resolution_height)}"
 
                   para "Resolution", fill: true, text_wrap: :none
-                  list_box items: res_options, choose: current_res, width: 172, **BUTTON_STYLE do |value|
+                  list_box items: res_options, choose: current_res, width: 172, theme: LIST_ITEM_THEME, **BUTTON_STYLE do |value|
                     w, h = value.split("x", 2)
 
                     @game_settings.set_value(:resolution_width, w.to_i)
@@ -98,7 +102,7 @@ class W3DHub
 
                 flow(width: 1.0, height: 28, margin: 4, margin_left: 10) do
                   para "Windowed Mode", fill: true, text_wrap: :none
-                  list_box items: @game_settings.get(:windowed_mode).options.map { |v| v[0] }, choose: @game_settings.get_value(:windowed_mode), width: 172, **BUTTON_STYLE do |value|
+                  list_box items: @game_settings.get(:windowed_mode).options.map { |v| v[0] }, choose: @game_settings.get_value(:windowed_mode), width: 172, theme: LIST_ITEM_THEME, **BUTTON_STYLE do |value|
                     @game_settings.set_value(:windowed_mode, value)
                   end
                 end
@@ -112,7 +116,7 @@ class W3DHub
 
                 flow(width: 1.0, height: 28, margin: 4, margin_left: 10) do
                   para "Anti-aliasing", fill: true, text_wrap: :none
-                  list_box items: @game_settings.get(:anti_aliasing).options.map { |v| v[0] }, choose: @game_settings.get_value(:anti_aliasing), width: 72, **BUTTON_STYLE do |value|
+                  list_box items: @game_settings.get(:anti_aliasing).options.map { |v| v[0] }, choose: @game_settings.get_value(:anti_aliasing), width: 72, theme: LIST_ITEM_THEME, **BUTTON_STYLE do |value|
                     @game_settings.set_value(:anti_aliasing, value)
                   end
                 end
@@ -191,35 +195,35 @@ class W3DHub
 
                 flow(width: 1.0, height: 28, margin: 4, margin_left: 10) do
                   para "Texture Detail", fill: true, text_wrap: :none
-                  list_box items: @game_settings.get(:texture_detail).options.map { |v| v[0] }, choose: @game_settings.get_value(:texture_detail), width: 172, **BUTTON_STYLE do |value|
+                  list_box items: @game_settings.get(:texture_detail).options.map { |v| v[0] }, choose: @game_settings.get_value(:texture_detail), width: 172, theme: LIST_ITEM_THEME, **BUTTON_STYLE do |value|
                     @game_settings.set_value(:texture_detail, value)
                   end
                 end
 
                 flow(width: 1.0, height: 28, margin: 4, margin_left: 10) do
                   para "Texture Filtering", fill: true, text_wrap: :none
-                  list_box items: @game_settings.get(:texture_filtering).options.map { |v| v[0] }, choose: @game_settings.get_value(:texture_filtering), width: 172, **BUTTON_STYLE do |value|
+                  list_box items: @game_settings.get(:texture_filtering).options.map { |v| v[0] }, choose: @game_settings.get_value(:texture_filtering), width: 172, theme: LIST_ITEM_THEME, **BUTTON_STYLE do |value|
                     @game_settings.set_value(:texture_filtering, value)
                   end
                 end
 
                 # flow(width: 1.0, height: 28, margin: 4, margin_left: 10) do
                 #   para "Shader Detail", fill: true
-                #   list_box items: @game_settings.get(:texture_filtering).options.map { |v| v[0] }, choose: @game_settings.get_value(:texture_filtering), width: 172, **BUTTON_STYLE do |value|
+                #   list_box items: @game_settings.get(:texture_filtering).options.map { |v| v[0] }, choose: @game_settings.get_value(:texture_filtering), width: 172, theme: LIST_ITEM_THEME, **BUTTON_STYLE do |value|
                 #     @game_settings.set_value(:texture_filtering, value)
                 #   end
                 # end
 
                 # flow(width: 1.0, height: 28, margin: 4, margin_left: 10) do
                 #   para "Post Processing Detail", fill: true
-                #   list_box items: @game_settings.get(:texture_filtering).options.map { |v| v[0] }, choose: @game_settings.get_value(:texture_filtering), width: 172, **BUTTON_STYLE do |value|
+                #   list_box items: @game_settings.get(:texture_filtering).options.map { |v| v[0] }, choose: @game_settings.get_value(:texture_filtering), width: 172, theme: LIST_ITEM_THEME, **BUTTON_STYLE do |value|
                 #     @game_settings.set_value(:texture_filtering, value)
                 #   end
                 # end
 
                 flow(width: 1.0, height: 28, margin: 4, margin_left: 10) do
                   para "Shadow Resolution", fill: true, text_wrap: :none
-                  list_box items: @game_settings.get(:shadow_resolution).options.map { |v| v[0] }, choose: @game_settings.get_value(:shadow_resolution), width: 172, **BUTTON_STYLE do |value|
+                  list_box items: @game_settings.get(:shadow_resolution).options.map { |v| v[0] }, choose: @game_settings.get_value(:shadow_resolution), width: 172, theme: LIST_ITEM_THEME, **BUTTON_STYLE do |value|
                     @game_settings.set_value(:shadow_resolution, value)
                   end
                 end
@@ -233,7 +237,7 @@ class W3DHub
 
                 flow(width: 1.0, height: 28, margin: 4, margin_left: 10) do
                   para "FPS Limit", fill: true, text_wrap: :none
-                  list_box items: @game_settings.get(:fps).options.map { |v| v[0] }, choose: @game_settings.get_value(:fps), width: 172, **BUTTON_STYLE do |value|
+                  list_box items: @game_settings.get(:fps).options.map { |v| v[0] }, choose: @game_settings.get_value(:fps), width: 172, theme: LIST_ITEM_THEME, **BUTTON_STYLE do |value|
                     @game_settings.set_value(:fps, value.to_i)
                   end
                 end
