@@ -369,7 +369,7 @@ class W3DHub
                 flow(fill: true)
 
                 image game_icon(server), height: 1.0
-                title server.status.name, text_wrap: :none
+                title server.status.name[0..30], text_wrap: :none
 
                 flow(fill: true)
               end
@@ -377,7 +377,8 @@ class W3DHub
               flow(width: 1.0, height: 46, margin_top: 16, margin_bottom: 16) do
                 game_installed = Store.application_manager.installed?(server.game, server.channel)
                 game_updatable = Store.application_manager.updateable?(server.game, server.channel)
-                style = server.channel != "release" ? TESTING_BUTTON : {}
+                channel = Store.application_manager.channel(server.game, server.channel)
+                style = ((channel && channel.user_level.downcase.strip == "public") || server.channel == "release") ? {} : TESTING_BUTTON
 
                 flow(fill: true)
                 button "<b>#{I18n.t(:"server_browser.join_server")}</b>", enabled: (game_installed && !game_updatable), **style do
