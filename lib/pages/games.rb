@@ -189,7 +189,13 @@ class W3DHub
                   button get_image("#{GAME_ROOT_PATH}/media/ui_icons/gear.png"), tip: I18n.t(:"games.game_options"), image_height: 32, margin_left: 0 do |btn|
                     items = []
 
-                    items << { label: I18n.t(:"games.game_settings"), block: proc { push_state(States::GameSettingsDialog, app_id: game.id, channel: channel.id) } } #, block: proc { Store.application_manager.wwconfig(game.id, channel.id) } }
+                    items << { label: I18n.t(:"games.game_settings"), block: proc do
+                      if game.uses_engine_cfg?
+                        push_state(States::GameSettingsDialog, app_id: game.id, channel: channel.id)
+                      else
+                        Store.application_manager.wwconfig(game.id, channel.id)
+                      end
+                    end}
                     # items << { label: I18n.t(:"games.game_settings"), block: proc { Store.application_manager.settings(game.id, channel.id) } }
                     items << { label: I18n.t(:"games.wine_configuration"), block: proc { Store.application_manager.wine_configuration(game.id, channel.id) } } if W3DHub.unix?
                     items << { label: I18n.t(:"games.game_modifications"), block: proc { populate_game_modifications(game, channel) } } unless Store.offline_mode

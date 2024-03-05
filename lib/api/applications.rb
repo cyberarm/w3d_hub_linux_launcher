@@ -36,6 +36,13 @@ class W3DHub
           color = @data[:"extended-data"].find { |h| h[:name] == "colour" }[:value].sub("#", "")
 
           @color = "ff#{color}".to_i(16)
+
+          cfg = @data[:"extended-data"].find { |h| h[:name] == "usesEngineCfg" }
+          @uses_engine_cfg = (cfg && cfg[:value].downcase.strip == "true") == true # explicit truthy compare to prevent return `nil`
+        end
+
+        def uses_engine_cfg?
+          @uses_engine_cfg
         end
 
         class Channel

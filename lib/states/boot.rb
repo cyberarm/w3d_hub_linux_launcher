@@ -56,6 +56,22 @@ class W3DHub
 
         if @offline_mode || (@progressbar.value >= 1.0 && @task_index == @tasks.size)
           pop_state
+
+          # --- Repair/Upgrade settings schema/data
+          Store.settings[:favorites] ||= {}
+          #   add game colo[u]r and uses_engine_cfg to application data
+          unless @offline_mode
+            Store.settings[:games].each do |key, game|
+              application = Store.applications.games.find { |g| g.id == key.to_s.split("_", 2).first }
+              next unless application
+
+              game[:colour] = application.color
+              game[:uses_engine_cfg] = application.uses_engine_cfg?
+            end
+          end
+
+          Store.settings.save_settings
+
           push_state(States::Interface)
         end
 
@@ -228,7 +244,10 @@ class W3DHub
             "studio-id": "",
             channels: [],
             "web-links": [],
-            "extended-data": [{ name: "colour", value: "#353535" }]
+            "extended-data": [
+              { name: "colour", value: game[:colour] },
+              { name: "usesEngineCfg", value: game[:uses_engine_cfg] },
+            ]
           }
 
           channel = {
