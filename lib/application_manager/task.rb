@@ -78,7 +78,7 @@ class W3DHub
             @task_state = :complete unless @task_state == :failed
 
             hide_application_taskbar if @task_state == :failed
-            send_message_dialog(:failure, "Task #{type.inspect} failed for #{@application.name}", @task_failure_reason) if @task_state == :failed && !@fail_silently
+            send_message_dialog(:failure, "#{type.to_s.capitalize} Task failed for #{@application.name}", @task_failure_reason) if @task_state == :failed && !@fail_silently
           # end
         end
       end
@@ -370,6 +370,11 @@ class W3DHub
         end
 
         [package_details].flatten.each do |rich|
+          if rich.error?
+            fail!("Failed to retrieve package details! (#{rich.category}:#{rich.subcategory}:#{rich.name}:#{rich.version})\nError: #{rich.error.gsub("-", " ").capitalize}")
+            return
+          end
+
           package = @packages.find do |pkg|
             pkg.category == rich.category &&
             pkg.subcategory == rich.subcategory &&
@@ -572,7 +577,12 @@ class W3DHub
         if array.is_a?(Array)
           package = array.first
         else
-          fail!("Failed to fetch manifest package details!")
+          fail!("Failed to fetch manifest package details! (#{category}:#{subcategory}:#{name}:#{version})")
+          return
+        end
+
+        if package.error?
+          fail!("Failed to retrieve manifest package details! (#{category}:#{subcategory}:#{name}:#{version})\nError: #{package.error.gsub("-", " ").capitalize}")
           return
         end
 
@@ -605,7 +615,7 @@ class W3DHub
         return false unless File.exist?(path)
 
         operation = @status.operations[:"#{package.checksum}"]
-          operation&.value = "Verifying..."
+        operation&.value = "Verifying..."
 
         file_size = File.size(path)
         logger.info(LOG_TAG) { "    File size: #{file_size}" }
