@@ -73,18 +73,35 @@ class W3DHub
 
             hash = JSON.parse(msg, symbolize_names: true)
 
+            # pp hash if hash[:target] != "ServerStatusChanged" && hash[:type] != 6 && hash[:type] != 3
+
             # Send PING(?)
             if hash.empty? || hash[:type] == 6
               ws.send({ type: 6 }.to_json + "\x1e")
             else
               case hash[:type]
               when 1
-                if hash[:target] == "ServerStatusChanged"
+                case hash[:target]
+                when "ServerRegistered"
+                  data = hash[:arguments].first
+                  server = ServerListServer.new(data)
+                  Store.server_list.push(server)
+
+                when "ServerStatusChanged"
                   id, data = hash[:arguments]
                   server = Store.server_list.find { |s| s.id == id }
                   server_updated = server&.update(data)
 
-                  BackgroundWorker.foreground_job(-> {}, ->(result){ States::Interface.instance&.update_server_browser(server) }) if server_updated
+                  BackgroundWorker.foreground_job(-> {}, ->(result){ States::Interface.instance&.update_server_browser(server, :update) }) if server_updated
+
+                when "ServerUnregistered"
+                  id = hash[:arguments].first
+                  server = Store.server_list.find { |s| s.id == id }
+
+                  if server
+                    Store.server_list.delete(server)
+                    BackgroundWorker.foreground_job(-> {}, ->(result){ States::Interface.instance&.update_server_browser(server, :remove) })
+                  end
                 end
               end
             end

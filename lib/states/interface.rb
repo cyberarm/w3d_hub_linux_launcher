@@ -71,7 +71,7 @@ class W3DHub
                 stack(width: 1.0, height: 1.0, margin_left: 16, margin_right: 16) do
                   flow(width: 1.0, height: 0.65) do
                     @application_taskbar_label = para "", fill: true, text_wrap: :none
-                    @application_taskbar_status_label = para "", min_width: 0.40, text_align: :right, text_wrap: :none
+                    @application_taskbar_status_label = para "", width: 0.4, min_width: 256, text_align: :right, text_wrap: :none
                   end
 
                   @application_taskbar_progressbar = progress fraction: 0.0, height: 2, width: 1.0
@@ -163,10 +163,10 @@ class W3DHub
         @page
       end
 
-      def update_server_browser(server)
+      def update_server_browser(server, mode = :update)
         return unless @page.is_a?(Pages::ServerBrowser)
 
-        @page.refresh_server_list(server)
+        @page.refresh_server_list(server, mode)
       end
 
       def update_server_ping(server)

@@ -15,6 +15,7 @@ require "time"
 require "base64"
 require "zip"
 require "excon"
+require "libui"
 
 class W3DHub
   W3DHUB_DEBUG = ARGV.join.include?("--debug")

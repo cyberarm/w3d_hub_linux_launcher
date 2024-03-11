@@ -231,12 +231,23 @@ class W3DHub
         return list.first
       end
 
-      def refresh_server_list(server)
+      def refresh_server_list(server, mode = :update) # :remove
         @refresh_server_list = Gosu.milliseconds + 3_000
         @refresh_server = server if @selected_server&.id == server.id
 
         server_container = find_element_by_tag(@server_list_container, server.id)
 
+        case mode
+        when :update
+          if server.status && !server_container
+            @server_list_container.append do
+              create_server_container(server)
+            end
+          end
+        when :remove
+          @server_list_container.remove(server_container) if server_container
+          return
+        end
         return unless server_container
 
         game_icon      = find_element_by_tag(server_container, :game_icon)
@@ -247,6 +258,7 @@ class W3DHub
         player_count   = find_element_by_tag(server_container, :player_count)
         server_ping    = find_element_by_tag(server_container, :ping)
 
+        game_icon.value = game_icon(server)
         server_name.value = "<b>#{server&.status&.name}</b>"
         server_channel.value = Store.application_manager.channel_name(server.game, server.channel).to_s
         server_region.value = server.region
@@ -299,66 +311,67 @@ class W3DHub
         Store.server_list = Store.server_list.sort_by! { |s| [s&.status&.player_count, s&.id] }.reverse if Store.server_list
 
         @server_list_container.clear do
-          i = -1
-
           Store.server_list.each do |server|
-            next unless @filters[server.game.to_sym]
-            next unless server.region == @filter_region || @filter_region == "Any"
-            next unless Store.application_manager.channel_name(server.game, server.channel) # can user access required game and channel for this server?
-
-            i += 1
-
-            server_container = flow(width: 1.0, height: 56, hover: { background: 0xaa_555566 }, active: { background: 0xaa_555588 }, tag: server.id, tip: ping_tip(server)) do
-              background 0x88_333333 if i.even?
-
-              flow(width: 56, height: 1.0, padding: 4) do
-                image game_icon(server), height: 1.0, tag: :game_icon
-              end
-
-              stack(width: 0.45, height: 1.0) do
-                para server&.status&.name, tag: :server_name, font: BOLD_FONT, text_wrap: :none
-
-                flow(width: 1.0, height: 1.0) do
-                  para Store.application_manager.channel_name(server.game, server.channel).to_s, width: 172, margin_right: 8, tag: :server_channel
-                  para server.region, tag: :server_region
-                end
-              end
-
-              flow(fill: true, height: 1.0) do
-                para "#{server&.status&.map}", tag: :server_map
-              end
-
-              flow(width: 0.11, height: 1.0) do
-                para "#{server&.status&.player_count}/#{server&.status&.max_players}", tag: :player_count
-              end
-
-              flow(width: 56, height: 1.0, padding: 4) do
-                image ping_icon(server), height: 1.0, tag: :ping
-              end
-            end
-
-            def server_container.hit_element?(x, y)
-              self if hit?(x, y)
-            end
-
-            server_container.subscribe(:clicked_left_mouse_button) do
-              stylize_selected_server(server_container)
-
-              @selected_server_container = server_container
-
-              @selected_server = server
-
-              reorder_server_list if @selected_server_container
-
-              BackgroundWorker.foreground_job(
-                -> { fetch_server_details(server) },
-                ->(result) { populate_server_info(server) if server == @selected_server }
-              )
-            end
-
-            stylize_selected_server(server_container) if server.id == @selected_server&.id
+            create_server_container(server)
           end
         end
+
+        reorder_server_list
+      end
+
+      def create_server_container(server)
+        return unless @filters[server.game.to_sym]
+        return unless server.status
+        return unless server.region == @filter_region || @filter_region == "Any"
+        return unless Store.application_manager.channel_name(server.game, server.channel) # can user access required game and channel for this server?
+
+        server_container = flow(width: 1.0, height: 56, hover: { background: 0xaa_555566 }, active: { background: 0xaa_555588 }, tag: server.id, tip: ping_tip(server)) do
+          flow(width: 56, height: 1.0, padding: 4) do
+            image game_icon(server), height: 1.0, tag: :game_icon
+          end
+
+          stack(width: 0.45, height: 1.0) do
+            para server&.status&.name, tag: :server_name, font: BOLD_FONT, text_wrap: :none
+
+            flow(width: 1.0, height: 1.0) do
+              para Store.application_manager.channel_name(server.game, server.channel).to_s, width: 172, margin_right: 8, tag: :server_channel
+              para server.region, tag: :server_region
+            end
+          end
+
+          flow(fill: true, height: 1.0) do
+            para "#{server&.status&.map}", tag: :server_map
+          end
+
+          flow(width: 0.11, height: 1.0) do
+            para "#{server&.status&.player_count}/#{server&.status&.max_players}", tag: :player_count
+          end
+
+          flow(width: 56, height: 1.0, padding: 4) do
+            image ping_icon(server), height: 1.0, tag: :ping
+          end
+        end
+
+        def server_container.hit_element?(x, y)
+          self if hit?(x, y)
+        end
+
+        server_container.subscribe(:clicked_left_mouse_button) do
+          stylize_selected_server(server_container)
+
+          @selected_server_container = server_container
+
+          @selected_server = server
+
+          reorder_server_list if @selected_server_container
+
+          BackgroundWorker.foreground_job(
+            -> { fetch_server_details(server) },
+            ->(result) { populate_server_info(server) if server == @selected_server }
+          )
+        end
+
+        stylize_selected_server(server_container) if server.id == @selected_server&.id
       end
 
       def populate_server_info(server)

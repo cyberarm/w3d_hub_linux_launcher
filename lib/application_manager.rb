@@ -201,6 +201,14 @@ class W3DHub
       end
     end
 
+    def start_command(path, exe)
+      if W3DHub.windows?
+        "start /D \"#{path}\" /B #{exe}"
+      else
+        "#{path}/#{exe}"
+      end
+    end
+
     def run(app_id, channel, *args)
       if (app_data = installed?(app_id, channel))
         install_directory = app_data[:install_directory]
@@ -208,8 +216,22 @@ class W3DHub
         exe_path.gsub!("/", "\\") if W3DHub.windows?
         exe_path.gsub!("\\", "/") if W3DHub.unix?
 
-        pid = Process.spawn("#{dxvk_command(app_id, channel)}#{mangohud_command(app_id, channel)}#{wine_command(app_id, channel)}\"#{exe_path}\" -launcher #{args.join(' ')}")
-        Process.detach(pid)
+        exe = File.basename(exe_path)
+        path = File.dirname(exe_path)
+
+        attempted = false
+        begin
+          pid = Process.spawn("#{dxvk_command(app_id, channel)}#{mangohud_command(app_id, channel)}#{wine_command(app_id, channel)}#{attempted ? start_command(path, exe) : "\"#{exe_path}\""} -launcher #{args.join(' ')}")
+          Process.detach(pid)
+        rescue Errno::EINVAL => e
+          retryable = !attempted
+          attempted = true
+
+          # Assume that we're on windoze and that the game requires admin
+          retry if retryable
+
+          # TODO: Show an error message if we reach here...
+        end
       end
     end
 
