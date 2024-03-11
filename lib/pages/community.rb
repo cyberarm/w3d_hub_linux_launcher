@@ -3,6 +3,7 @@ class W3DHub
     class Community < Page
       def setup
         @w3dhub_news ||= nil
+        @w3dhub_news_expires ||= 0
 
         body.clear do
           stack(width: 1.0, height: 1.0, padding: 8) do
@@ -76,6 +77,30 @@ class W3DHub
         end
       end
 
+      def update
+        super
+
+
+        if Gosu.milliseconds >= @w3dhub_news_expires
+          @w3dhub_news = nil
+          @w3dhub_news_expires = Gosu.milliseconds + 10_000 # seconds
+
+          @wd3hub_news_container.clear do
+            title I18n.t(:"games.fetching_news"), padding: 8
+          end
+
+          BackgroundWorker.foreground_job(
+            -> { fetch_w3dhub_news },
+            lambda do |result|
+              if result
+                populate_w3dhub_news
+                Cache.release_net_lock(result)
+              end
+            end
+          )
+        end
+      end
+
       def fetch_w3dhub_news
         lock = Cache.acquire_net_lock("w3dhub_news")
         return false unless lock
@@ -90,6 +115,7 @@ class W3DHub
         end
 
         @w3dhub_news = news
+        @w3dhub_news_expires = Gosu.milliseconds + (60 * 60 * 1000) # 1 hour (in ms)
 
         "w3dhub_news"
       end

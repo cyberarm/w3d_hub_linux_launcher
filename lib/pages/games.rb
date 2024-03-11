@@ -37,6 +37,7 @@ class W3DHub
 
           if Gosu.milliseconds >= @game_news["#{key}_expires"]
             @game_news.delete(key)
+            @game_news["#{key}_expires"] = Gosu.milliseconds + 10_000 # seconds
 
             if @focused_game && @focused_game.id == key
               @game_news_container.clear do
