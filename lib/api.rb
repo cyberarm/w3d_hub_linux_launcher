@@ -43,8 +43,9 @@ class W3DHub
     #! === W3D Hub API === !#
 
     ENDPOINT = "https://secure.w3dhub.com".freeze
+    API_CONNECTION = Excon.new(ENDPOINT, persistent: true)
 
-    def self.excon(method, url, headers = DEFAULT_HEADERS, body = nil)
+    def self.excon(method, url, headers = DEFAULT_HEADERS, body = nil, api = :api)
       logger.debug(LOG_TAG) { "Fetching #{method.to_s.upcase} \"#{url}\"..." }
 
       # Inject Authorization header if account data is populated
@@ -54,10 +55,13 @@ class W3DHub
         headers["Authorization"] = "Bearer #{Store.account.access_token}"
       end
 
+      connection = api == :api ? API_CONNECTION : GSH_CONNECTION
+      endpoint = api == :api ? ENDPOINT : SERVER_LIST_ENDPOINT
+
       begin
-        Excon.send(
+        connection.send(
           method,
-          url,
+          path: url.sub(endpoint, ""),
           headers: headers,
           body: body,
           nonblock: true,
@@ -82,7 +86,7 @@ class W3DHub
       end
     end
 
-    def self.post(url, headers = DEFAULT_HEADERS, body = nil)
+    def self.post(url, headers = DEFAULT_HEADERS, body = nil, api = :api)
       excon(:post, url, headers, body)
     end
 
@@ -258,9 +262,10 @@ class W3DHub
     #! === Server List API === !#
 
     SERVER_LIST_ENDPOINT = "https://gsh.w3dhub.com".freeze
+    GSH_CONNECTION = Excon.new(SERVER_LIST_ENDPOINT, persistent: true)
 
-    def self.get(url, headers = DEFAULT_HEADERS, body = nil)
-      excon(:get, url, headers, body)
+    def self.get(url, headers = DEFAULT_HEADERS, body = nil, api = :api)
+      excon(:get, url, headers, body, api)
     end
 
     # Method: GET
@@ -281,7 +286,7 @@ class W3DHub
     #   ...players[]:
     #     nick, team (index of teams array), score, kills, deaths
     def self.server_list(level = 1)
-      response = get("#{SERVER_LIST_ENDPOINT}/listings/getAll/v2?statusLevel=#{level}")
+      response = get("#{SERVER_LIST_ENDPOINT}/listings/getAll/v2?statusLevel=#{level}", DEFAULT_HEADERS, nil, :gsh)
 
       if response.status == 200
         data = JSON.parse(response.body, symbolize_names: true)
@@ -303,7 +308,7 @@ class W3DHub
     #   ...players[]:
     #     nick, team (index of teams array), score, kills, deaths
     def self.server_details(id, level)
-      response = get("#{SERVER_LIST_ENDPOINT}/listings/getStatus/v2/#{id}?statusLevel=#{level}")
+      response = get("#{SERVER_LIST_ENDPOINT}/listings/getStatus/v2/#{id}?statusLevel=#{level}", DEFAULT_HEADERS, nil, :gsh)
 
       if response.status == 200
         hash = JSON.parse(response.body, symbolize_names: true)

@@ -83,7 +83,7 @@ class W3DHub
 
         if Gosu.milliseconds >= @w3dhub_news_expires
           @w3dhub_news = nil
-          @w3dhub_news_expires = Gosu.milliseconds + 10_000 # seconds
+          @w3dhub_news_expires = Gosu.milliseconds + 30_000 # seconds
 
           @wd3hub_news_container.clear do
             title I18n.t(:"games.fetching_news"), padding: 8
