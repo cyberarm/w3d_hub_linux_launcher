@@ -18,7 +18,6 @@ class W3DHub
 
             # Game Menu
             @game_page_container = stack(width: 1.0, fill: true, background_image: "#{GAME_ROOT_PATH}/media/textures/noiseb.png", background_image_mode: :tiled) do
-              # , background_image: "C:/Users/cyber/Downloads/vlcsnap-2022-04-24-22h24m15s854.png"
             end
           end
         end
@@ -27,6 +26,35 @@ class W3DHub
 
         populate_game_page(@focused_game, @focused_channel)
         populate_games_list
+      end
+
+      def update
+        super
+
+
+        @game_news.each do |key, value|
+          next if key.end_with?("_expires")
+
+          if Gosu.milliseconds >= @game_news["#{key}_expires"]
+            @game_news.delete(key)
+
+            if @focused_game && @focused_game.id == key
+              @game_news_container.clear do
+                title I18n.t(:"games.fetching_news"), padding: 8
+              end
+
+              BackgroundWorker.foreground_job(
+                -> { fetch_game_news(@focused_game) },
+                lambda do |result|
+                  if result
+                    populate_game_news(@focused_game)
+                    Cache.release_net_lock(result)
+                  end
+                end
+              )
+            end
+          end
+        end
       end
 
       def populate_games_list
@@ -398,6 +426,7 @@ class W3DHub
         end
 
         @game_news[game.id] = news
+        @game_news["#{game.id}_expires"] = Gosu.milliseconds + (60 * 60 * 1000) # 1 hour (in ms)
 
         "game_news_#{game.id}"
       end
