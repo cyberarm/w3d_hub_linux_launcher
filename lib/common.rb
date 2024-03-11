@@ -147,26 +147,16 @@ class W3DHub
   end
 
   def self.ask_file(title: "Open File", filter: "*game*.exe")
-    if W3DHub.unix?
-      # search for command
-      cmds = %w{ zenity matedialog qarma kdialog }
+      result_ptr = LibUI.open_file(LIBUI_WINDOW)
+      result = result_ptr.null? ? "" : result_ptr.to_s.gsub("\\", "/")
 
-      command = cmds.find do |cmd|
-        cmd if system("which #{cmd}")
-      end
+      result
+  end
 
-      path = case File.basename(command)
-      when "zenity", "matedialog", "qarma"
-        `#{command} --file-selection --title "#{title}" --file-filter "#{filter}"`
-      when "kdialog"
-        `#{command} --title "#{title}" --getopenfilename . "#{filter}"`
-      else
-        raise "No known command found for system file selection dialog!"
-      end
+  def self.ask_folder(title: "Open Folder")
+    result_ptr = LibUI.open_folder(window)
+    result = result_ptr.null? ? "" : result_ptr.to_s.gsub("\\", "/")
 
-      path.strip
-    else
-      raise NotImplementedError
-    end
+    result
   end
 end

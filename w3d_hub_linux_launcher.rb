@@ -15,7 +15,6 @@ require "time"
 require "base64"
 require "zip"
 require "excon"
-require "libui"
 
 class W3DHub
   W3DHUB_DEBUG = ARGV.join.include?("--debug")
@@ -81,6 +80,15 @@ require "i18n"
 require "websocket-client-simple"
 require "English"
 require "sdl2"
+require "libui"
+
+# Using a WHOLE ui library for: native file/folder open dialogs...
+LibUI.init
+LIBUI_WINDOW = LibUI.new_window("", 100, 100, 0)
+at_exit do
+  LibUI.control_destroy(LIBUI_WINDOW)
+  LibUI.uninit
+end
 
 I18n.load_path << Dir["#{W3DHub::GAME_ROOT_PATH}/locales/*.yml"]
 I18n.default_locale = :en

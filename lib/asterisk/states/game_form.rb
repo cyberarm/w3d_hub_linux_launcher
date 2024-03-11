@@ -31,7 +31,7 @@ class W3DHub
 
                 flow(width: 1.0, fill: true) do
                   @game_path = edit_line "#{@game&.path}", fill: true, height: 1.0
-                  button "Browse...", width: 128, height: 1.0, enabled: W3DHub.unix?, tip: W3DHub.unix? ? "Browse for game executable" : "Not available on Windows" do
+                  button "Browse...", width: 128, height: 1.0, tip: "Browse for game executable" do
                     path = W3DHub.ask_file
                     @game_path.value = path if !path.empty? && File.exist?(path)
                   end
