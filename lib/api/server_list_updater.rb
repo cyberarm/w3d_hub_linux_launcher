@@ -49,6 +49,7 @@ class W3DHub
         response = Excon.post("https://gsh.w3dhub.com/listings/push/v2/negotiate?negotiateVersion=1", headers: Api::DEFAULT_HEADERS, body: "")
         data = JSON.parse(response.body, symbolize_names: true)
 
+        invocation_id = 0
         id = data[:connectionToken]
         endpoint = "https://gsh.w3dhub.com/listings/push/v2?id=#{id}"
 
@@ -60,10 +61,10 @@ class W3DHub
             ws.send({ protocol: "json", version: 1 }.to_json + "\x1e")
 
             logger.debug(LOG_TAG) { "Subscribing to server changes..." }
-            Store.server_list.each_with_index do |server, i|
-              i += 1
+            Store.server_list.each do |server|
+              invocation_id += 1
               mode = 1 # 2 full details, 1 basic details
-              out = { "type": 1, "invocationId": "#{i}", "target": "SubscribeToServerStatusUpdates", "arguments": [server.id, mode] }
+              out = { "type": 1, "invocationId": "#{invocation_id}", "target": "SubscribeToServerStatusUpdates", "arguments": [server.id, mode] }
               ws.send(out.to_json + "\x1e")
             end
           end
@@ -84,15 +85,34 @@ class W3DHub
                 case hash[:target]
                 when "ServerRegistered"
                   data = hash[:arguments].first
-                  server = ServerListServer.new(data)
-                  Store.server_list.push(server)
+
+                  invocation_id += 1
+                  out = { "type": 1, "invocationId": "#{invocation_id}", "target": "SubscribeToServerStatusUpdates", "arguments": [data[:id], 1] }
+                  ws.send(out.to_json + "\x1e")
+
+                  BackgroundWorker.foreground_job(
+                    ->(data) { [Api.server_details(data[:id], 2), data] },
+                    ->(array) do
+                      server_data, data = array
+
+                      next unless server_data
+
+                      data[:status] = server_data
+
+                      server = ServerListServer.new(data)
+                      Store.server_list.push(server)
+                      States::Interface.instance&.update_server_browser(server, :update)
+                    end,
+                    nil,
+                    data
+                  )
 
                 when "ServerStatusChanged"
                   id, data = hash[:arguments]
                   server = Store.server_list.find { |s| s.id == id }
                   server_updated = server&.update(data)
 
-                  BackgroundWorker.foreground_job(-> {}, ->(result){ States::Interface.instance&.update_server_browser(server, :update) }) if server_updated
+                  BackgroundWorker.foreground_job(->(server) { server }, ->(server) { States::Interface.instance&.update_server_browser(server, :update) }, nil, server) if server_updated
 
                 when "ServerUnregistered"
                   id = hash[:arguments].first
@@ -100,7 +120,7 @@ class W3DHub
 
                   if server
                     Store.server_list.delete(server)
-                    BackgroundWorker.foreground_job(-> {}, ->(result){ States::Interface.instance&.update_server_browser(server, :remove) })
+                    BackgroundWorker.foreground_job(->(server) { server }, ->(server) { States::Interface.instance&.update_server_browser(server, :remove) }, nil, server)
                   end
                 end
               end

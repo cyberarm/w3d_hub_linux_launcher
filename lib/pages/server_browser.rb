@@ -258,14 +258,14 @@ class W3DHub
         player_count   = find_element_by_tag(server_container, :player_count)
         server_ping    = find_element_by_tag(server_container, :ping)
 
-        game_icon.value = game_icon(server)
-        server_name.value = "<b>#{server&.status&.name}</b>"
-        server_channel.value = Store.application_manager.channel_name(server.game, server.channel).to_s
-        server_region.value = server.region
-        server_map.value = server&.status&.map
-        player_count.value = "#{server&.status&.player_count}/#{server&.status&.max_players}"
-        server_ping.value = ping_icon(server)
-        server_ping.parent.parent.tip = ping_tip(server)
+        game_icon&.value = game_icon(server)
+        server_name&.value = "<b>#{server&.status&.name}</b>"
+        server_channel&.value = Store.application_manager.channel_name(server.game, server.channel).to_s
+        server_region&.value = server.region
+        server_map&.value = server&.status&.map
+        player_count&.value = "#{server&.status&.player_count}/#{server&.status&.max_players}"
+        server_ping&.value = ping_icon(server)
+        server_ping&.parent.parent.tip = ping_tip(server)
       end
 
       def update_server_ping(server)
@@ -308,7 +308,7 @@ class W3DHub
       end
 
       def populate_server_list
-        Store.server_list = Store.server_list.sort_by! { |s| [s&.status&.player_count, s&.id] }.reverse if Store.server_list
+        Store.server_list = Store.server_list.sort_by! { |s| [s.status.player_count, s.id] }.reverse
 
         @server_list_container.clear do
           Store.server_list.each do |server|

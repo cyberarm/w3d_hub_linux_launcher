@@ -308,6 +308,8 @@ class W3DHub
     #   ...players[]:
     #     nick, team (index of teams array), score, kills, deaths
     def self.server_details(id, level)
+      return false unless id && level
+
       response = get("#{SERVER_LIST_ENDPOINT}/listings/getStatus/v2/#{id}?statusLevel=#{level}", DEFAULT_HEADERS, nil, :gsh)
 
       if response.status == 200

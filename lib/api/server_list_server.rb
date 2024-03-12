@@ -14,10 +14,10 @@ class W3DHub
         @channel = @data[:channel] || "release"
         @ping    = -1
 
-        @status  = @data[:status] ? Status.new(@data[:status]) : nil
+        @status  = Status.new(@data[:status])
 
         @ping_interval = 30_000
-        @last_pinged = Gosu.milliseconds + @ping_interval + 1
+        @last_pinged = Gosu.milliseconds + @ping_interval + 1_000
       end
 
       def update(hash)
@@ -34,11 +34,11 @@ class W3DHub
           @status.players = hash[:players]&.select { |t| t[:nick] != "Nod" && t[:nick] != "GDI" }&.map { |t| Player.new(t) } if hash[:players]
 
           send_ping
-
-          return true
+        else
+          @status = Status.new(hash)
         end
 
-        false
+        true
       end
 
       def send_ping(force_ping = false)
@@ -70,18 +70,18 @@ class W3DHub
         attr_accessor :name, :password, :map, :max_players, :player_count, :started, :remaining, :teams, :players
 
         def initialize(hash)
-          @data = hash
+          @data = hash || {}
 
-          @teams   = @data[:teams]&.map { |t| Team.new(t) }
-          @players = @data[:players]&.select { |t| t[:nick] != "Nod" && t[:nick] != "GDI" }&.map { |t| Player.new(t) }
+          @teams   = @data[:teams]&.map { |t| Team.new(t) } || []
+          @players = @data[:players]&.select { |t| t[:nick] != "Nod" && t[:nick] != "GDI" }&.map { |t| Player.new(t) } || []
 
-          @name         = @data[:name]
+          @name         = @data[:name] || ""
           @password     = @data[:password] || false
-          @map          = @data[:map]
-          @max_players  = @data[:maxplayers]
+          @map          = @data[:map] || ""
+          @max_players  = @data[:maxplayers] || 0
           @player_count = @players.size || @data[:numplayers].to_i
-          @started      = @data[:started]
-          @remaining    = @data[:remaining]
+          @started      = @data[:started] || Time.now
+          @remaining    = @data[:remaining] || "00.00.00"
         end
       end
 

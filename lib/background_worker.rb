@@ -43,20 +43,20 @@ class W3DHub
       @@instance.kill!
     end
 
-    def self.job(job, callback, error_handler = nil)
-      @@instance.add_job(Job.new(job: job, callback: callback, error_handler: error_handler))
+    def self.job(job, callback, error_handler = nil, data = nil)
+      @@instance.add_job(Job.new(job: job, callback: callback, error_handler: error_handler, data: data))
     end
 
-    def self.parallel_job(job, callback, error_handler = nil)
-      @@instance.add_parallel_job(Job.new(job: job, callback: callback, error_handler: error_handler))
+    def self.parallel_job(job, callback, error_handler = nil, data = nil)
+      @@instance.add_parallel_job(Job.new(job: job, callback: callback, error_handler: error_handler, data: data))
     end
 
-    def self.foreground_job(job, callback, error_handler = nil)
-      @@instance.add_job(Job.new(job: job, callback: callback, error_handler: error_handler, deliver_to_queue: true))
+    def self.foreground_job(job, callback, error_handler = nil, data = nil)
+      @@instance.add_job(Job.new(job: job, callback: callback, error_handler: error_handler, deliver_to_queue: true, data: data))
     end
 
-    def self.foreground_parallel_job(job, callback, error_handler = nil)
-      @@instance.add_parallel_job(Job.new(job: job, callback: callback, error_handler: error_handler, deliver_to_queue: true))
+    def self.foreground_parallel_job(job, callback, error_handler = nil, data = nil)
+      @@instance.add_parallel_job(Job.new(job: job, callback: callback, error_handler: error_handler, deliver_to_queue: true, data: data))
     end
 
     def initialize
@@ -136,16 +136,16 @@ class W3DHub
     end
 
     class Job
-      def initialize(job:, callback:, error_handler: nil, deliver_to_queue: false)
+      def initialize(job:, callback:, error_handler: nil, deliver_to_queue: false, data: nil)
         @job = job
         @callback = callback
         @error_handler = error_handler
-
         @deliver_to_queue = deliver_to_queue
+        @data = data
       end
 
       def do
-        result = @job.call
+        result = @data ? @job.call(@data) : @job.call
         deliver(result)
       end
 
