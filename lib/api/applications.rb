@@ -35,10 +35,11 @@ class W3DHub
 
           color = @data[:"extended-data"].find { |h| h[:name] == "colour" }[:value].sub("#", "")
 
+          color = color.sub("ff", "") if color.length == 8
           @color = "ff#{color}".to_i(16)
 
           cfg = @data[:"extended-data"].find { |h| h[:name] == "usesEngineCfg" }
-          @uses_engine_cfg = (cfg && cfg[:value].downcase.strip == "true") == true # explicit truthy compare to prevent return `nil`
+          @uses_engine_cfg = (cfg && cfg[:value].to_s.downcase.strip == "true") == true # explicit truthy compare to prevent return `nil`
         end
 
         def uses_engine_cfg?

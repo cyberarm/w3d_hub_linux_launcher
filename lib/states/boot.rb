@@ -65,7 +65,7 @@ class W3DHub
               application = Store.applications.games.find { |g| g.id == key.to_s.split("_", 2).first }
               next unless application
 
-              game[:colour] = application.color
+              game[:colour] = "##{application.color.to_s(16)}"
               game[:uses_engine_cfg] = application.uses_engine_cfg?
             end
           end
