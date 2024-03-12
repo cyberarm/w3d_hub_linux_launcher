@@ -438,8 +438,8 @@ class W3DHub
                 end
 
                 if W3DHUB_DEVELOPER
-                  list_box(items: (1..12).to_a.map(&:to_s), margin_left: 16, width: 72, tip: "Number of game clients", **TESTING_BUTTON)
-                  button "Multijoin", tip: "Launch multiple clients with configured username_\#{number}", **TESTING_BUTTON, enabled: true
+                  list_box(items: (1..12).to_a.map(&:to_s), margin_left: 16, width: 72, tip: "Number of game clients", enabled: (game_installed && !game_updatable), **TESTING_BUTTON)
+                  button "Multijoin", tip: "Launch multiple clients with configured username_\#{number}", enabled: (game_installed && !game_updatable), **TESTING_BUTTON
                 end
 
                 flow(fill: true)

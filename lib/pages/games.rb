@@ -232,8 +232,10 @@ class W3DHub
                       end
 
                       unless Store.offline_mode
-                        menu_item(I18n.t(:"games.game_modifications")) do
-                          populate_game_modifications(game, channel)
+                        if W3DHUB_DEVELOPER
+                          menu_item(I18n.t(:"games.game_modifications")) do
+                            populate_game_modifications(game, channel)
+                          end
                         end
 
                         if game.id != "ren"

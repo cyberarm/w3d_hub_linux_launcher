@@ -184,7 +184,7 @@ class W3DHub
 
       path = case File.basename(command)
       when "zenity", "matedialog", "qarma"
-        `#{command} --file-selection --directory --title "#{title} #{Dir.home}"`
+        `#{command} --file-selection --directory --title "#{title}"`
       when "kdialog"
         `#{command} --title "#{title}" --getexistingdirectory #{Dir.home}"`
       else
