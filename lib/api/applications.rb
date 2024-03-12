@@ -1,6 +1,8 @@
 class W3DHub
   class Api
     class Applications
+      attr_reader :data
+
       def initialize(response)
         @data = JSON.parse(response, symbolize_names: true)
 

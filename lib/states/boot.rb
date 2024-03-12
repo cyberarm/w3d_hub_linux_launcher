@@ -29,8 +29,8 @@ class W3DHub
 
           stack(width: 1.0, height: 60) do
             flow(width: 1.0, height: 26, margin_left: 16, margin_right: 16, margin_bottom: 8, margin_top: 8) do
-              @status_label = caption "Starting #{I18n.t(:app_name_simple)}...", width: 0.5
-              para "#{I18n.t(:app_name)} #{W3DHub::VERSION}", width: 0.5, text_align: :right
+              @status_label = caption "Starting #{I18n.t(:app_name_simple)}...", fill: true
+              para "#{I18n.t(:app_name)} #{W3DHub::VERSION}", text_align: :right
             end
 
             @progressbar = progress height: 4, width: 1.0, margin_left: 16, margin_right: 16, margin_bottom: 8
@@ -52,7 +52,16 @@ class W3DHub
 
         @progressbar.value = @fraction
 
-        load_offline_applications_list if @offline_mode
+        if @offline_mode
+          load_offline_applications_list
+
+          unless Store.applications
+            @progressbar.value = 0.0
+            @status_label.value = "<c=f80>Unable to connect to W3D Hub API. No application data cached, unable to continue.</c>"
+
+            return
+          end
+        end
 
         if @offline_mode || (@progressbar.value >= 1.0 && @task_index == @tasks.size)
           pop_state
@@ -156,7 +165,7 @@ class W3DHub
         Api.on_thread(:applications) do |applications|
           if applications
             Store.applications = applications
-
+            Store.settings.save_application_cache(applications.data.to_json)
             @tasks[:applications][:complete] = true
           else
             # FIXME: Failed to retreive!
@@ -227,6 +236,12 @@ class W3DHub
       end
 
       def load_offline_applications_list
+        if (application_cache = Store.settings.load_application_cache)
+          Store.applications = Api::Applications.new(application_cache.to_json)
+
+          return
+        end
+
         hash = {
           applications: []
         }

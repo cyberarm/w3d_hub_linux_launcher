@@ -23,6 +23,7 @@ class W3DHub
   GAME_ROOT_PATH = File.expand_path(".", __dir__)
   CACHE_PATH = "#{GAME_ROOT_PATH}/data/cache"
   SETTINGS_FILE_PATH = "#{GAME_ROOT_PATH}/data/settings.json"
+  APPLICATIONS_CACHE_FILE_PATH = "#{GAME_ROOT_PATH}/data/applications_cache.json"
 
   LOGGER = Logger.new("#{GAME_ROOT_PATH}/data/logs/w3d_hub_linux_launcher.log", "daily")
   LOGGER.level = Logger::Severity::DEBUG # W3DHUB_DEBUG ? Logger::Severity::DEBUG : Logger::Severity::WARN

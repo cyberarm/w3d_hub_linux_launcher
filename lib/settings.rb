@@ -71,5 +71,15 @@ class W3DHub
     def save_settings
       File.write(SETTINGS_FILE_PATH, @settings.to_json)
     end
+
+    def save_application_cache(json)
+      File.write(APPLICATIONS_CACHE_FILE_PATH, json)
+    end
+
+    def load_application_cache
+      JSON.parse(File.read(APPLICATIONS_CACHE_FILE_PATH), symbolize_names: true)
+    rescue
+      nil
+    end
   end
 end

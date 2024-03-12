@@ -102,6 +102,8 @@ class W3DHub
       end
 
       def populate_account_info
+        return if Store.offline_mode
+
         @host.instance_variable_get(:"@account_container").clear do
           flow(fill: true, height: 1.0) do
             avatar_image = begin
