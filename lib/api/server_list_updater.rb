@@ -11,10 +11,12 @@ class W3DHub
         @@instance = ServerListUpdater.new
       end
 
-      attr_accessor :auto_reconnect
+      attr_accessor :auto_reconnect, :invocation_id
 
       def initialize
         @auto_reconnect = false
+
+        @invocation_id = 0
 
         logger.info(LOG_TAG) { "Starting emulated SignalR Server List Updater..." }
         run
@@ -49,22 +51,22 @@ class W3DHub
         response = Excon.post("https://gsh.w3dhub.com/listings/push/v2/negotiate?negotiateVersion=1", headers: Api::DEFAULT_HEADERS, body: "")
         data = JSON.parse(response.body, symbolize_names: true)
 
-        invocation_id = 0
+        @invocation_id = 0 if @invocation_id > 9095
         id = data[:connectionToken]
         endpoint = "https://gsh.w3dhub.com/listings/push/v2?id=#{id}"
 
         logger.debug(LOG_TAG) { "Connecting to websocket..." }
         this = self
-        WebSocket::Client::Simple.connect(endpoint, headers: Api::DEFAULT_HEADERS) do |ws|
+        @ws = WebSocket::Client::Simple.connect(endpoint, headers: Api::DEFAULT_HEADERS) do |ws|
           ws.on(:open) do
             logger.debug(LOG_TAG) { "Requesting json protocol, v1..." }
             ws.send({ protocol: "json", version: 1 }.to_json + "\x1e")
 
             logger.debug(LOG_TAG) { "Subscribing to server changes..." }
             Store.server_list.each do |server|
-              invocation_id += 1
+              this.invocation_id += 1
               mode = 1 # 2 full details, 1 basic details
-              out = { "type": 1, "invocationId": "#{invocation_id}", "target": "SubscribeToServerStatusUpdates", "arguments": [server.id, mode] }
+              out = { "type": 1, "invocationId": "#{this.invocation_id}", "target": "SubscribeToServerStatusUpdates", "arguments": [server.id, mode] }
               ws.send(out.to_json + "\x1e")
             end
           end
@@ -86,8 +88,8 @@ class W3DHub
                 when "ServerRegistered"
                   data = hash[:arguments].first
 
-                  invocation_id += 1
-                  out = { "type": 1, "invocationId": "#{invocation_id}", "target": "SubscribeToServerStatusUpdates", "arguments": [data[:id], 1] }
+                  this.invocation_id += 1
+                  out = { "type": 1, "invocationId": "#{this.invocation_id}", "target": "SubscribeToServerStatusUpdates", "arguments": [data[:id], 1] }
                   ws.send(out.to_json + "\x1e")
 
                   BackgroundWorker.foreground_job(
@@ -128,17 +130,65 @@ class W3DHub
           end
 
           ws.on(:close) do |e|
-            p e
+            logger.error(LOG_TAG) { e }
             this.auto_reconnect = true
             ws.close
           end
 
           ws.on(:error) do |e|
-            p e
+            logger.error(LOG_TAG) { e }
             this.auto_reconnect = true
             ws.close
           end
         end
+
+        @ws = nil
+      end
+
+      def refresh_server_list(list)
+        new_servers = []
+        removed_servers = []
+
+        # find new servers
+        list.each do |server|
+          found_server = Store.server_list.find { |s| s.id == server.id }
+
+          new_servers << server unless found_server
+        end
+
+        # find removed servers
+        Store.server_list.each do |server|
+          found_server = list.find { |s| s.id == server.id }
+
+          removed_servers << server unless found_server
+        end
+
+        # purge removed servers from list
+        Store.server_list.reject! do |server|
+          removed_servers.find { |s| server.id == s.id }
+        end
+
+        # add new servers to list
+        Store.server_list = Store.server_list + new_servers
+
+        if @ws
+          # unsubscribe from removed servers
+          removed_servers.each do
+            @invocation_id += 1
+            out = { "type": 1, "invocationId": "#{@invocation_id}", "target": "SubscribeToServerStatusUpdates", "arguments": [server.id, 0] }
+            ws.send(out.to_json + "\x1e")
+          end
+
+          # subscribe to new servers
+          new_servers.each do
+            @invocation_id += 1
+            out = { "type": 1, "invocationId": "#{@invocation_id}", "target": "SubscribeToServerStatusUpdates", "arguments": [server.id, 1] }
+            ws.send(out.to_json + "\x1e")
+          end
+        end
+
+        # sort list
+        Store.server_list.sort_by! { |s| [s.status.player_count, s.id] }.reverse!
       end
     end
   end

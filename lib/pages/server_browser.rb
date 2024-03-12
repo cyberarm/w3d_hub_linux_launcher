@@ -231,7 +231,12 @@ class W3DHub
         return list.first
       end
 
-      def refresh_server_list(server, mode = :update) # :remove
+      def refresh_server_list(server, mode = :update) # :remove, :refresh_all
+        if mode == :refresh_all
+          populate_server_list
+          return
+        end
+
         @refresh_server_list = Gosu.milliseconds + 3_000
         @refresh_server = server if @selected_server&.id == server.id
 

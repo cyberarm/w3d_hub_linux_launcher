@@ -1,6 +1,9 @@
 class W3DHub
   class States
     class Interface < CyberarmEngine::GuiState
+      APPLICATIONS_UPDATE_INTERVAL = 10 * 60 * 1000 # ten minutes
+      SERVER_LIST_UPDATE_INTERVAL = 5 * 60 * 1000 # five minutes
+
       attr_accessor :interface_task_update_pending
 
       @@instance = nil
@@ -17,6 +20,9 @@ class W3DHub
         @account = @options[:account]
         @service_status = @options[:service_status]
         @applications = @options[:applications]
+
+        @applications_expire = Gosu.milliseconds + APPLICATIONS_UPDATE_INTERVAL # ten minutes
+        @server_list_expire = Gosu.milliseconds + SERVER_LIST_UPDATE_INTERVAL # 5 minutes
 
         @interface_task_update_pending = nil
 
@@ -128,6 +134,36 @@ class W3DHub
         @page&.update
 
         update_interface_task_status(@interface_task_update_pending) if @interface_task_update_pending
+
+        if Gosu.milliseconds >= @applications_expire
+          @applications_expire = Gosu.milliseconds + 30_000
+
+          Api.on_thread(:applications) do |applications|
+            if applications
+              @applications_expire = Gosu.milliseconds + APPLICATIONS_UPDATE_INTERVAL # ten minutes
+
+              Store.applications = applications
+
+              # TODO: Signal Games and ServerBrowser that applications have been updated
+            end
+          end
+        end
+
+        if Gosu.milliseconds >= @server_list_expire
+          @server_list_expire = Gosu.milliseconds + 30_000
+
+          Api.on_thread(:server_list, 2) do |list|
+            if list
+              @server_list_expire = Gosu.milliseconds + SERVER_LIST_UPDATE_INTERVAL # five minutes
+
+              Store.server_list_last_fetch = Gosu.milliseconds
+
+              Api::ServerListUpdater.instance.refresh_server_list(list)
+
+              BackgroundWorker.foreground_job(-> {}, ->(_) { States::Interface.instance&.update_server_browser(nil, :refresh_all) })
+            end
+          end
+        end
       end
 
       def button_down(id)
