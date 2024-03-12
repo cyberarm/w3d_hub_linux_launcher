@@ -4,15 +4,15 @@ gem "base64"
 gem "excon"
 gem "cyberarm_engine"
 gem "sdl2-bindings"
-gem "libui"
+gem "libui", platforms: [:windows]
 gem "digest-crc"
 gem "i18n"
 gem "ircparser"
 gem "rexml"
 gem "rubyzip"
 gem "websocket-client-simple"
-gem "win32-process", platforms: [:x64_mingw, :mingw]
-gem "win32-security", platforms: [:x64_mingw, :mingw]
+gem "win32-process", platforms: [:windows]
+gem "win32-security", platforms: [:windows]
 
 # PACKAGING NOTES
 # bundler 2.5.x doesn't seem to play nice with ocra[n]

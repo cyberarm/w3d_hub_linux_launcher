@@ -10,10 +10,11 @@ GEM
     event_emitter (0.2.6)
     excon (0.109.0)
     ffi (1.16.3)
+    ffi (1.16.3-x64-mingw-ucrt)
     ffi-win32-extensions (1.0.4)
       ffi
     gosu (1.4.6)
-    i18n (1.14.1)
+    i18n (1.14.4)
       concurrent-ruby (~> 1.0)
     ircparser (1.0.0)
     libui (0.0.15)
@@ -34,6 +35,7 @@ GEM
 
 PLATFORMS
   x64-mingw-ucrt
+  x86_64-linux
 
 DEPENDENCIES
   base64

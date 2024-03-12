@@ -147,16 +147,56 @@ class W3DHub
   end
 
   def self.ask_file(title: "Open File", filter: "*game*.exe")
+    if W3DHub.unix?
+      # search for command
+      cmds = %w{ zenity matedialog qarma kdialog }
+
+      command = cmds.find do |cmd|
+        cmd if system("which #{cmd}")
+      end
+
+      path = case File.basename(command)
+      when "zenity", "matedialog", "qarma"
+        `#{command} --file-selection --title "#{title}" --file-filter "#{filter}"`
+      when "kdialog"
+        `#{command} --title "#{title}" --getopenfilename . "#{filter}"`
+      else
+        raise "No known command found for system file selection dialog!"
+      end
+
+      path.strip
+    else
       result_ptr = LibUI.open_file(LIBUI_WINDOW)
       result = result_ptr.null? ? "" : result_ptr.to_s.gsub("\\", "/")
 
-      result
+      result.strip
+    end
   end
 
   def self.ask_folder(title: "Open Folder")
-    result_ptr = LibUI.open_folder(window)
-    result = result_ptr.null? ? "" : result_ptr.to_s.gsub("\\", "/")
+    if W3DHub.unix?
+      # search for command
+      cmds = %w{ zenity matedialog qarma kdialog }
 
-    result
+      command = cmds.find do |cmd|
+        cmd if system("which #{cmd}")
+      end
+
+      path = case File.basename(command)
+      when "zenity", "matedialog", "qarma"
+        `#{command} --file-selection --directory --title "#{title} #{Dir.home}"`
+      when "kdialog"
+        `#{command} --title "#{title}" --getexistingdirectory #{Dir.home}"`
+      else
+        raise "No known command found for system file selection dialog!"
+      end
+
+      path.strip
+    else
+      result_ptr = LibUI.open_folder(window)
+      result = result_ptr.null? ? "" : result_ptr.to_s.gsub("\\", "/")
+
+      result.strip
+    end
   end
 end

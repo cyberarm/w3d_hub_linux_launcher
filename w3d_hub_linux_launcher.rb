@@ -80,15 +80,6 @@ require "i18n"
 require "websocket-client-simple"
 require "English"
 require "sdl2"
-require "libui"
-
-# Using a WHOLE ui library for: native file/folder open dialogs...
-LibUI.init
-LIBUI_WINDOW = LibUI.new_window("", 100, 100, 0)
-at_exit do
-  LibUI.control_destroy(LIBUI_WINDOW)
-  LibUI.uninit
-end
 
 I18n.load_path << Dir["#{W3DHub::GAME_ROOT_PATH}/locales/*.yml"]
 I18n.default_locale = :en
@@ -158,7 +149,18 @@ require_relative "lib/asterisk/states/game_form"
 require_relative "lib/asterisk/states/irc_profile_form"
 require_relative "lib/asterisk/states/server_profile_form"
 
-require "win32/process" if W3DHub.windows?
+if W3DHub.windows?
+  require "libui"
+  require "win32/process"
+
+  # Using a WHOLE ui library for: native file/folder open dialogs...
+  LibUI.init
+  LIBUI_WINDOW = LibUI.new_window("", 100, 100, 0)
+  at_exit do
+    LibUI.control_destroy(LIBUI_WINDOW)
+    LibUI.uninit
+  end
+end
 
 logger.info(W3DHub::LOG_TAG) { "W3D Hub Linux Launcher v#{W3DHub::VERSION}" }
 
