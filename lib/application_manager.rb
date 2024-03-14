@@ -250,7 +250,7 @@ class W3DHub
       return nil unless app_data
 
       found_server = Store.server_list.select do |server|
-        server.game == app_id && server.channel == channel && !server.status.password
+        server.game == app_id && server.channel == channel && !server.status.password && server.status.player_count < server.status.max_players
       end&.first
 
       found_server ? found_server : nil

@@ -89,7 +89,7 @@ class W3DHub
               image_color = Store.application_manager.installed?(game.id, game.channels.first.id) ? 0xff_ffffff : 0x66_ffffff
 
               flow(width: 1.0, height: 1.0, margin: 8, background_image: image_path, background_image_color: image_color, background_image_mode: :fill_height) do
-                image "#{GAME_ROOT_PATH}/media/ui_icons/import.png", width: 24, margin_left: -4, margin_top: -6, color: 0xff_ff8800 if Store.application_manager.updateable?(game.id, game.channels.first.id)
+                image "#{GAME_ROOT_PATH}/media/ui_icons/import.png", width: 24, margin_left: -4, margin_top: -6, color: 0xff_ff8800 if game.channels.any? { |channel| Store.application_manager.updateable?(game.id, channel.id) }
               end
 
               # para game.name, width: 1.0, text_align: :center
