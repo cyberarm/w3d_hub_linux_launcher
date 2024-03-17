@@ -63,19 +63,13 @@ class W3DHub
                     populate_server_list
                   end
                 end
-
-                # button get_image("#{GAME_ROOT_PATH}/media/ui_icons/return.png"), tip: I18n.t(:"server_browser.refresh"), image_height: 1.0, margin_left: 16, padding_left: 2, padding_right: 2, padding_top: 2, padding_bottom: 2 do
-                #   fetch_server_list
-                # end
-
-                flow(fill: true)
-
-                button "Direct Connect", height: 1.0, padding_top: 4, padding_bottom: 4 do
-                  push_state(W3DHub::States::DirectConnectDialog)
-                end
               end
 
               flow(min_width: 372, width: 0.38, max_width: 512, height: 1.0) do |container|
+                button "Direct Connect", height: 1.0, padding_top: 4, padding_bottom: 4 do
+                  push_state(W3DHub::States::DirectConnectDialog)
+                end
+
                 flow(fill: true)
 
                 para "#{I18n.t(:"server_browser.nickname")}:"

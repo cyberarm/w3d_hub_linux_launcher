@@ -35,7 +35,7 @@ class W3DHub
             puts e
             puts e.backtrace
 
-            sleep 10
+            sleep 30
             retry
           end
         end
@@ -48,12 +48,18 @@ class W3DHub
         @auto_reconnect = false
 
         logger.debug(LOG_TAG) { "Requesting connection token..." }
-        response = Excon.post("https://gsh.w3dhub.com/listings/push/v2/negotiate?negotiateVersion=1", headers: Api::DEFAULT_HEADERS, body: "")
+        response = Api.post("#{Api::SERVER_LIST_ENDPOINT}/listings/push/v2/negotiate?negotiateVersion=1", Api::DEFAULT_HEADERS, "", :gsh)
+
+        if response.status != 200
+          @auto_reconnect = true
+          return
+        end
+
         data = JSON.parse(response.body, symbolize_names: true)
 
         @invocation_id = 0 if @invocation_id > 9095
         id = data[:connectionToken]
-        endpoint = "https://gsh.w3dhub.com/listings/push/v2?id=#{id}"
+        endpoint = "#{Api::SERVER_LIST_ENDPOINT}/listings/push/v2?id=#{id}"
 
         logger.debug(LOG_TAG) { "Connecting to websocket..." }
         this = self

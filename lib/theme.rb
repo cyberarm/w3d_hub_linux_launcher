@@ -80,15 +80,15 @@ class W3DHub
       padding_bottom: 8,
       border_thickness: 2,
       border_color: Gosu::Color::NONE,
-      background: 0xff_0074e0,
+      background: 0xff_0074e0..0xff_0052c0,
       hover: {
         color: 0xff_f2f2f2,
-        background: 0xff_004c94,
+        background: 0xff_0052c0..0xff_0030a0,
         border_color: 0xff_0074e0
       },
       active: {
         color: 0xff_aaaaaa,
-        background: 0xff_005aad,
+        background: 0xff_0030a0..0xff_0052c0,
         border_color: 0xff_0074e0
       }
     },
@@ -151,7 +151,18 @@ class W3DHub
     MenuItem: {
       width: 1.0,
       text_left: :left,
-      margin: 0
+      margin: 0,
+      border_color: Gosu::Color::NONE,
+      background: 0xff_0074e0,
+      hover: {
+        color: 0xff_f2f2f2,
+        background: 0xff_0052c0,
+        border_color: Gosu::Color::NONE
+      },
+      active: {
+        background: 0xff_0030a0,
+        border_color: Gosu::Color::NONE
+      }
     }
   }
 end
