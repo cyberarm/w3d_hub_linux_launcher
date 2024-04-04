@@ -7,12 +7,28 @@ class W3DHub
   MAX_PAGE_WIDTH = 1200
 
   TESTING_BUTTON = {
-    background: 0xff_ff8800,
+    background: 0xff_ff8800..0xff_dd6600,
+    border_color: Gosu::Color::NONE,
     hover: {
-      background: 0xff_ffaa00
+      background: 0xff_dd6600..0xff_bb4400,
+      border_color: 0xff_ff8800,
     },
     active: {
-      background: 0xff_ffec00
+      background: 0xff_bb4400..0xff_dd6600,
+     border_color: 0xff_ff8800
+    }
+  }
+
+  DANGEROUS_BUTTON = {
+    background: 0xff_800000..0xff_600000,
+    border_color: Gosu::Color::NONE,
+    hover: {
+      background: 0xff_600000..0xff_400000,
+      border_color: 0xff_800000,
+    },
+    active: {
+      background: 0xff_400000..0xff_600000,
+      border_color: 0xff_800000
     }
   }
 

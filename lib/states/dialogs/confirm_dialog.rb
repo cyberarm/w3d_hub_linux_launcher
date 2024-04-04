@@ -29,7 +29,7 @@ class W3DHub
 
             stack(width: 0.5)
 
-            button "Confirm", width: 0.25, background: 0xff_800000, hover: { background: 0xff_d00000 }, active: { background: 0xff_600000, color: 0xff_ffffff } do
+            button "Confirm", width: 0.25, **DANGEROUS_BUTTON do
               pop_state
               @options[:accept_callback]&.call
             end
