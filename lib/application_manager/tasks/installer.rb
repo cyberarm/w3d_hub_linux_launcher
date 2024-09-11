@@ -40,6 +40,9 @@ class W3DHub
         install_dependencies
         return false if failed?
 
+        write_paths_ini
+        return false if failed?
+
         mark_application_installed
         return false if failed?
 

@@ -42,10 +42,17 @@ class W3DHub
 
           cfg = @data[:"extended-data"].find { |h| h[:name] == "usesEngineCfg" }
           @uses_engine_cfg = (cfg && cfg[:value].to_s.downcase.strip == "true") == true # explicit truthy compare to prevent return `nil`
+
+          cfg = @data[:"extended-data"].find { |h| h[:name] == "usesRenFolder" }
+          @uses_ren_folder = (cfg && cfg[:value].to_s.downcase.strip == "true") == true # explicit truthy compare to prevent return `nil`
         end
 
         def uses_engine_cfg?
           @uses_engine_cfg
+        end
+
+        def uses_ren_folder?
+          @uses_ren_folder
         end
 
         class Channel

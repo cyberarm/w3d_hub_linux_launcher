@@ -552,6 +552,22 @@ class W3DHub
         @status.step = :install_dependencies
       end
 
+      def write_paths_ini
+        path = Cache.install_path(@application, @channel)
+
+        File.open("#{path}/data/paths.ini", "w") do |file|
+          file.puts("[paths]")
+          file.puts("RegBase=W3D Hub")
+          file.puts("RegClient=#{@application.category}\\#{@application.id}-#{@channel.id}")
+          file.puts("RegFDS=#{@application.category}\\#{@application.id}-#{@channel.id}-server")
+          file.puts("FileBase=W3D Hub");
+          file.puts("FileClient=#{@application.category}\\#{@application.id}-#{@channel.id}")
+          file.puts("FileFDS=#{@application.category}\\#{@application.id}-#{@channel.id}-server")
+
+          file.puts("UseRenFolder=#{@application.uses_ren_folder?}")
+        end
+      end
+
       def mark_application_installed
         Store.application_manager.installed!(self)
 
