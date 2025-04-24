@@ -189,6 +189,8 @@ class W3DHub
           package_details ||= nil
 
           package_details&.each do |package|
+            next if package.error?
+
             path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
             generated_icon_path = "#{GAME_ROOT_PATH}/media/icons/#{package.subcategory}.png"
 
