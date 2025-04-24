@@ -87,7 +87,7 @@ class W3DHub
     end
 
     def self.post(url, headers = DEFAULT_HEADERS, body = nil, api = :api)
-      excon(:post, url, headers, body)
+      excon(:post, url, headers, body, api)
     end
 
     # Method: POST

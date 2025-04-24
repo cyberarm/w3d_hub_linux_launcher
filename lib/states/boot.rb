@@ -12,11 +12,11 @@ class W3DHub
         @w3dhub_logo = get_image("#{GAME_ROOT_PATH}/media/icons/app.png")
         @tasks = {
           # connectivity_check: { started: false, complete: false }, # HEAD connectivity-check.ubuntu.com or HEAD secure.w3dhub.com?
+          server_list: { started: false, complete: false },
           refresh_user_token: { started: false, complete: false },
           service_status: { started: false, complete: false },
           applications: { started: false, complete: false },
-          app_icons: { started: false, complete: false },
-          server_list: { started: false, complete: false }
+          app_icons: { started: false, complete: false }
         }
 
         @offline_mode = false
