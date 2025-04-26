@@ -6,7 +6,7 @@ class W3DHub
       def initialize(response)
         @data = JSON.parse(response, symbolize_names: true)
 
-        @items = @data[:news].map { |item| Item.new(item) }
+        @items = (@data[:news] && @data[:news].is_a?(Array)) ? @data[:news].map { |item| Item.new(item) } : []
       end
 
       class Item
