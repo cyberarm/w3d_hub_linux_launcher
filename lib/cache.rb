@@ -89,9 +89,11 @@ class W3DHub
 
     # Download a W3D Hub package
     def self.fetch_package(package, block)
+      endpoint_download_url = package.download_url || "#{Api::ENDPOINT}/apis/launcher/1/get-package"
       path = package_path(package.category, package.subcategory, package.name, package.version)
       headers = { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": Api::USER_AGENT }
-      headers["Authorization"] = "Bearer #{Store.account.access_token}" if Store.account
+      headers["Authorization"] = "Bearer #{Store.account.access_token}" if Store.account && !package.download_url
+      body = "data=#{JSON.dump({ category: package.category, subcategory: package.subcategory, name: package.name, version: package.version })}"
       start_from_bytes = package.custom_partially_valid_at_bytes
 
       logger.info(LOG_TAG) { "    Start from bytes: #{start_from_bytes} of #{package.size}" }
@@ -112,17 +114,25 @@ class W3DHub
       end
 
       # Create a new connection due to some weirdness somewhere in Excon
-      response = Excon.post(
-        "#{Api::ENDPOINT}/apis/launcher/1/get-package",
+      response = Excon.send(
+        package.download_url ? :get : :post,
+        endpoint_download_url,
         tcp_nodelay: true,
         headers: headers,
-        body: "data=#{JSON.dump({ category: package.category, subcategory: package.subcategory, name: package.name, version: package.version })}",
+        body: package.download_url ? "" : body,
         chunk_size: 50_000,
         response_block: streamer,
         middlewares: Excon.defaults[:middlewares] + [Excon::Middleware::RedirectFollower]
       )
 
-      response.status == 200 || response.status == 206
+      if response.status == 200 || response.status == 206
+        return true
+      else
+        logger.debug(LOG_TAG) { "    Failed to retrieve package: (#{package.category}:#{package.subcategory}:#{package.name}:#{package.version})" }
+        logger.debug(LOG_TAG) { "      Download URL: #{endpoint_download_url}, response: #{response.status}" }
+
+        false
+      end
     ensure
       file&.close
     end
