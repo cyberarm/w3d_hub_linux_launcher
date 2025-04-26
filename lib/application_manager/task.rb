@@ -617,9 +617,11 @@ class W3DHub
       def package_fetch(package, &block)
         logger.info(LOG_TAG) { "Downloading: #{package.category}:#{package.subcategory}:#{package.name}-#{package.version}" }
 
-        Api.package(package) do |chunk, remaining_bytes, total_bytes|
+        status_okay = Api.package(package) do |chunk, remaining_bytes, total_bytes|
           block&.call(chunk, remaining_bytes, total_bytes)
         end
+
+        fail!("Failed to retrieve package: (#{package.category}:#{package.subcategory}:#{package.name}:#{package.version})") unless status_okay
       end
 
       def verify_package(package, &block)
