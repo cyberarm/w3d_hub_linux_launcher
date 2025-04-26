@@ -1,7 +1,7 @@
 class W3DHub
   class Api
     class Package
-      attr_reader :category, :subcategory, :name, :version, :size, :checksum, :checksum_chunk_size, :checksum_chunks, :error,
+      attr_reader :category, :subcategory, :name, :version, :size, :checksum, :checksum_chunk_size, :checksum_chunks, :download_url, :error,
                   :custom_partially_valid_at_bytes, :custom_is_patch
 
       def initialize(hash)
@@ -17,6 +17,8 @@ class W3DHub
         @checksum_chunk_size = @data[:"checksum-chunk-size"]
         @checksum_chunks = @data[:"checksum-chunks"]
         @error = @data[:error] || nil
+
+        @download_url = @data[:download_url] || nil
 
         @custom_partially_valid_at_bytes = 0
         @custom_is_patch = false
