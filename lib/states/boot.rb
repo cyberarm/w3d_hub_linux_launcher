@@ -279,7 +279,7 @@ class W3DHub
           hash[:applications] << app unless app_in_array
         end
 
-        Store.applications = Api::Applications.new(hash.to_json)
+        Store.applications = Api::Applications.new(hash.to_json) unless hash[:applications].empty?
       end
     end
   end
