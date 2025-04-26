@@ -118,7 +118,8 @@ class W3DHub
         headers: headers,
         body: "data=#{JSON.dump({ category: package.category, subcategory: package.subcategory, name: package.name, version: package.version })}",
         chunk_size: 50_000,
-        response_block: streamer
+        response_block: streamer,
+        middlewares: Excon.defaults[:middlewares] + [Excon::Middleware::RedirectFollower]
       )
 
       response.status == 200 || response.status == 206

@@ -2,7 +2,7 @@ class W3DHub
   class Api
     LOG_TAG = "W3DHub::Api".freeze
 
-    API_TIMEOUT = 10 # seconds
+    API_TIMEOUT = 30 # seconds
     USER_AGENT = "Cyberarm's Linux Friendly W3D Hub Launcher v#{W3DHub::VERSION}".freeze
     DEFAULT_HEADERS = {
       "User-Agent": USER_AGENT,
@@ -42,7 +42,7 @@ class W3DHub
 
     #! === W3D Hub API === !#
 
-    ENDPOINT = "https://secure.w3dhub.com".freeze
+    ENDPOINT = "https://w3dhub-api.w3d.cyberarm.dev" # "https://secure.w3dhub.com".freeze # "https://example.com" # "http://127.0.0.1:9292".freeze #
     API_CONNECTION = Excon.new(ENDPOINT, persistent: true)
 
     def self.excon(method, url, headers = DEFAULT_HEADERS, body = nil, api = :api)
