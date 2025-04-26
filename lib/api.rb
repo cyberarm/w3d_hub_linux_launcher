@@ -261,8 +261,8 @@ class W3DHub
 
     #! === Server List API === !#
 
-    SERVER_LIST_ENDPOINT = "https://gsh.w3dhub.com".freeze
-    # SERVER_LIST_ENDPOINT = "https://gsh.w3d.cyberarm.dev".freeze
+    # SERVER_LIST_ENDPOINT = "https://gsh.w3dhub.com".freeze
+    SERVER_LIST_ENDPOINT = "https://gsh.w3d.cyberarm.dev".freeze
     # SERVER_LIST_ENDPOINT = "http://127.0.0.1:9292".freeze
     GSH_CONNECTION = Excon.new(SERVER_LIST_ENDPOINT, persistent: true)
 
