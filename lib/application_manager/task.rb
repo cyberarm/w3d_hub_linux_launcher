@@ -208,10 +208,17 @@ class W3DHub
           @manifests << manifest
 
           until(manifest.full?)
-            fetch_manifest("games", app_id, "manifest.xml", manifest.base_version)
-            manifest = load_manifest("games", app_id, "manifest.xml", manifest.base_version)
-            manifests << manifest
+            if fetch_manifest("games", app_id, "manifest.xml", manifest.base_version)
+              manifest = load_manifest("games", app_id, "manifest.xml", manifest.base_version)
+              manifests << manifest
+            else
+              fail!("Failed to retrieve manifest: games:#{app_id}:manifest.xml-#{manifest.base_version}")
+              return []
+            end
           end
+        else
+          fail!("Failed to retrieve manifest: games:#{app_id}:manifest.xml-#{@target_version}")
+          return []
         end
 
         @manifests
@@ -594,12 +601,12 @@ class W3DHub
           package = array.first
         else
           fail!("Failed to fetch manifest package details! (#{category}:#{subcategory}:#{name}:#{version})")
-          return
+          return false
         end
 
         if package.error?
           fail!("Failed to retrieve manifest package details! (#{category}:#{subcategory}:#{name}:#{version})\nError: #{package.error.gsub("-", " ").capitalize}")
-          return
+          return false
         end
 
         if File.exist?(Cache.package_path(category, subcategory, name, version))
@@ -622,6 +629,8 @@ class W3DHub
         end
 
         fail!("Failed to retrieve package: (#{package.category}:#{package.subcategory}:#{package.name}:#{package.version})") unless status_okay
+
+        status_okay
       end
 
       def verify_package(package, &block)
