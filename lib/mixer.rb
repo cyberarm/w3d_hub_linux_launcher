@@ -6,6 +6,8 @@ class W3DHub
   # https://github.com/TheUnstoppable/MixLibrary used for reference
   class Mixer
     DEFAULT_BUFFER_SIZE = 32_000_000
+    MIX1_HEADER = 0x3158494D
+    MIX2_HEADER = 0x3258494D
 
     class MixParserException < RuntimeError; end
     class MixFormatException < RuntimeError; end
@@ -203,8 +205,12 @@ class W3DHub
 
         @buffer.pos = 0
 
+        @encrypted = false
+
         # Valid header
-        if read_i32 == 0x3158494D
+        if (mime = read_i32) && (mime == MIX1_HEADER || mime == MIX2_HEADER)
+          @encrypted = mime == MIX2_HEADER
+
           file_data_offset = read_i32
           file_names_offset = read_i32
 
@@ -237,7 +243,7 @@ class W3DHub
             @buffer.pos = pos
           end
         else
-          raise MixParserException, "Invalid MIX file"
+          raise MixParserException, "Invalid MIX file: Expected \"#{MIX1_HEADER}\" or \"#{MIX2_HEADER}\", got \"0x#{mime.to_s(16).upcase}\"\n(#{file_path})"
         end
 
       ensure
@@ -264,18 +270,24 @@ class W3DHub
 
         buffer.strip
       end
+
+      def encrypted?
+        @encrypted
+      end
     end
 
     class Writer
       attr_reader :package
 
-      def initialize(file_path:, package:, memory_buffer: false, buffer_size: DEFAULT_BUFFER_SIZE)
+      def initialize(file_path:, package:, memory_buffer: false, buffer_size: DEFAULT_BUFFER_SIZE, encrypted: false)
         @package = package
 
         @buffer = MemoryBuffer.new(file_path: file_path, mode: :write, buffer_size: buffer_size)
         @buffer.pos = 0
 
-        @buffer.write("MIX1")
+        @encrypted = encrypted
+
+        @buffer.write(encrypted? ? "MIX2" : "MIX1")
 
         files = @package.files.sort { |a, b| a.file_crc <=> b.file_crc }
 
@@ -321,6 +333,10 @@ class W3DHub
 
       def write_byte(byte)
         @buffer.write([byte].pack("c"))
+      end
+
+      def encrypted?
+        @encrypted
       end
     end
 

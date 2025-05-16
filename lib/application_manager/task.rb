@@ -738,7 +738,7 @@ class W3DHub
         end
 
         logger.info(LOG_TAG) { "      Writing updated #{path}/#{safe_file_name}..." } if patch_info[:updatedFiles].size.positive?
-        W3DHub::Mixer::Writer.new(file_path: "#{path}/#{safe_file_name}", package: target_mix.package, memory_buffer: true)
+        W3DHub::Mixer::Writer.new(file_path: "#{path}/#{safe_file_name}", package: target_mix.package, memory_buffer: true, encrypted: target_mix.encrypted?)
 
         FileUtils.remove_dir(temp_path)
 
