@@ -196,11 +196,11 @@ class W3DHub
 
       def ping_icon(server)
         case server.ping
-        when 0..160
+        when 0..150
           @ping_icons[:good]
-        when 161..250
+        when 151..200
           @ping_icons[:fair]
-        when 251..1_000
+        when 201..1_000
           @ping_icons[:poor]
         when 1_001..5_000
           @ping_icons[:bad]
@@ -210,7 +210,7 @@ class W3DHub
       end
 
       def ping_tip(server)
-        server.ping.negative? ? "Ping failed" : "Ping #{server.ping}ms"
+        server.ping == W3DHub::Api::ServerListServer::NO_OR_BAD_PING ? "Ping failed" : "Ping #{server.ping}ms"
       end
 
       def find_element_by_tag(container, tag, list = [])
@@ -292,7 +292,7 @@ class W3DHub
         @server_list_container.children.sort_by! do |child|
           s = Store.server_list.find { |s| s.id == child.style.tag }
 
-          [s.status.player_count, s.id]
+          [s.status.player_count, -s.ping]
         end.reverse!.each_with_index do |child, i|
           next if @selected_server_container && child == @selected_server_container
 

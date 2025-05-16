@@ -1,6 +1,8 @@
 class W3DHub
   class Api
     class ServerListServer
+      NO_OR_BAD_PING = 1_000_000
+
       attr_reader :id, :game, :address, :port, :region, :channel, :ping, :status
 
       def initialize(hash)
@@ -12,7 +14,7 @@ class W3DHub
         @port    = @data[:port]
         @region  = @data[:region]
         @channel = @data[:channel] || "release"
-        @ping    = -1
+        @ping    = NO_OR_BAD_PING
 
         @status  = Status.new(@data[:status])
 
@@ -55,7 +57,7 @@ class W3DHub
                 end
               end
 
-              @ping = -1 if @ping.zero?
+              @ping = NO_OR_BAD_PING if @ping.zero?
 
               @ping
             end,
