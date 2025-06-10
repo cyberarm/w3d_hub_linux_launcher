@@ -1,0 +1,47 @@
+name: Build Launcher Binary
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build-tebako:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        architecture: [x64]
+    container:
+      image: ghcr.io/tamatebako/tebako-ubuntu-20.04:latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Gosu and native dependencies
+        run: |
+          apt-get update
+          apt-get install -y libsdl2-dev libgl1-mesa-dev libopenal-dev libgmp-dev libfontconfig1-dev libsndfile1-dev libmpg123-dev libpango1.0-dev libtool libssl-dev libffi-dev
+
+      - name: Update Bundler and lockfile
+        run: |
+          gem install bundler -v 2.4.22
+          bundle _2.4.22_ lock --update --bundler
+
+      - name: Build Tebako binary
+        run: |
+          tebako press -P -R 3.4.1 -m bundle -o w3d_hub_linux_launcher -r $PWD -e w3d_hub_linux_launcher.rb
+
+      - name: Prepare artifact directory
+        run: |
+          mkdir w3d-hub-launcher-x86_64
+          cp w3d_hub_linux_launcher w3d-hub-launcher-x86_64/
+          cp -r media w3d-hub-launcher-x86_64/
+          cp -r locales w3d-hub-launcher-x86_64/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: w3d-hub-launcher-x86_64
+          path: w3d-hub-launcher-x86_64
