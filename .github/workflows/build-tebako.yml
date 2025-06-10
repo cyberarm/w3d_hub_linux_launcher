@@ -2,7 +2,7 @@ name: Build Launcher Binary
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, test ]
   workflow_dispatch:
 
 jobs:
