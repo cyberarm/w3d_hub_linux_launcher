@@ -10,7 +10,7 @@ class W3DHub
               para "<b>Language</b>"
               para "<b>Launcher Language</b>", width: 0.249, margin_left: 32, margin_top: 12
               stack(width: 0.75) do
-                @language_menu = list_box items: I18n.available_locales.map { |l| begin; expand_language_code(l.to_s); rescue => e; logger.warn("W3DHub::Settings") { "expand_language_code error for #{l.inspect}: #{e}" }; nil; end }.compact, choose: expand_language_code(Store.settings[:language]), width: 1.0
+                @language_menu = list_box items: I18n.available_locales.map { |l| expand_language_code(l.to_s) }, choose: expand_language_code(Store.settings[:language]), width: 1.0
                 para "Select the UI language you'd like to use in the W3D Hub Launcher."
               end
             end
@@ -114,7 +114,7 @@ class W3DHub
         when "es"
           "Español"
         else
-          raise "Unknown language code: #{string.inspect}"
+          logger.warn("W3DHub::Settings") { "Unknown language code: #{string.inspect}" }
         end
       end
     end
