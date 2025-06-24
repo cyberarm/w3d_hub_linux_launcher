@@ -48,7 +48,7 @@ class W3DHub
         @auto_reconnect = false
 
         logger.debug(LOG_TAG) { "Requesting connection token..." }
-        response = Api.post("#{Api::SERVER_LIST_ENDPOINT}/listings/push/v2/negotiate?negotiateVersion=1", Api::DEFAULT_HEADERS, "", :gsh)
+        response = Api.post("/listings/push/v2/negotiate?negotiateVersion=1", Api::DEFAULT_HEADERS, "", :gsh)
 
         if response.status != 200
           @auto_reconnect = true

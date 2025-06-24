@@ -9,18 +9,18 @@ class W3DHub
     end
 
     # Fetch a generic uri
-    def self.fetch(uri:, force_fetch: false, async: true)
+    def self.fetch(uri:, force_fetch: false, async: true, backend: :w3dhub)
       path = path(uri)
 
       if !force_fetch && File.exist?(path)
         path
       elsif async
         BackgroundWorker.job(
-          -> { Api.get(uri, W3DHub::Api::DEFAULT_HEADERS) },
+          -> { Api.fetch(uri, W3DHub::Api::DEFAULT_HEADERS, nil, backend) },
           ->(response) { File.open(path, "wb") { |f| f.write response.body } if response.status == 200 }
         )
       else
-        response = Api.get(uri, W3DHub::Api::DEFAULT_HEADERS)
+        response = Api.fetch(uri, W3DHub::Api::DEFAULT_HEADERS, nil, backend)
         File.open(path, "wb") { |f| f.write response.body } if response.status == 200
       end
     end
@@ -69,7 +69,7 @@ class W3DHub
 
       body = "data=#{JSON.dump({ category: package.category, subcategory: package.subcategory, name: package.name, version: package.version })}"
 
-      response = Api.post("#{Api::ENDPOINT}/apis/launcher/1/get-package", headers, body)
+      response = Api.post("/apis/launcher/1/get-package", headers, body)
 
       total_bytes = package.size
       remaining_bytes = total_bytes - start_from_bytes
@@ -89,7 +89,7 @@ class W3DHub
 
     # Download a W3D Hub package
     def self.fetch_package(package, block)
-      endpoint_download_url = package.download_url || "#{Api::ENDPOINT}/apis/launcher/1/get-package"
+      endpoint_download_url = package.download_url || "#{Api::W3DHUB_API_ENDPOINT}/apis/launcher/1/get-package"
       path = package_path(package.category, package.subcategory, package.name, package.version)
       headers = { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": Api::USER_AGENT }
       headers["Authorization"] = "Bearer #{Store.account.access_token}" if Store.account && !package.download_url

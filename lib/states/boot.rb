@@ -127,7 +127,7 @@ class W3DHub
 
           Store.settings[:account][:data] = account
 
-          Cache.fetch(uri: account.avatar_uri, force_fetch: true, async: false)
+          Cache.fetch(uri: account.avatar_uri, force_fetch: true, async: false, backend: :w3dhub)
         else
           Store.settings[:account] = {}
         end
@@ -162,7 +162,7 @@ class W3DHub
       def applications
         @status_label.value = I18n.t(:"boot.checking_for_updates")
 
-        Api.on_thread(:applications) do |applications|
+        Api.on_thread(:_applications) do |applications|
           if applications
             Store.applications = applications
             Store.settings.save_application_cache(applications.data.to_json)
@@ -185,7 +185,7 @@ class W3DHub
           packages << { category: app.category, subcategory: app.id, name: "#{app.id}.ico", version: "" }
         end
 
-        Api.on_thread(:package_details, packages) do |package_details|
+        Api.on_thread(:package_details, packages, :alt_w3dhub) do |package_details|
           package_details ||= nil
 
           package_details&.each do |package|

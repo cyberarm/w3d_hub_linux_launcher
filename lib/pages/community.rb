@@ -111,7 +111,7 @@ class W3DHub
         return unless news
 
         news.items[0..15].each do |item|
-          Cache.fetch(uri: item.image, async: false)
+          Cache.fetch(uri: item.image, async: false, backend: :w3dhub)
         end
 
         @w3dhub_news = news
