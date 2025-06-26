@@ -51,7 +51,7 @@ class W3DHub
               end
             end
 
-            stack(width: 128, height: 48, h_align: :center, margin_top: 16) do
+            stack(width: 128, max_height: 256, h_align: :center, margin_top: 16, fill: true) do
               button "Save", width: 1.0 do
                 save_settings!
               end

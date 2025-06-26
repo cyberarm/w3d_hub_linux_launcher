@@ -12,6 +12,7 @@ class W3DHub
         @w3dhub_logo = get_image("#{GAME_ROOT_PATH}/media/icons/app.png")
         @tasks = {
           # connectivity_check: { started: false, complete: false }, # HEAD connectivity-check.ubuntu.com or HEAD secure.w3dhub.com?
+          # launcher_updater: { started: false, complete: false },
           server_list: { started: false, complete: false },
           refresh_user_token: { started: false, complete: false },
           service_status: { started: false, complete: false },
@@ -155,6 +156,32 @@ class W3DHub
 
             @offline_mode = true
             Store.offline_mode = true
+          end
+        end
+      end
+
+      def launcher_updater
+        @status_label.value = "Checking for Launcher updates..." # I18n.t(:"boot.checking_for_updates")
+        
+        Api.on_thread(:fetch, "https://api.github.com/repos/Inq8/CAmod/releases/latest") do |response|
+          if response.status == 200
+            hash = JSON.parse(response.body, symbolize_names: true)
+            available_version = hash[:tag_name].downcase.sub("v", "")
+
+            pp Gem::Version.new(available_version) > Gem::Version.new(W3DHub::VERSION)
+            pp [Gem::Version.new(available_version), Gem::Version.new(W3DHub::VERSION)]
+
+            push_state(
+              LauncherUpdaterDialog,
+              release_data: hash,
+              available_version: available_version,
+              cancel_callback: -> { @tasks[:launcher_updater][:complete] = true }, 
+              accept_callback: -> { @tasks[:launcher_updater][:complete] = true }
+            )
+          else
+            # Failed to retrieve release data from github
+            log "Failed to retrieve release data from Github"
+            @tasks[:launcher_updater][:complete] = true
           end
         end
       end
