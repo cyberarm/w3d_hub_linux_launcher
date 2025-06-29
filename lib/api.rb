@@ -1,5 +1,19 @@
 class W3DHub
   class Api
+
+    # Detect CA bundle path for Excon
+    def self.ca_bundle_path
+      redhat_path = '/etc/pki/tls/certs/ca-bundle.crt'
+      debian_path = '/etc/ssl/certs/ca-certificates.crt'
+      [redhat_path, debian_path].find { |path| File.exist?(path) }
+    end
+
+    # Set Excon default CA file if found
+    ca_file = ca_bundle_path
+    if ca_file
+      Excon.defaults[:ssl_ca_file] = ca_file
+    end
+    
     LOG_TAG = "W3DHub::Api".freeze
 
     API_TIMEOUT = 30 # seconds

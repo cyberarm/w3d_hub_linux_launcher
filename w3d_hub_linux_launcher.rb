@@ -20,12 +20,19 @@ class W3DHub
   W3DHUB_DEBUG = ARGV.join.include?("--debug")
   W3DHUB_DEVELOPER = ARGV.join.include?("--developer")
 
-  GAME_ROOT_PATH = File.expand_path(".", __dir__)
+  # Use the real working directory as the root for runtime data/logs
+  GAME_ROOT_PATH = Dir.pwd
+
   CACHE_PATH = "#{GAME_ROOT_PATH}/data/cache"
+  LOGS_PATH = "#{GAME_ROOT_PATH}/data/logs"
   SETTINGS_FILE_PATH = "#{GAME_ROOT_PATH}/data/settings.json"
   APPLICATIONS_CACHE_FILE_PATH = "#{GAME_ROOT_PATH}/data/applications_cache.json"
 
-  LOGGER = Logger.new("#{GAME_ROOT_PATH}/data/logs/w3d_hub_linux_launcher.log", "daily")
+  # Ensure data/cache and data/logs exist
+  FileUtils.mkdir_p(CACHE_PATH) unless Dir.exist?(CACHE_PATH)
+  FileUtils.mkdir_p(LOGS_PATH) unless Dir.exist?(LOGS_PATH)
+
+  LOGGER = Logger.new("#{LOGS_PATH}/w3d_hub_linux_launcher.log", "daily")
   LOGGER.level = Logger::Severity::DEBUG # W3DHUB_DEBUG ? Logger::Severity::DEBUG : Logger::Severity::WARN
 
   LOG_TAG = "W3DHubLinuxLauncher"

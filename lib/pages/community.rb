@@ -161,7 +161,13 @@ class W3DHub
               flow(width: 1.0, max_width: 1230, height: 200, margin: 8, border_thickness: 1, border_color: lighten(Gosu::Color.new(0xff_252525))) do
                 background 0x44_000000
 
-                image image_path, height: 1.0
+                # Ensure the image file exists before trying to load it
+                if File.exist?(image_path)
+                  image image_path, height: 1.0
+                else
+                  logger.warn("W3DHub::Community") { "Image not found in cache: #{image_path}" }
+                  image BLACK_IMAGE, height: 1.0
+                end
 
                 stack(fill: true, height: 1.0, padding: 4, border_thickness_left: 1, border_color_left: lighten(Gosu::Color.new(0xff_252525))) do
                   tagline "<b>#{item.title}</b>", width: 1.0
