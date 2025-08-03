@@ -84,7 +84,7 @@ class W3DHub
         when "es"
           "Español"
         else
-          raise "Unknown language error"
+          logger.warn("W3DHub::Settings") { "Unknown language code: #{string.inspect}" }
         end
       end
 
