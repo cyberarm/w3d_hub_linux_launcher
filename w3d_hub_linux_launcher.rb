@@ -128,6 +128,7 @@ require_relative "lib/states/dialogs/confirm_dialog"
 require_relative "lib/states/dialogs/direct_connect_dialog"
 require_relative "lib/states/dialogs/game_settings_dialog"
 require_relative "lib/states/dialogs/import_game_dialog"
+require_relative "lib/states/dialogs/launcher_updater_dialog"
 
 require_relative "lib/api"
 require_relative "lib/api/service_status"

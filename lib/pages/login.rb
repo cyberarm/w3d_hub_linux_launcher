@@ -44,8 +44,10 @@ class W3DHub
                         Store.settings[:account][:data] = account
                         Store.settings.save_settings
 
-                        Cache.fetch(uri: account.avatar_uri, force_fetch: true, async: false) if account
-                        applications = Api.applications if account
+                        if account
+                          Cache.fetch(uri: account.avatar_uri, force_fetch: true, async: false, backend: :w3dhub)
+                          applications = Api._applications
+                        end
                       end
 
                       [account, applications]
@@ -79,7 +81,7 @@ class W3DHub
 
         if Store.account
           BackgroundWorker.foreground_job(
-            -> { Cache.fetch(uri: Store.account.avatar_uri, async: false) },
+            -> { Cache.fetch(uri: Store.account.avatar_uri, async: false, backend: :w3dhub) },
             ->(result) {
               populate_account_info
               page(W3DHub::Pages::Games)
@@ -152,7 +154,7 @@ class W3DHub
         Store.account = nil
 
         BackgroundWorker.foreground_job(
-          -> { Api.applications },
+          -> { Api._applications },
           lambda do |applications|
             if applications
               Store.applications = applications

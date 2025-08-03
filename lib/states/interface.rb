@@ -138,7 +138,7 @@ class W3DHub
         if Gosu.milliseconds >= @applications_expire
           @applications_expire = Gosu.milliseconds + 30_000
 
-          Api.on_thread(:applications) do |applications|
+          Api.on_thread(:_applications) do |applications|
             if applications
               @applications_expire = Gosu.milliseconds + APPLICATIONS_UPDATE_INTERVAL # ten minutes
 
