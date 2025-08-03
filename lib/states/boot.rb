@@ -162,7 +162,7 @@ class W3DHub
 
       def launcher_updater
         @status_label.value = "Checking for Launcher updates..." # I18n.t(:"boot.checking_for_updates")
-        
+
         Api.on_thread(:fetch, "https://api.github.com/repos/Inq8/CAmod/releases/latest") do |response|
           if response.status == 200
             hash = JSON.parse(response.body, symbolize_names: true)
@@ -175,7 +175,7 @@ class W3DHub
               LauncherUpdaterDialog,
               release_data: hash,
               available_version: available_version,
-              cancel_callback: -> { @tasks[:launcher_updater][:complete] = true }, 
+              cancel_callback: -> { @tasks[:launcher_updater][:complete] = true },
               accept_callback: -> { @tasks[:launcher_updater][:complete] = true }
             )
           else
