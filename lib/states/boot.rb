@@ -17,7 +17,8 @@ class W3DHub
           refresh_user_token: { started: false, complete: false },
           service_status: { started: false, complete: false },
           applications: { started: false, complete: false },
-          app_icons: { started: false, complete: false }
+          app_icons: { started: false, complete: false },
+          app_logos_and_backgrounds: { started: false, complete: false }
         }
 
         @offline_mode = false
@@ -238,6 +239,32 @@ class W3DHub
           end
 
           @tasks[:app_icons][:complete] = true
+        end
+      end
+
+      def app_logos_and_backgrounds
+        return unless Store.applications
+
+        packages = []
+        Store.applications.games.each do |app|
+          packages << { category: app.category, subcategory: app.id, name: "logo.png", version: "" }
+          packages << { category: app.category, subcategory: app.id, name: "background.png", version: "" }
+        end
+
+        Api.on_thread(:package_details, packages, :alt_w3dhub) do |package_details|
+          package_details ||= nil
+
+          package_details&.each do |package|
+            next if package.error?
+
+            package_cache_path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
+
+            missing_or_broken_image = File.exist?(package_cache_path) ? Digest::SHA256.new.hexdigest(File.binread(package_cache_path)).upcase != package.checksum.upcase : true
+
+            Cache.fetch_package(package, proc {}) if missing_or_broken_image
+          end
+
+          @tasks[:app_logos_and_backgrounds][:complete] = true
         end
       end
 
