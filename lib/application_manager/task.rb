@@ -112,6 +112,11 @@ class W3DHub
         @task_state == :failed
       end
 
+      # Helper method to normalize file paths for case-insensitive comparison
+      def normalize_path(path)
+        path.to_s.gsub("\\", "/").downcase
+      end
+
       def failure_reason
         @task_failure_reason || ""
       end
@@ -259,7 +264,7 @@ class W3DHub
           next if packages.detect do |pkg|
             pkg.category == "games" &&
             pkg.subcategory == @app_id &&
-            pkg.name == file.package &&
+            pkg.name.to_s.casecmp?(file.package.to_s) &&
             pkg.version == file.version
           end
 
@@ -295,10 +300,8 @@ class W3DHub
         @files.reverse.each do |file|
           break unless folder_exists
 
-          safe_file_name = file.name.gsub("\\", "/")
-          # Fix borked Data -> data 'cause Windows don't care about capitalization
-          safe_file_name.sub!("Data/", "data/")
-
+          # Normalize file paths to handle case-insensitive comparisons
+          safe_file_name = normalize_path(file.name)
           file_path = "#{path}/#{safe_file_name}"
 
           processed_files += 1
@@ -383,9 +386,9 @@ class W3DHub
           end
 
           package = @packages.find do |pkg|
-            pkg.category == rich.category &&
-            pkg.subcategory == rich.subcategory &&
-            "#{pkg.name}.zip" == rich.name &&
+            pkg.category.to_s.casecmp?(rich.category.to_s) &&
+            pkg.subcategory.to_s.casecmp?(rich.subcategory.to_s) &&
+            "#{pkg.name}.zip".casecmp?(rich.name) &&
             pkg.version == rich.version
           end
 
