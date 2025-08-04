@@ -202,7 +202,7 @@ class W3DHub
 
       path.strip
     else
-      result_ptr = LibUI.open_folder(window)
+      result_ptr = LibUI.open_folder(LIBUI_WINDOW)
       result = result_ptr.null? ? "" : result_ptr.to_s.gsub("\\", "/")
 
       result.strip
