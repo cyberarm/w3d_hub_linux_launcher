@@ -4,6 +4,8 @@ class W3DHub
       APPLICATIONS_UPDATE_INTERVAL = 10 * 60 * 1000 # ten minutes
       SERVER_LIST_UPDATE_INTERVAL = 5 * 60 * 1000 # five minutes
 
+      DEFAULT_BACKGROUND_IMAGE = "#{GAME_ROOT_PATH}/media/banners/background.png".freeze
+
       attr_accessor :interface_task_update_pending
 
       @@instance = nil
@@ -33,10 +35,12 @@ class W3DHub
 
         theme(W3DHub::THEME)
 
-        @interface_container = stack(width: 1.0, height: 1.0, border_thickness: 1, border_color: W3DHub::BORDER_COLOR, background_image: "#{GAME_ROOT_PATH}/media/banners/background.png", background_image_color: 0xff_525252, background_image_mode: :fill) do
+        @interface_container = stack(width: 1.0, height: 1.0, border_thickness: 1, border_color: W3DHub::BORDER_COLOR, background_image: DEFAULT_BACKGROUND_IMAGE, background_image_mode: :fill) do
           background 0xff_252525
 
           @header_container = flow(width: 1.0, height: 84, padding: 4, border_thickness_bottom: 1, border_color_bottom: W3DHub::BORDER_COLOR) do
+            background 0xaa_151515
+
             flow(width: 148, height: 1.0) do
               flow(fill: true)
               image "#{GAME_ROOT_PATH}/media/icons/app.png", height: 84
@@ -54,18 +58,26 @@ class W3DHub
                 end
 
                 link I18n.t(:"interface.servers").upcase, text_size: 34, font: BOLD_FONT, margin_left: 12 do
+                  @interface_container.style.background_image = DEFAULT_BACKGROUND_IMAGE
+                  @interface_container.style.default[:background_image] = DEFAULT_BACKGROUND_IMAGE
                   page(W3DHub::Pages::ServerBrowser)
                 end
 
                 link I18n.t(:"interface.community").upcase, text_size: 34, font: BOLD_FONT, margin_left: 12 do
+                  @interface_container.style.background_image = DEFAULT_BACKGROUND_IMAGE
+                  @interface_container.style.default[:background_image] = DEFAULT_BACKGROUND_IMAGE
                   page(W3DHub::Pages::Community)
                 end
 
                 link I18n.t(:"interface.downloads").upcase, text_size: 34, font: BOLD_FONT, margin_left: 12 do
+                  @interface_container.style.background_image = DEFAULT_BACKGROUND_IMAGE
+                  @interface_container.style.default[:background_image] = DEFAULT_BACKGROUND_IMAGE
                   page(W3DHub::Pages::DownloadManager)
                 end
 
                 link I18n.t(:"interface.settings").upcase, text_size: 34, font: BOLD_FONT, margin_left: 12 do
+                  @interface_container.style.background_image = DEFAULT_BACKGROUND_IMAGE
+                  @interface_container.style.default[:background_image] = DEFAULT_BACKGROUND_IMAGE
                   page(W3DHub::Pages::Settings)
                 end
               end

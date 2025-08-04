@@ -17,7 +17,7 @@ class W3DHub
             end
 
             # Game Menu
-            @game_page_container = stack(width: 1.0, fill: true, background_image: "#{GAME_ROOT_PATH}/media/textures/noiseb.png", background_image_mode: :tiled) do
+            @game_page_container = stack(width: 1.0, fill: true) do
             end
           end
         end
@@ -118,28 +118,25 @@ class W3DHub
 
         @game_page_container.clear do
           game_color = Gosu::Color.new(game.color)
-          game_color.alpha = 0x88
+          game_color.alpha = 0xaa
 
-          background game_color
-          @game_page_container.style.background_image_color = game_color
-          @game_page_container.style.default[:background_image_color] = game_color
-          @game_page_container.update_background_image
+          background_image_path = Cache.package_path(game.category, game.id, "background.png", "")
+          if File.exist?(background_image_path)
+            States::Interface.instance&.instance_variable_get(:"@interface_container")&.style&.background_image = get_image(background_image_path)
+            States::Interface.instance&.instance_variable_get(:"@interface_container")&.style&.default[:background_image] = get_image(background_image_path)
+          end
 
           # Game Stuff
           flow(width: 1.0, fill: true) do
-            # background 0xff_9999ff
-
             # Game options
-            stack(width: 360, height: 1.0, padding: 8, scroll: true, border_thickness_right: 1, border_color_right: W3DHub::BORDER_COLOR) do
-              background 0x55_000000
+            stack(width: 360, height: 1.0, padding: 8, scroll: true, background: game_color, border_thickness_right: 1, border_color_right: W3DHub::BORDER_COLOR) do
+              # Game Logo
+              logo_image_path = Cache.package_path(game.category, game.id, "logo.png", "")
 
-              # Game Banner
-              image_path = "#{GAME_ROOT_PATH}/media/banners/#{game.id}.png"
-
-              if File.exist?(image_path)
-                image image_path, width: 1.0
+              if File.exist?(logo_image_path)
+                image logo_image_path, width: 1.0
               else
-                banner game.name unless File.exist?(image_path)
+                banner game.name unless File.exist?(logo_image_path)
               end
 
               stack(width: 1.0, fill: true, scroll: true, margin_top: 32) do
@@ -331,11 +328,6 @@ class W3DHub
 
       def populate_all_games_view
         @game_page_container.clear do
-          background 0x88_353535
-          @game_page_container.style.background_image_color = 0x88_353535
-          @game_page_container.style.default[:background_image_color] = 0x88_353535
-          @game_page_container.update_background_image
-
           @focused_game = nil
           @focused_channel = nil
 
@@ -438,6 +430,9 @@ class W3DHub
         return unless @focused_game == game
 
         if (feed = @game_news[game.id])
+          game_color = Gosu::Color.new(game.color)
+          game_color.alpha = 0xaa
+
           @game_news_container.clear do
             # Patch Notes
             if false # Patch notes
@@ -467,9 +462,7 @@ class W3DHub
             feed.items.sort_by { |i| i.timestamp }.reverse[0..9].each do |item|
               image_path = Cache.path(item.image)
 
-              flow(width: 1.0, max_width: 869, height: 200, margin: 8, border_thickness: 1, border_color: lighten(Gosu::Color.new(game.color))) do
-                background 0x44_000000
-
+              flow(width: 1.0, max_width: 869, height: 200, margin: 8, background: game_color, border_thickness: 1, border_color: lighten(Gosu::Color.new(game.color))) do
                 if File.file?(image_path)
                   image image_path, height: 1.0
                 end
