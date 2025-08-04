@@ -32,6 +32,15 @@ class W3DHub
     linux? || mac?
   end
 
+  # Detect system CA bundle path for SSL verification
+  def self.ca_bundle_path
+    [
+      "/etc/ssl/certs/ca-certificates.crt",      # Debian/Ubuntu
+      "/etc/pki/tls/certs/ca-bundle.crt",        # RHEL/Fedora/CentOS
+      "/etc/ssl/ca-bundle.pem"                   # Some other distros
+    ].find { |path| File.exist?(path) }
+  end
+
   def self.url(path)
     raise "Hazardous input: #{path}" if path.include?("&&") || path.include?(";")
 

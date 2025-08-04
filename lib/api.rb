@@ -1,19 +1,11 @@
 class W3DHub
   class Api
 
-    # Detect CA bundle path for Excon
-    def self.ca_bundle_path
-      redhat_path = '/etc/pki/tls/certs/ca-bundle.crt'
-      debian_path = '/etc/ssl/certs/ca-certificates.crt'
-      [redhat_path, debian_path].find { |path| File.exist?(path) }
-    end
-
     # Set Excon default CA file if found
-    ca_file = ca_bundle_path
-    if ca_file
+    if (ca_file = W3DHub.ca_bundle_path)
       Excon.defaults[:ssl_ca_file] = ca_file
     end
-    
+
     LOG_TAG = "W3DHub::Api".freeze
 
     API_TIMEOUT = 30 # seconds
@@ -295,7 +287,7 @@ class W3DHub
             end
 
             # If channel versions and access levels match then all's well
-            if channel.current_version == _channel.current_version && 
+            if channel.current_version == _channel.current_version &&
               channel.user_level == _channel.user_level
 
               # All's Well!
@@ -310,7 +302,7 @@ class W3DHub
               # Replaced, continue.
               next
             end
-            
+
             # If versions doen't match then pick whichever one is higher
             if Gem::Version.new(channel.current_version) > Gem::Version.new(_channel.current_version)
               # Replace alternate's channel with primary's channel

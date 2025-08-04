@@ -10,15 +10,6 @@ class W3DHub
       TAG = "IRCClient"
 
       class SSL
-        # Detect system CA bundle path for SSL verification
-        def self.ca_bundle_path
-          [
-            '/etc/ssl/certs/ca-certificates.crt',      # Debian/Ubuntu
-            '/etc/pki/tls/certs/ca-bundle.crt',        # RHEL/Fedora/CentOS
-            '/etc/ssl/ca-bundle.pem'                   # Some other distros
-          ].find { |path| File.exist?(path) }
-        end
-
         def self.default_context
           verify_peer_and_hostname
         end
@@ -33,8 +24,7 @@ class W3DHub
           no_verify.tap do |context|
             context.verify_mode = OpenSSL::SSL::VERIFY_PEER
             context.cert_store = OpenSSL::X509::Store.new
-            ca_file = ca_bundle_path
-            if ca_file
+            if (ca_file = W3DHub.ca_bundle_path)
               context.cert_store.add_file(ca_file)
             else
               context.cert_store.set_default_paths

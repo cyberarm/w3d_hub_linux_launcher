@@ -85,6 +85,8 @@ class W3DHub
           "Español"
         else
           logger.warn("W3DHub::Settings") { "Unknown language code: #{string.inspect}" }
+
+          "UNKNOWN"
         end
       end
 
