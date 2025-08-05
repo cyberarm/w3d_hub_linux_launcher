@@ -85,7 +85,7 @@ class W3DHub
                                 padding_left: 4, padding_right: 4, tip: game.name) do
               background game.color if selected
 
-              image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{game.id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
+              image_path = File.exist?("#{CACHE_PATH}/#{game.id}.png") ? "#{CACHE_PATH}/#{game.id}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
               image_color = Store.application_manager.installed?(game.id, game.channels.first.id) ? 0xff_ffffff : 0x66_ffffff
 
               flow(width: 1.0, height: 1.0, margin: 8, background_image: image_path, background_image_color: image_color, background_image_mode: :fill_height) do

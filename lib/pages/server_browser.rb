@@ -43,7 +43,7 @@ class W3DHub
                   app = Store.applications.games.find { |a| a.id == app_id.to_s }
                   next unless app
 
-                  image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{app_id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{app_id}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
+                  image_path = File.exist?("#{CACHE_PATH}/#{app.id}.png") ? "#{CACHE_PATH}/#{app.id}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
 
                   image image_path, tip: "#{app.name}", height: 1.0,
                         border_thickness_bottom: 1, border_color_bottom: 0x00_000000,
@@ -534,7 +534,7 @@ class W3DHub
       end
 
       def game_icon(server)
-        image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{server.game.nil? ? 'ren' : server.game}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{server.game.nil? ? 'ren' : server.game}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
+        image_path = File.exist?("#{CACHE_PATH}/#{server.game.nil? ? 'ren' : server.game}.png") ? "#{CACHE_PATH}/#{server.game.nil? ? 'ren' : server.game}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
 
         if server.status.password
           @server_locked_icons[server.game] ||= Gosu.render(96, 96) do

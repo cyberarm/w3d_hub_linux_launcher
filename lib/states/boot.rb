@@ -208,6 +208,8 @@ class W3DHub
       def app_icons
         return unless Store.applications
 
+        @status_label.value = "Retrieving application icons, this might take a moment..." # I18n.t(:"boot.checking_for_updates")
+
         packages = []
         Store.applications.games.each do |app|
           packages << { category: app.category, subcategory: app.id, name: "#{app.id}.ico", version: "" }
@@ -220,7 +222,7 @@ class W3DHub
             next if package.error?
 
             path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
-            generated_icon_path = "#{GAME_ROOT_PATH}/media/icons/#{package.subcategory}.png"
+            generated_icon_path = "#{CACHE_PATH}/#{package.subcategory}.png"
 
             regenerate = false
 
@@ -244,6 +246,8 @@ class W3DHub
 
       def app_logos_and_backgrounds
         return unless Store.applications
+
+        @status_label.value = "Retrieving application image assets, this might take a moment..." # I18n.t(:"boot.checking_for_updates")
 
         packages = []
         Store.applications.games.each do |app|

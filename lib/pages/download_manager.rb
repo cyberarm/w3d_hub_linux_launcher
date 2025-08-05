@@ -36,7 +36,7 @@ class W3DHub
               background app_color
 
               flow(width: 0.70, height: 1.0) do
-                image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{task.app_id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{task.app_id}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
+                image_path = File.exist?("#{CACHE_PATH}/#{task.app_id}.png") ? "#{CACHE_PATH}/#{task.app_id}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
                 @application_image = image image_path, height: 1.0
 
                 stack(margin_left: 8, width: 0.75) do
