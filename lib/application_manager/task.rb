@@ -750,13 +750,20 @@ class W3DHub
 
       def unzip(package_path, path)
         stream = Zip::InputStream.new(File.open(package_path))
+        extracted_files = {} # Track files we've already extracted to handle case conflicts
 
         while (entry = stream.get_next_entry)
-
-          safe_file_name = entry.name.gsub("\\", "/")
-          # Fix borked Data -> data 'cause Windows don't care about capitalization
-          safe_file_name.sub!("Data/", "data/")
-
+          # Normalize the path to handle case-insensitivity consistently
+          safe_file_name = normalize_path(entry.name.gsub("\\", "/"))
+          
+          # Skip if we've already extracted a file with this normalized path
+          if extracted_files[safe_file_name]
+            logger.debug(LOG_TAG) { "Skipping duplicate file (case-insensitive): #{entry.name}" }
+            next
+          end
+          
+          extracted_files[safe_file_name] = true
+          
           dir_path = "#{path}/#{File.dirname(safe_file_name)}"
           unless dir_path.end_with?("/.") || Dir.exist?(dir_path)
             FileUtils.mkdir_p(dir_path)
