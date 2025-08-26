@@ -710,8 +710,8 @@ class W3DHub
         logger.info(LOG_TAG) { "      Unpacking patch \"#{package_path}\" in \"#{temp_path}\"" }
         unzip(package_path, temp_path)
 
-        # Fix borked Data -> data 'cause Windows don't care about capitalization
-        safe_file_name = "#{manifest_file.name.sub('Data/', 'data/')}"
+        # Normalize the path to handle case-insensitivity consistently
+        safe_file_name = normalize_path(manifest_file.name)
 
         logger.info(LOG_TAG) { "      Loading #{temp_path}/#{safe_file_name}.patch..." }
         patch_mix = W3DHub::Mixer::Reader.new(file_path: "#{temp_path}/#{safe_file_name}.patch", ignore_crc_mismatches: false)
@@ -750,20 +750,11 @@ class W3DHub
 
       def unzip(package_path, path)
         stream = Zip::InputStream.new(File.open(package_path))
-        extracted_files = {} # Track files we've already extracted to handle case conflicts
 
         while (entry = stream.get_next_entry)
           # Normalize the path to handle case-insensitivity consistently
-          safe_file_name = normalize_path(entry.name.gsub("\\", "/"))
-          
-          # Skip if we've already extracted a file with this normalized path
-          if extracted_files[safe_file_name]
-            logger.debug(LOG_TAG) { "Skipping duplicate file (case-insensitive): #{entry.name}" }
-            next
-          end
-          
-          extracted_files[safe_file_name] = true
-          
+          safe_file_name = normalize_path(entry.name)
+
           dir_path = "#{path}/#{File.dirname(safe_file_name)}"
           unless dir_path.end_with?("/.") || Dir.exist?(dir_path)
             FileUtils.mkdir_p(dir_path)
