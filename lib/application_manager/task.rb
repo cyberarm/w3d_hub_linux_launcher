@@ -369,7 +369,7 @@ class W3DHub
           }
         end
 
-        package_details = Api.package_details(hashes)
+        package_details = Api.package_details(hashes, @channel.source || :w3dhub)
 
         unless package_details
           fail!("Failed to fetch package details")
@@ -596,7 +596,7 @@ class W3DHub
         # Check for and integrity of local manifest
 
         package = nil
-        array = Api.package_details([{ category: category, subcategory: subcategory, name: name, version: version }])
+        array = Api.package_details([{ category: category, subcategory: subcategory, name: name, version: version }], @channel.source || :w3dhub)
         if array.is_a?(Array)
           package = array.first
         else

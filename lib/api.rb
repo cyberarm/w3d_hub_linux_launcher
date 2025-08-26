@@ -240,7 +240,7 @@ class W3DHub
       response = post("/apis/launcher/1/get-applications", DEFAULT_HEADERS, nil, backend)
 
       if response.status == 200
-        Applications.new(response.body)
+        Applications.new(response.body, backend)
       else
         logger.error(LOG_TAG) { "Failed to fetch applications list:" }
         logger.error(LOG_TAG) { response }
@@ -294,7 +294,7 @@ class W3DHub
               next
             end
 
-            # If the access levels doen't match then overwrite alternate's channel with primary's channel
+            # If the access levels don't match then overwrite alternate's channel with primary's channel
             if channel.user_level != _channel.user_level
               # Replace alternate's channel with primary's channel
               _game.channels[_game.channels.index(_channel)] = channel
@@ -303,7 +303,7 @@ class W3DHub
               next
             end
 
-            # If versions doen't match then pick whichever one is higher
+            # If versions don't match then pick whichever one is higher
             if Gem::Version.new(channel.current_version) > Gem::Version.new(_channel.current_version)
               # Replace alternate's channel with primary's channel
               _game.channels[_game.channels.index(_channel)] = channel

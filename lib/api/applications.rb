@@ -3,14 +3,14 @@ class W3DHub
     class Applications
       attr_reader :data
 
-      def initialize(response)
+      def initialize(response, source = nil)
         @data = JSON.parse(response, symbolize_names: true)
 
         games = @data[:applications].select { |a| a[:category] == "games" }
 
         @games = []
 
-        games.each { |hash| @games << Game.new(hash) }
+        games.each { |hash| @games << Game.new(hash, source) }
         @games.sort_by!(&:name).reverse
       end
 
@@ -20,9 +20,11 @@ class W3DHub
 
       class Game
         attr_reader :id, :name, :type, :category, :studio_id, :channels, :web_links, :color
+        attr_reader :___source
 
-        def initialize(hash)
+        def initialize(hash, source = nil)
           @data = hash
+          @data[:___source] = source if source
 
           @id = @data[:id].to_s
           @name = @data[:name]
@@ -31,7 +33,7 @@ class W3DHub
           @studio_id = @data[:"studio-id"]
 
            # TODO: Do processing
-          @channels = @data[:channels].map { |channel| Channel.new(channel) }
+          @channels = @data[:channels].map { |channel| Channel.new(channel, source) }
           @web_links = @data[:"web-links"]&.map { |link| WebLink.new(link) } || []
           @extended_data = @data[:"extended-data"]
 
@@ -55,16 +57,33 @@ class W3DHub
           @uses_ren_folder
         end
 
+        def source
+          @data[:___source]&.to_sym || :w3dhub
+        end
+
+        def source=(sym)
+          @data[:___source] = sym
+        end
+
         class Channel
           attr_reader :id, :name, :user_level, :current_version
 
-          def initialize(hash)
+          def initialize(hash, source = nil)
             @data = hash
+            @data[:___source] = source
 
             @id = @data[:id].to_s
             @name = @data[:name]
             @user_level = @data[:"user-level"]
             @current_version = @data[:"current-version"]
+          end
+
+          def source
+            @data[:___source]&.to_sym || :w3dhub
+          end
+
+          def source=(sym)
+            @data[:___source] = sym
           end
         end
 
