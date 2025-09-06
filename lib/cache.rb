@@ -90,6 +90,10 @@ class W3DHub
     # Download a W3D Hub package
     def self.fetch_package(package, block)
       endpoint_download_url = package.download_url || "#{Api::W3DHUB_API_ENDPOINT}/apis/launcher/1/get-package"
+      if package.download_url
+        uri_path = package.download_url.split("/").last
+        endpoint_download_url = package.download_url.sub(uri_path, URI.encode_uri_component(uri_path))
+      end
       path = package_path(package.category, package.subcategory, package.name, package.version)
       headers = { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": Api::USER_AGENT }
       headers["Authorization"] = "Bearer #{Store.account.access_token}" if Store.account && !package.download_url
