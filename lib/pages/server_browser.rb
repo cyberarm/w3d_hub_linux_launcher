@@ -410,11 +410,11 @@ class W3DHub
                         if server.status.password
                           W3DHub.prompt_for_password(
                             accept_callback: proc do |password|
-                              W3DHub.join_server(server, password)
+                              W3DHub.join_server(server: server, password: password)
                             end
                           )
                         else
-                          W3DHub.join_server(server, nil)
+                          W3DHub.join_server(server: server)
                         end
                       end
                     )
@@ -422,18 +422,24 @@ class W3DHub
                     if server.status.password
                       W3DHub.prompt_for_password(
                         accept_callback: proc do |password|
-                          W3DHub.join_server(server, password)
+                          W3DHub.join_server(server: server, password: password)
                         end
                       )
                     else
-                      W3DHub.join_server(server, nil)
+                      W3DHub.join_server(server: server)
                     end
                   end
                 end
 
                 if W3DHUB_DEVELOPER
-                  list_box(items: (1..12).to_a.map(&:to_s), margin_left: 16, width: 72, tip: "Number of game clients", enabled: (game_installed && !game_updatable), **TESTING_BUTTON)
-                  button "Multijoin", tip: "Launch multiple clients with configured username_\#{number}", enabled: (game_installed && !game_updatable), **TESTING_BUTTON
+                  client_instances = list_box(items: (1..12).to_a.map(&:to_s), margin_left: 16, width: 72, tip: "Number of game clients", enabled: (game_installed && !game_updatable), **TESTING_BUTTON)
+                  button("Multijoin", tip: "Launch multiple clients with configured username_\#{number}", enabled: (game_installed && !game_updatable), **TESTING_BUTTON) do
+                    username = Store.settings[:server_list_username]
+
+                    client_instances.value.to_i.times do |i|
+                      W3DHub.join_server(server: server, username: format("%s_%d", username, i), multi: true)
+                    end
+                  end
                 end
 
                 flow(fill: true)

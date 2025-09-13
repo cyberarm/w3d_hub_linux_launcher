@@ -235,11 +235,11 @@ class W3DHub
       end
     end
 
-    def join_server(app_id, channel, server, password = nil)
-      if installed?(app_id, channel) && Store.settings[:server_list_username].to_s.length.positive?
+    def join_server(app_id, channel, server, username = Store.settings[:server_list_username], password = nil, multi = false)
+      if installed?(app_id, channel) && username.to_s.length.positive?
         run(
           app_id, channel,
-          "+connect #{server.address}:#{server.port} +netplayername #{Store.settings[:server_list_username]}#{password ? " +password \"#{password}\"" : ""}"
+          "+connect #{server.address}:#{server.port} +netplayername #{username}#{password ? " +password \"#{password}\"" : ""}#{multi ? " +multi" : ""}"
         )
       end
     end

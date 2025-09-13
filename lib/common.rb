@@ -81,15 +81,19 @@ class W3DHub
         )
       end
 
-      def self.join_server(server, password)
+      def self.join_server(server:, username: Store.settings[:server_list_username], password: nil, multi: false)
         if (
           (server.status.password && password.length.positive?) ||
           !server.status.password) &&
-           Store.settings[:server_list_username].to_s.length.positive?
+           username.to_s.length.positive?
 
           Store.application_manager.join_server(
             server.game,
-            server.channel, server, password
+            server.channel,
+            server,
+            username,
+            password,
+            multi
           )
         else
           CyberarmEngine::Window.instance.push_state(W3DHub::States::MessageDialog, type: "?", title: "?", message: "?")
