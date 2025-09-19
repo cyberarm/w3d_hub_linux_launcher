@@ -375,7 +375,7 @@ class W3DHub
                     end
 
                     container = stack(fill: true, width: 1.0, padding: 8) do
-                      image_path = File.exist?("#{GAME_ROOT_PATH}/media/icons/#{game.id}.png") ? "#{GAME_ROOT_PATH}/media/icons/#{game.id}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
+                      image_path = File.exist?("#{CACHE_PATH}/#{game.id}.png") ? "#{CACHE_PATH}/#{game.id}.png" : "#{GAME_ROOT_PATH}/media/icons/default_icon.png"
                       flow(width: 1.0, margin_top: 8) do
                         flow(fill: true)
                         image image_path, width: 0.5
