@@ -133,10 +133,24 @@ class W3DHub
         return true
       else
         logger.debug(LOG_TAG) { "    Failed to retrieve package: (#{package.category}:#{package.subcategory}:#{package.name}:#{package.version})" }
-        logger.debug(LOG_TAG) { "      Download URL: #{endpoint_download_url}, response: #{response.status}" }
+        logger.debug(LOG_TAG) { "      Download URL: #{endpoint_download_url}, response: #{response&.status || -1}" }
 
-        false
+        return false
       end
+    rescue Excon::Error::Timeout => e
+      logger.error(LOG_TAG) { "    Connection to \"#{endpoint_download_url}\" timed out after: #{API_TIMEOUT} seconds" }
+      logger.error(LOG_TAG) { e }
+      logger.debug(LOG_TAG) { "    Failed to retrieve package: (#{package.category}:#{package.subcategory}:#{package.name}:#{package.version})" }
+      logger.debug(LOG_TAG) { "      Download URL: #{endpoint_download_url}, response: #{response&.status || -1}" }
+
+      return false
+    rescue Excon::Error => e
+      logger.error(LOG_TAG) { "    Connection to \"#{endpoint_download_url}\" errored:" }
+      logger.error(LOG_TAG) { e }
+      logger.debug(LOG_TAG) { "    Failed to retrieve package: (#{package.category}:#{package.subcategory}:#{package.name}:#{package.version})" }
+      logger.debug(LOG_TAG) { "      Download URL: #{endpoint_download_url}, response: #{response&.status || -1}" }
+
+      return false
     ensure
       file&.close
     end
