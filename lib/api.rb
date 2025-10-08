@@ -91,7 +91,7 @@ class W3DHub
           retry_interval: 1,
           retry_errors: [Excon::Error::Socket, Excon::Error::HTTPStatus] # Don't retry on timeout
         )
-      rescue Excon::Errors::Timeout => e
+      rescue Excon::Error::Timeout => e
         logger.error(LOG_TAG) { "Connection to \"#{url}\" timed out after: #{API_TIMEOUT} seconds" }
 
         DummyResponse.new(e)
@@ -135,7 +135,7 @@ class W3DHub
           retry_interval: 1,
           retry_errors: [Excon::Error::Socket, Excon::Error::HTTPStatus] # Don't retry on timeout
         )
-      rescue Excon::Errors::Timeout => e
+      rescue Excon::Error::Timeout => e
         logger.error(LOG_TAG) { "Connection to \"#{url}\" timed out after: #{API_TIMEOUT} seconds" }
 
         DummyResponse.new(e)
