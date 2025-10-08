@@ -112,9 +112,29 @@ class W3DHub
         @task_state == :failed
       end
 
-      # Helper method to normalize file paths for case-insensitive comparison
-      def normalize_path(path)
-        path.to_s.gsub("\\", "/").downcase
+      def normalize_path(path, base_path)
+        path = path.to_s.gsub("\\", "/")
+        return path if W3DHub.windows? # Windows is easy, or annoying, depending how you look at it...
+
+        constructed_path = base_path
+
+        split_path = path.split("/")
+        split_path.each do |segment|
+          Dir.glob("#{constructed_path}/*").each do |part|
+            next unless "#{constructed_path}/#{segment}".downcase == part.downcase
+
+            constructed_path = part
+
+            break if File.file?(constructed_path)
+          end
+        end
+
+        # Find file if it exists, otherwise downcase the `path` sans `base_path`
+        if "#{base_path}/#{path}".length == constructed_path.length
+          constructed_path
+        else
+          "#{base_path}/#{path.downcase}"
+        end
       end
 
       def failure_reason
@@ -300,15 +320,13 @@ class W3DHub
         @files.reverse.each do |file|
           break unless folder_exists
 
-          # Normalize file paths to handle case-insensitive comparisons
-          safe_file_name = normalize_path(file.name)
-          file_path = "#{path}/#{safe_file_name}"
+          file_path = normalize_path(file.name, path)
 
           processed_files += 1
           @status.progress = processed_files.to_f / file_count
 
           next if file.removed_since
-          next if accepted_files.key?(safe_file_name)
+          next if accepted_files.key?(file_path)
 
           unless File.exist?(file_path)
             rejected_files << { file: file, manifest_version: file.version }
@@ -328,7 +346,7 @@ class W3DHub
           logger.info(LOG_TAG) { file.inspect } if file.checksum.nil?
 
           if digest.hexdigest.upcase == file.checksum.upcase
-            accepted_files[safe_file_name] = file.version
+            accepted_files[file_path] = file.version
             logger.info(LOG_TAG) { "[#{file.version}] Verified file: #{file_path}" }
           else
             rejected_files << { file: file, manifest_version: file.version }
@@ -532,7 +550,7 @@ class W3DHub
           logger.info(LOG_TAG) { "    #{file.name}" }
 
           path = Cache.install_path(@application, @channel)
-          file_path = "#{path}/#{file.name}".sub('Data/', 'data/')
+          file_path = normalize_path(file.name, path)
 
           File.delete(file_path) if File.exist?(file_path)
 
@@ -565,7 +583,7 @@ class W3DHub
       def write_paths_ini
         path = Cache.install_path(@application, @channel)
 
-        File.open("#{path}/data/paths.ini", "w") do |file|
+        File.open(normalize_path("data/paths.ini", path), "w") do |file|
           file.puts("[paths]")
           file.puts("RegBase=W3D Hub")
           file.puts("RegClient=#{@application.category}\\#{@application.id}-#{@channel.id}")
@@ -710,15 +728,15 @@ class W3DHub
         logger.info(LOG_TAG) { "      Unpacking patch \"#{package_path}\" in \"#{temp_path}\"" }
         unzip(package_path, temp_path)
 
-        # Normalize the path to handle case-insensitivity consistently
-        safe_file_name = normalize_path(manifest_file.name)
+        file_path = normalize_path(manifest_file.name, path)
+        temp_file_path = normalize_path(manifest_file.name, temp_path)
 
-        logger.info(LOG_TAG) { "      Loading #{temp_path}/#{safe_file_name}.patch..." }
-        patch_mix = W3DHub::Mixer::Reader.new(file_path: "#{temp_path}/#{safe_file_name}.patch", ignore_crc_mismatches: false)
+        logger.info(LOG_TAG) { "      Loading #{temp_file_path}.patch..." }
+        patch_mix = W3DHub::Mixer::Reader.new(file_path: "#{temp_file_path}.patch", ignore_crc_mismatches: false)
         patch_info = JSON.parse(patch_mix.package.files.find { |f| f.name.casecmp?(".w3dhub.patch") || f.name.casecmp?(".bhppatch") }.data, symbolize_names: true)
 
-        logger.info(LOG_TAG) { "      Loading #{path}/#{safe_file_name}..." }
-        target_mix = W3DHub::Mixer::Reader.new(file_path: "#{path}/#{safe_file_name}", ignore_crc_mismatches: false)
+        logger.info(LOG_TAG) { "      Loading #{file_path}..." }
+        target_mix = W3DHub::Mixer::Reader.new(file_path: "#{file_path}", ignore_crc_mismatches: false)
 
         logger.info(LOG_TAG) { "      Removing files..." } if patch_info[:removedFiles].size.positive?
         patch_info[:removedFiles].each do |file|
@@ -740,8 +758,8 @@ class W3DHub
           end
         end
 
-        logger.info(LOG_TAG) { "      Writing updated #{path}/#{safe_file_name}..." } if patch_info[:updatedFiles].size.positive?
-        W3DHub::Mixer::Writer.new(file_path: "#{path}/#{safe_file_name}", package: target_mix.package, memory_buffer: true, encrypted: target_mix.encrypted?)
+        logger.info(LOG_TAG) { "      Writing updated #{file_path}..." } if patch_info[:updatedFiles].size.positive?
+        W3DHub::Mixer::Writer.new(file_path: "#{file_path}", package: target_mix.package, memory_buffer: true, encrypted: target_mix.encrypted?)
 
         FileUtils.remove_dir(temp_path)
 
@@ -753,14 +771,14 @@ class W3DHub
 
         while (entry = stream.get_next_entry)
           # Normalize the path to handle case-insensitivity consistently
-          safe_file_name = normalize_path(entry.name)
+          file_path = normalize_path(entry.name, path)
 
-          dir_path = "#{path}/#{File.dirname(safe_file_name)}"
+          dir_path = File.dirname(file_path)
           unless dir_path.end_with?("/.") || Dir.exist?(dir_path)
             FileUtils.mkdir_p(dir_path)
           end
 
-          File.open("#{path}/#{safe_file_name}", "wb") do |f|
+          File.open(file_path, "wb") do |f|
             i = entry.get_input_stream
 
             while (chunk = i.read(32_000_000)) # Read up to ~32 MB per chunk
