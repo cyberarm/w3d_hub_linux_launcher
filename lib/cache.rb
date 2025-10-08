@@ -138,7 +138,7 @@ class W3DHub
         return false
       end
     rescue Excon::Error::Timeout => e
-      logger.error(LOG_TAG) { "    Connection to \"#{endpoint_download_url}\" timed out after: #{API_TIMEOUT} seconds" }
+      logger.error(LOG_TAG) { "    Connection to \"#{endpoint_download_url}\" timed out after: #{W3DHub::Api::API_TIMEOUT} seconds" }
       logger.error(LOG_TAG) { e }
       logger.debug(LOG_TAG) { "    Failed to retrieve package: (#{package.category}:#{package.subcategory}:#{package.name}:#{package.version})" }
       logger.debug(LOG_TAG) { "      Download URL: #{endpoint_download_url}, response: #{response&.status || -1}" }
