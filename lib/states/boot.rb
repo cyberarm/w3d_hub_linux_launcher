@@ -11,7 +11,7 @@ class W3DHub
         @fraction = 0.0
         @w3dhub_logo = get_image("#{GAME_ROOT_PATH}/media/icons/app.png")
         @tasks = {
-          # connectivity_check: { started: false, complete: false }, # HEAD connectivity-check.ubuntu.com or HEAD secure.w3dhub.com?
+          connectivity_check: { started: false, complete: false }, # HEAD connectivity-check.ubuntu.com or HEAD secure.w3dhub.com?
           # launcher_updater: { started: false, complete: false },
           server_list: { started: false, complete: false },
           refresh_user_token: { started: false, complete: false },
@@ -137,6 +137,41 @@ class W3DHub
         Store.settings.save_settings
 
         @tasks[:refresh_user_token][:complete] = true
+      end
+
+      def connectivity_check
+        domains = {
+          "w3dhub-api.w3d.cyberarm.dev": false,
+          "s3.w3d.cyberarm.dev": false,
+          "secure.w3dhub.com": false
+        }
+
+        @status_label.value = "Checking uplink..."
+        domains.each do |key, value|
+          begin
+            Resolv.getaddress(key.to_s)
+          rescue => e
+            logger.error(LOG_TAG) {"Failed to resolve hostname: #{key.to_s}"}
+            logger.error(LOG_TAG) {e}
+
+            push_state(
+              ConfirmDialog,
+              title: "DNS Resolution Failure",
+              message: "Failed to resolve: #{key.to_s}\n\nTry disabling VPN or proxy if in use.\n\n\nContinue offline?",
+              cancel_callback: ->() { window.close },
+              accept_callback: ->() {
+                @offline_mode = true
+                Store.offline_mode = true
+                @tasks[:connectivity_check][:complete] = true
+              }
+            )
+
+            # Prevent task from being marked as completed
+            return false
+          end
+        end
+
+        @tasks[:connectivity_check][:complete] = true
       end
 
       def service_status

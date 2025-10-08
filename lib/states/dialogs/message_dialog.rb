@@ -24,6 +24,7 @@ class W3DHub
           stack(width: 1.0, height: 46, padding: 8) do
             button "Okay", width: 1.0 do
               pop_state
+              @options[:accept_callback]&.call
             end
           end
         end
