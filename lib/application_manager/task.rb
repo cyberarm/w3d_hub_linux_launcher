@@ -129,11 +129,11 @@ class W3DHub
           end
         end
 
-        # Find file if it exists, otherwise downcase the `path` sans `base_path`
+        # Find file if it exists else use provided path as cased
         if "#{base_path}/#{path}".length == constructed_path.length
           constructed_path
         else
-          "#{base_path}/#{path.downcase}"
+          "#{base_path}/#{path}" # File doesn't exist, case doesn't matter.
         end
       end
 
