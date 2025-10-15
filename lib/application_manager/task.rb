@@ -114,7 +114,7 @@ class W3DHub
 
       def normalize_path(path, base_path)
         path = path.to_s.gsub("\\", "/")
-        return path if W3DHub.windows? # Windows is easy, or annoying, depending how you look at it...
+        return "#{base_path}/#{path}" if W3DHub.windows? # Windows is easy, or annoying, depending how you look at it...
 
         constructed_path = base_path
 
