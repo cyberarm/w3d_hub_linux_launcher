@@ -118,12 +118,14 @@ class W3DHub
 
         constructed_path = base_path
 
+        accepted_parts = 0
         split_path = path.split("/")
         split_path.each do |segment|
           Dir.glob("#{constructed_path}/*").each do |part|
             next unless "#{constructed_path}/#{segment}".downcase == part.downcase
 
             constructed_path = part
+            accepted_parts += 1
 
             break if File.file?(constructed_path)
           end
@@ -132,6 +134,8 @@ class W3DHub
         # Find file if it exists else use provided path as cased
         if "#{base_path}/#{path}".length == constructed_path.length
           constructed_path
+        elsif accepted_parts.positive?
+          "#{constructed_path}/#{split_path[accepted_parts..].join('/')}"
         else
           "#{base_path}/#{path}" # File doesn't exist, case doesn't matter.
         end
