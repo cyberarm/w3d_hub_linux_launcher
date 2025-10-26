@@ -24,8 +24,9 @@ class W3DHub
 
       def to_json(env)
         d = @data.dup
+
         d[:avatar_uri] = @avatar_uri
-        d[:access_token_expiry] = d[:access_token_expiry].to_i
+        d[:access_token_expiry] = @access_token_expiry.to_i
 
         d.to_json(env)
       end
