@@ -117,6 +117,7 @@ class W3DHub
         return "#{base_path}/#{path}" if W3DHub.windows? # Windows is easy, or annoying, depending how you look at it...
 
         constructed_path = base_path
+        lowercase_full_path = "#{base_path}/#{path}".downcase.strip.freeze
 
         accepted_parts = 0
         split_path = path.split("/")
@@ -124,15 +125,17 @@ class W3DHub
           Dir.glob("#{constructed_path}/*").each do |part|
             next unless "#{constructed_path}/#{segment}".downcase == part.downcase
 
+            # Handle edge case where a file with the same name is in a higher directory
+            next if File.file?(part) && part.downcase.strip != lowercase_full_path
+
             constructed_path = part
             accepted_parts += 1
-
-            break if File.file?(constructed_path)
+            break
           end
         end
 
         # Find file if it exists else use provided path as cased
-        if "#{base_path}/#{path}".length == constructed_path.length
+        if constructed_path.downcase.strip == lowercase_full_path
           constructed_path
         elsif accepted_parts.positive?
           "#{constructed_path}/#{split_path[accepted_parts..].join('/')}"
