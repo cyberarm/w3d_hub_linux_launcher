@@ -84,11 +84,11 @@ class W3DHub
   BLACK_IMAGE = Gosu::Image.from_blob(1, 1, "\x00\x00\x00\xff")
 end
 
-require "i18n"
 require "websocket-client-simple"
 require "English"
 require "sdl2"
 
+require_relative "lib/i18n"
 I18n.load_path << Dir["#{W3DHub::GAME_ROOT_PATH}/locales/*.yml"]
 I18n.default_locale = :en
 
