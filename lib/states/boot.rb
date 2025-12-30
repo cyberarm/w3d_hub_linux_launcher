@@ -25,7 +25,8 @@ class W3DHub
 
         @task_index = 0
 
-        stack(width: 1.0, height: 1.0, border_thickness: 1, border_color: W3DHub::BORDER_COLOR, background_image: "#{GAME_ROOT_PATH}/media/banners/background.png", background_image_color: 0xff_525252, background_image_mode: :fill) do
+        stack(width: 1.0, height: 1.0, border_thickness: 1, border_color: W3DHub::BORDER_COLOR,
+              background_image: "#{GAME_ROOT_PATH}/media/banners/background.png", background_image_color: 0xff_525252, background_image_mode: :fill) do
           stack(width: 1.0, fill: true) do
           end
 
@@ -41,7 +42,8 @@ class W3DHub
       end
 
       def draw
-        Gosu.draw_circle(window.width / 2, window.height / 2, @w3dhub_logo.width * (0.6 + Math.cos(Gosu.milliseconds / 1000.0 * Math::PI).abs * 0.05), 128, 0xaa_353535, 32)
+        Gosu.draw_circle(window.width / 2, window.height / 2,
+                         @w3dhub_logo.width * (0.6 + Math.cos(Gosu.milliseconds / 1000.0 * Math::PI).abs * 0.05), 128, 0xaa_353535, 32)
         @w3dhub_logo.draw_rot(window.width / 2, window.height / 2, 32)
 
         super
@@ -147,28 +149,26 @@ class W3DHub
         }
 
         @status_label.value = "Checking uplink..."
-        domains.each do |key, value|
-          begin
-            Resolv.getaddress(key.to_s)
-          rescue => e
-            logger.error(LOG_TAG) {"Failed to resolve hostname: #{key.to_s}"}
-            logger.error(LOG_TAG) {e}
+        domains.each do |key, _value|
+          Resolv.getaddress(key.to_s)
+        rescue StandardError => e
+          logger.error(LOG_TAG) { "Failed to resolve hostname: #{key}" }
+          logger.error(LOG_TAG) { e }
 
-            push_state(
-              ConfirmDialog,
-              title: "DNS Resolution Failure",
-              message: "Failed to resolve: #{key.to_s}\n\nTry disabling VPN or proxy if in use.\n\n\nContinue offline?",
-              cancel_callback: ->() { window.close },
-              accept_callback: ->() {
-                @offline_mode = true
-                Store.offline_mode = true
-                @tasks[:connectivity_check][:complete] = true
-              }
-            )
+          push_state(
+            ConfirmDialog,
+            title: "DNS Resolution Failure",
+            message: "Failed to resolve: #{key}\n\nTry disabling VPN or proxy if in use.\n\n\nContinue offline?",
+            cancel_callback: -> { window.close },
+            accept_callback: lambda {
+              @offline_mode = true
+              Store.offline_mode = true
+              @tasks[:connectivity_check][:complete] = true
+            }
+          )
 
-            # Prevent task from being marked as completed
-            return false
-          end
+          # Prevent task from being marked as completed
+          return false
         end
 
         @tasks[:connectivity_check][:complete] = true
@@ -187,7 +187,9 @@ class W3DHub
 
             @tasks[:service_status][:complete] = true
           else
-            BackgroundWorker.foreground_job(-> {}, ->(_) { @status_label.value = I18n.t(:"boot.w3dhub_service_is_down") })
+            BackgroundWorker.foreground_job(-> {}, lambda { |_|
+              @status_label.value = I18n.t(:"boot.w3dhub_service_is_down")
+            })
             @tasks[:service_status][:complete] = true
 
             @offline_mode = true
@@ -232,7 +234,7 @@ class W3DHub
             @tasks[:applications][:complete] = true
           else
             # FIXME: Failed to retreive!
-            BackgroundWorker.foreground_job(-> {}, ->(_){ @status_label.value = "FAILED TO RETREIVE APPS LIST" })
+            BackgroundWorker.foreground_job(-> {}, ->(_) { @status_label.value = "FAILED TO RETREIVE APPS LIST" })
 
             @offline_mode = true
             Store.offline_mode = true
@@ -246,6 +248,7 @@ class W3DHub
         @status_label.value = "Retrieving application icons, this might take a moment..." # I18n.t(:"boot.checking_for_updates")
 
         packages = []
+        failure = false
         Store.applications.games.each do |app|
           packages << { category: app.category, subcategory: app.id, name: "#{app.id}.ico", version: "" }
         end
@@ -261,21 +264,32 @@ class W3DHub
 
             regenerate = false
 
-            broken_or_out_dated_icon = Digest::SHA256.new.hexdigest(File.binread(path)).upcase != package.checksum.upcase if File.exist?(path)
+            if File.exist?(path)
+              broken_or_out_dated_icon = Digest::SHA256.new.hexdigest(File.binread(path)).upcase != package.checksum.upcase
+            end
 
             if File.exist?(path) && !broken_or_out_dated_icon
               regenerate = !File.exist?(generated_icon_path)
             else
-              Cache.fetch_package(package, proc {})
-              regenerate = true
+              begin
+                Cache.fetch_package(package, proc {})
+                regenerate = true
+              rescue Errno::EACCES => e
+                failure = true
+                push_state(MessageDialog, title: "Fatal Error",
+                                          message: "Directory Permission Error (#{e.class}):\n#{e}.\n\nIs the required drive mounted?",
+                                          accept_callback: -> { window.close })
+              end
             end
 
-            if regenerate
-              BackgroundWorker.foreground_job(-> { ICO.new(file: path) }, ->(result) { result.save(result.images.max_by(&:width), generated_icon_path) })
-            end
+            next unless regenerate
+
+            BackgroundWorker.foreground_job(-> { ICO.new(file: path) }, lambda { |result|
+              result.save(result.images.max_by(&:width), generated_icon_path)
+            })
           end
 
-          @tasks[:app_icons][:complete] = true
+          @tasks[:app_icons][:complete] = true unless failure
         end
       end
 
@@ -296,7 +310,8 @@ class W3DHub
           package_details&.each do |package|
             next if package.error?
 
-            package_cache_path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
+            package_cache_path = Cache.package_path(package.category, package.subcategory, package.name,
+                                                    package.version)
 
             missing_or_broken_image = File.exist?(package_cache_path) ? Digest::SHA256.new.hexdigest(File.binread(package_cache_path)).upcase != package.checksum.upcase : true
 
@@ -356,7 +371,7 @@ class W3DHub
             "web-links": [],
             "extended-data": [
               { name: "colour", value: game[:colour] },
-              { name: "usesEngineCfg", value: game[:uses_engine_cfg] },
+              { name: "usesEngineCfg", value: game[:uses_engine_cfg] }
             ]
           }
 
