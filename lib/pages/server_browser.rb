@@ -389,11 +389,12 @@ class W3DHub
               flow(width: 1.0, height: 46, margin_top: 16, margin_bottom: 16) do
                 game_installed = Store.application_manager.installed?(server.game, server.channel)
                 game_updatable = Store.application_manager.updateable?(server.game, server.channel)
+                matching_version = game_installed[:installed_version] == server.version || server.version == Api::ServerListServer::NO_OR_DEFAULT_VERSION
                 channel = Store.application_manager.channel(server.game, server.channel)
                 style = ((channel && channel.user_level.downcase.strip == "public") || server.channel == "release") ? {} : TESTING_BUTTON
 
                 flow(fill: true)
-                button "<b>#{I18n.t(:"server_browser.join_server")}</b>", enabled: (game_installed && !game_updatable), **style do
+                button "<b>#{I18n.t(:"server_browser.join_server")}</b>", enabled: (game_installed && !game_updatable && matching_version), **style do
                   # Check for nickname
                   #   prompt for nickname
                   # !abort unless nickname set
