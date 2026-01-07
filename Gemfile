@@ -1,7 +1,8 @@
 source "https://rubygems.org"
 
 gem "base64"
-gem "excon"
+gem "async-http"
+gem "async-websocket"
 gem "cyberarm_engine"
 gem "sdl2-bindings"
 gem "libui", platforms: [:windows]

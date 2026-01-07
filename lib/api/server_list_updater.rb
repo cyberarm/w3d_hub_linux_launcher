@@ -23,25 +23,62 @@ class W3DHub
       end
 
       def run
+        return
+
         Thread.new do
-          begin
-            connect
+          Sync do |task|
+            begin
+              async_connect(task)
 
-            while W3DHub::BackgroundWorker.alive?
-              connect if @auto_reconnect
-              sleep 1
+              while W3DHub::BackgroundWorker.alive?
+                async_connect(task) if @auto_reconnect
+                sleep 1
+              end
+            rescue => e
+              puts e
+              puts e.backtrace
+
+              sleep 30
+              retry
             end
-          rescue => e
-            puts e
-            puts e.backtrace
-
-            sleep 30
-            retry
           end
         end
 
         logger.debug(LOG_TAG) { "Cleaning up..." }
         @@instance = nil
+      end
+
+      def async_connect(task)
+        @auto_reconnect = false
+
+        logger.debug(LOG_TAG) { "Requesting connection token..." }
+        response = Api.post("/listings/push/v2/negotiate?negotiateVersion=1", Api::DEFAULT_HEADERS, "", :gsh)
+
+        if response.status != 200
+          @auto_reconnect = true
+          return
+        end
+
+        data = JSON.parse(response.body, symbolize_names: true)
+
+        @invocation_id = 0 if @invocation_id > 9095
+        id = data[:connectionToken]
+        endpoint = "#{Api::SERVER_LIST_ENDPOINT}/listings/push/v2?id=#{id}"
+
+        logger.debug(LOG_TAG) { "Connecting to websocket..." }
+
+        Async::WebSocket::Client.connect(Async::HTTP::Endpoint.parse(endpoint)) do |connection|
+          logger.debug(LOG_TAG) { "Requesting json protocol, v1..." }
+          async_websocket_send(connection, { protocol: "json", version: 1 }.to_json)
+        end
+      end
+
+      def async_websocket_send(connection, payload)
+        connection.write("#{payload}\x1e")
+        connection.flush
+      end
+
+      def async_websocket_read(connection, payload)
       end
 
       def connect

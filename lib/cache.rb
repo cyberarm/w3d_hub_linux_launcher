@@ -50,54 +50,16 @@ class W3DHub
     end
 
     # Download a W3D Hub package
-    # TODO: More work needed to make this work reliably
-    def self._async_fetch_package(package, block)
-      path = package_path(package.category, package.subcategory, package.name, package.version)
-      headers = Api::FORM_ENCODED_HEADERS
-      start_from_bytes = package.custom_partially_valid_at_bytes
-
-      logger.info(LOG_TAG) { "    Start from bytes: #{start_from_bytes} of #{package.size}" }
-
-      create_directories(path)
-
-      file = File.open(path, start_from_bytes.positive? ? "r+b" : "wb")
-
-      if start_from_bytes.positive?
-        headers = Api::FORM_ENCODED_HEADERS + [["Range", "bytes=#{start_from_bytes}-"]]
-        file.pos = start_from_bytes
-      end
-
-      body = "data=#{JSON.dump({ category: package.category, subcategory: package.subcategory, name: package.name, version: package.version })}"
-
-      response = Api.post("/apis/launcher/1/get-package", headers, body)
-
-      total_bytes = package.size
-      remaining_bytes = total_bytes - start_from_bytes
-
-      response.each do |chunk|
-        file.write(chunk)
-
-        remaining_bytes -= chunk.size
-
-        block.call(chunk, remaining_bytes, total_bytes)
-      end
-
-      response.status == 200
-    ensure
-      file&.close
-    end
-
-    # Download a W3D Hub package
-    def self.fetch_package(package, block)
+    def self.async_fetch_package(package, block)
       endpoint_download_url = package.download_url || "#{Api::W3DHUB_API_ENDPOINT}/apis/launcher/1/get-package"
       if package.download_url
         uri_path = package.download_url.split("/").last
         endpoint_download_url = package.download_url.sub(uri_path, URI.encode_uri_component(uri_path))
       end
       path = package_path(package.category, package.subcategory, package.name, package.version)
-      headers = { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": Api::USER_AGENT }
-      headers["Authorization"] = "Bearer #{Store.account.access_token}" if Store.account && !package.download_url
-      body = "data=#{JSON.dump({ category: package.category, subcategory: package.subcategory, name: package.name, version: package.version })}"
+      headers = [["content-type", "application/x-www-form-urlencoded"], ["user-agent", Api::USER_AGENT]]
+      headers << ["authorization", "Bearer #{Store.account.access_token}"] if Store.account && !package.download_url
+      body = URI.encode_www_form("data": JSON.dump({ category: package.category, subcategory: package.subcategory, name: package.name, version: package.version }))
       start_from_bytes = package.custom_partially_valid_at_bytes
 
       logger.info(LOG_TAG) { "    Start from bytes: #{start_from_bytes} of #{package.size}" }
@@ -107,52 +69,61 @@ class W3DHub
       file = File.open(path, start_from_bytes.positive? ? "r+b" : "wb")
 
       if start_from_bytes.positive?
-        headers["Range"] = "bytes=#{start_from_bytes}-"
+        headers << ["range", "bytes=#{start_from_bytes}-"]
         file.pos = start_from_bytes
       end
 
-      streamer = lambda do |chunk, remaining_bytes, total_bytes|
-        file.write(chunk)
+      result = false
+      Sync do
+        response = nil
 
-        block.call(chunk, remaining_bytes, total_bytes)
-      end
+        Async::HTTP::Internet.send(package.download_url ? :get : :post, endpoint_download_url, headers, body) do |r|
+          response = r
+          if r.success?
+            total_bytes = package.size
 
-      # Create a new connection due to some weirdness somewhere in Excon
-      response = Excon.send(
-        package.download_url ? :get : :post,
-        endpoint_download_url,
-        tcp_nodelay: true,
-        headers: headers,
-        body: package.download_url ? "" : body,
-        chunk_size: 50_000,
-        response_block: streamer,
-        middlewares: Excon.defaults[:middlewares] + [Excon::Middleware::RedirectFollower]
-      )
+            r.each do |chunk|
+              file.write(chunk)
 
-      if response.status == 200 || response.status == 206
-        return true
-      else
+              block.call(chunk, total_bytes - file.pos, total_bytes)
+            end
+
+            result = true
+          end
+        end
+
+        if response.status == 200 || response.status == 206
+          result = true
+        else
+          logger.debug(LOG_TAG) { "    Failed to retrieve package: (#{package.category}:#{package.subcategory}:#{package.name}:#{package.version})" }
+          logger.debug(LOG_TAG) { "      Download URL: #{endpoint_download_url}, response: #{response&.status || -1}" }
+
+          result = false
+        end
+      rescue Async::Timeout => e
+        logger.error(LOG_TAG) { "    Connection to \"#{endpoint_download_url}\" timed out after: #{W3DHub::Api::API_TIMEOUT} seconds" }
+        logger.error(LOG_TAG) { e }
         logger.debug(LOG_TAG) { "    Failed to retrieve package: (#{package.category}:#{package.subcategory}:#{package.name}:#{package.version})" }
         logger.debug(LOG_TAG) { "      Download URL: #{endpoint_download_url}, response: #{response&.status || -1}" }
 
-        return false
+        result = false
+      rescue StandardError => e
+        logger.error(LOG_TAG) { "    Connection to \"#{endpoint_download_url}\" errored:" }
+        logger.error(LOG_TAG) { e }
+        logger.debug(LOG_TAG) { "    Failed to retrieve package: (#{package.category}:#{package.subcategory}:#{package.name}:#{package.version})" }
+        logger.debug(LOG_TAG) { "      Download URL: #{endpoint_download_url}, response: #{response&.status || -1}" }
+
+        result = false
       end
-    rescue Excon::Error::Timeout => e
-      logger.error(LOG_TAG) { "    Connection to \"#{endpoint_download_url}\" timed out after: #{W3DHub::Api::API_TIMEOUT} seconds" }
-      logger.error(LOG_TAG) { e }
-      logger.debug(LOG_TAG) { "    Failed to retrieve package: (#{package.category}:#{package.subcategory}:#{package.name}:#{package.version})" }
-      logger.debug(LOG_TAG) { "      Download URL: #{endpoint_download_url}, response: #{response&.status || -1}" }
 
-      return false
-    rescue Excon::Error => e
-      logger.error(LOG_TAG) { "    Connection to \"#{endpoint_download_url}\" errored:" }
-      logger.error(LOG_TAG) { e }
-      logger.debug(LOG_TAG) { "    Failed to retrieve package: (#{package.category}:#{package.subcategory}:#{package.name}:#{package.version})" }
-      logger.debug(LOG_TAG) { "      Download URL: #{endpoint_download_url}, response: #{response&.status || -1}" }
-
-      return false
+      result
     ensure
       file&.close
+    end
+
+    # Download a W3D Hub package
+    def self.fetch_package(package, block)
+      async_fetch_package(package, block)
     end
 
     def self.acquire_net_lock(key)

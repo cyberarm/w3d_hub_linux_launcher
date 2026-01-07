@@ -14,7 +14,10 @@ require "logger"
 require "time"
 require "base64"
 require "zip"
-require "excon"
+require "async"
+require "async/http/endpoint"
+require "async/websocket/client"
+require "async/http/internet/instance"
 
 class W3DHub
   W3DHUB_DEBUG = ARGV.join.include?("--debug")
@@ -32,7 +35,7 @@ class W3DHub
   FileUtils.mkdir_p(CACHE_PATH) unless Dir.exist?(CACHE_PATH)
   FileUtils.mkdir_p(LOGS_PATH) unless Dir.exist?(LOGS_PATH)
 
-  LOGGER = Logger.new("#{LOGS_PATH}/w3d_hub_linux_launcher.log", "daily")
+  LOGGER = W3DHUB_DEBUG ? Logger.new(STDOUT) : Logger.new("#{LOGS_PATH}/w3d_hub_linux_launcher.log", "daily")
   LOGGER.level = Logger::Severity::DEBUG # W3DHUB_DEBUG ? Logger::Severity::DEBUG : Logger::Severity::WARN
 
   LOG_TAG = "W3DHubLinuxLauncher"

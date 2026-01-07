@@ -10,35 +10,37 @@ class W3DHub
 
     API_TIMEOUT = 30 # seconds
     USER_AGENT = "Cyberarm's Linux Friendly W3D Hub Launcher v#{W3DHub::VERSION}".freeze
-    DEFAULT_HEADERS = {
-      "User-Agent": USER_AGENT,
-      "Accept": "application/json"
-    }.freeze
-    FORM_ENCODED_HEADERS = {
-      "User-Agent": USER_AGENT,
-      "Accept": "application/json",
-      "Content-Type": "application/x-www-form-urlencoded"
-    }.freeze
+    DEFAULT_HEADERS = [
+      ["user-agent", USER_AGENT],
+      ["accept", "application/json"]
+    ].freeze
+    FORM_ENCODED_HEADERS = [
+      ["user-agent", USER_AGENT],
+      ["accept", "application/json"],
+      ["content-type", "application/x-www-form-urlencoded"]
+    ].freeze
 
     def self.on_thread(method, *args, &callback)
       BackgroundWorker.foreground_job(-> { Api.send(method, *args) }, callback)
     end
 
-    class DummyResponse
-      def initialize(error)
+    class Response
+      def initialize(error: nil, status: -1, body: "")
+        @status = status
+        @body = body
         @error = error
       end
 
       def success?
-        false
+        @status == 200
       end
 
       def status
-        -1
+        @status
       end
 
       def body
-        ""
+        @body
       end
 
       def error
@@ -48,103 +50,60 @@ class W3DHub
 
     #! === W3D Hub API === !#
     W3DHUB_API_ENDPOINT = "https://secure.w3dhub.com".freeze # "https://example.com" # "http://127.0.0.1:9292".freeze #
-    W3DHUB_API_CONNECTION = Excon.new(W3DHUB_API_ENDPOINT, persistent: true)
-
     ALT_W3DHUB_API_ENDPOINT = "https://w3dhub-api.w3d.cyberarm.dev".freeze # "https://secure.w3dhub.com".freeze # "https://example.com" # "http://127.0.0.1:9292".freeze #
-    ALT_W3DHUB_API_API_CONNECTION = Excon.new(ALT_W3DHUB_API_ENDPOINT, persistent: true)
 
-    def self.excon(method, url, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub)
+    def self.async_http(method, url, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub)
       case backend
       when :w3dhub
-        connection = W3DHUB_API_CONNECTION
         endpoint   = W3DHUB_API_ENDPOINT
       when :alt_w3dhub
-        connection = ALT_W3DHUB_API_API_CONNECTION
         endpoint   = ALT_W3DHUB_API_ENDPOINT
       when :gsh
-        connection = GSH_CONNECTION
         endpoint   = SERVER_LIST_ENDPOINT
       end
 
-      logger.debug(LOG_TAG) { "Fetching #{method.to_s.upcase} \"#{endpoint}#{url}\"..." }
+      url = "#{endpoint}#{url}" unless url.start_with?("http")
+
+      logger.debug(LOG_TAG) { "Fetching #{method.to_s.upcase} \"#{url}\"..." }
 
       # Inject Authorization header if account data is populated
       if Store.account
         logger.debug(LOG_TAG) { "  Injecting Authorization header..." }
         headers = headers.dup
-        headers["Authorization"] = "Bearer #{Store.account.access_token}"
+        headers << ["authorization", "Bearer #{Store.account.access_token}"]
       end
 
-      begin
-        connection.send(
-          method,
-          path: url.sub(endpoint, ""),
-          headers: headers,
-          body: body,
-          nonblock: true,
-          tcp_nodelay: true,
-          write_timeout: API_TIMEOUT,
-          read_timeout: API_TIMEOUT,
-          connect_timeout: API_TIMEOUT,
-          idempotent: true,
-          retry_limit: 3,
-          retry_interval: 1,
-          retry_errors: [Excon::Error::Socket, Excon::Error::HTTPStatus] # Don't retry on timeout
-        )
-      rescue Excon::Error::Timeout => e
-        logger.error(LOG_TAG) { "Connection to \"#{url}\" timed out after: #{API_TIMEOUT} seconds" }
+      Sync do
+        begin
+         response = Async::HTTP::Internet.send(method, url, headers, body)
 
-        DummyResponse.new(e)
-      rescue Excon::Error => e
-        logger.error(LOG_TAG) { "Connection to \"#{url}\" errored:" }
-        logger.error(LOG_TAG) { e }
+          Response.new(status: response.status, body: response.read)
+        rescue Async::TimeoutError => e
+          logger.error(LOG_TAG) { "Connection to \"#{url}\" timed out after: #{API_TIMEOUT} seconds" }
 
-        DummyResponse.new(e)
+          Response.new(error: e)
+        rescue StandardError => e
+          logger.error(LOG_TAG) { "Connection to \"#{url}\" errored:" }
+          logger.error(LOG_TAG) { e }
+
+          Response.new(error: e)
+        ensure
+          response&.close
+        end
       end
     end
 
     def self.post(url, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub)
-      excon(:post, url, headers, body, backend)
+      async_http(:post, url, headers, body, backend)
     end
 
     def self.get(url, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub)
-      excon(:get, url, headers, body, backend)
+      async_http(:get, url, headers, body, backend)
     end
 
     # Api.get but handles any URL instead of known hosts
     def self.fetch(url, headers = DEFAULT_HEADERS, body = nil, backend = nil)
-      uri = URI(url)
-
-      # Use Api.get for `W3DHUB_API_ENDPOINT` URL's to exploit keep alive and connection reuse (faster responses)
-      return excon(:get, url, headers, body, backend) if "#{uri.scheme}://#{uri.host}" == W3DHUB_API_ENDPOINT
-
-      logger.debug(LOG_TAG) { "Fetching GET \"#{url}\"..." }
-
-      begin
-        Excon.get(
-          url,
-          headers: headers,
-          body: body,
-          nonblock: true,
-          tcp_nodelay: true,
-          write_timeout: API_TIMEOUT,
-          read_timeout: API_TIMEOUT,
-          connect_timeout: API_TIMEOUT,
-          idempotent: true,
-          retry_limit: 3,
-          retry_interval: 1,
-          retry_errors: [Excon::Error::Socket, Excon::Error::HTTPStatus] # Don't retry on timeout
-        )
-      rescue Excon::Error::Timeout => e
-        logger.error(LOG_TAG) { "Connection to \"#{url}\" timed out after: #{API_TIMEOUT} seconds" }
-
-        DummyResponse.new(e)
-      rescue Excon::Error => e
-        logger.error(LOG_TAG) { "Connection to \"#{url}\" errored:" }
-        logger.error(LOG_TAG) { e }
-
-        DummyResponse.new(e)
-      end
+      async_http(:get, url, headers, body, backend)
     end
 
     # Method: POST
@@ -163,7 +122,7 @@ class W3DHub
     # On a failed login the service responds with:
     # {"error":"login-failed"}
     def self.refresh_user_login(refresh_token, backend = :w3dhub)
-      body = "data=#{JSON.dump({refreshToken: refresh_token})}"
+      body = URI.encode_www_form("data": JSON.dump({refreshToken: refresh_token}))
       response = post("/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body, backend)
 
       if response.status == 200
@@ -183,7 +142,7 @@ class W3DHub
 
     # See #user_refresh_token
     def self.user_login(username, password, backend = :w3dhub)
-      body = "data=#{JSON.dump({username: username, password: password})}"
+      body = URI.encode_www_form("data": JSON.dump({username: username, password: password}))
       response = post("/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body, backend)
 
       if response.status == 200
@@ -205,7 +164,7 @@ class W3DHub
     #
     # Response: avatar-uri (Image download uri), id, username
     def self.user_details(id, backend = :w3dhub)
-      body = "data=#{JSON.dump({ id: id })}"
+      body = URI.encode_www_form("data": JSON.dump({ id: id }))
       user_details = post("/apis/w3dhub/1/get-user-details", FORM_ENCODED_HEADERS, body, backend)
 
       if user_details.status == 200
@@ -322,7 +281,7 @@ class W3DHub
     # Client requests news for a specific application/game e.g.: data={"category":"ia"} ("launcher-home" retrieves the weekly hub updates)
     # Response is a JSON hash with a "highlighted" and "news" keys; the "news" one seems to be the desired one
     def self.news(category, backend = :w3dhub)
-      body = "data=#{JSON.dump({category: category})}"
+      body = URI.encode_www_form("data": JSON.dump({category: category}))
       response = post("/apis/w3dhub/1/get-news", FORM_ENCODED_HEADERS, body, backend)
 
       if response.status == 200
@@ -383,7 +342,6 @@ class W3DHub
     # SERVER_LIST_ENDPOINT = "https://gsh.w3dhub.com".freeze
     SERVER_LIST_ENDPOINT = "https://gsh.w3d.cyberarm.dev".freeze
     # SERVER_LIST_ENDPOINT = "http://127.0.0.1:9292".freeze
-    GSH_CONNECTION = Excon.new(SERVER_LIST_ENDPOINT, persistent: true)
 
     # Method: GET
     # FORMAT: JSON
