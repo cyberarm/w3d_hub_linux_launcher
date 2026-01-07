@@ -201,7 +201,7 @@ class W3DHub
       def launcher_updater
         @status_label.value = "Checking for Launcher updates..." # I18n.t(:"boot.checking_for_updates")
 
-        Api.on_thread(:fetch, "https://api.github.com/repos/Inq8/CAmod/releases/latest") do |response|
+        Api.on_thread(:fetch, "https://api.github.com/repos/cyberarm/w3d_hub_linux_launcher/releases/latest") do |response|
           if response.status == 200
             hash = JSON.parse(response.body, symbolize_names: true)
             available_version = hash[:tag_name].downcase.sub("v", "")
