@@ -333,7 +333,8 @@ class W3DHub
             para server&.status&.name, tag: :server_name, font: BOLD_FONT, text_wrap: :none
 
             flow(width: 1.0, height: 1.0) do
-              para Store.application_manager.channel_name(server.game, server.channel).to_s, width: 172, margin_right: 8, tag: :server_channel
+              para server.version, margin_right: 8, tag: :server_version
+              para Store.application_manager.channel_name(server.game, server.channel).to_s, width: 148, margin_right: 8, tag: :server_channel
               para server.region, tag: :server_region
             end
           end
