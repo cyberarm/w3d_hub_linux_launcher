@@ -739,34 +739,51 @@ class W3DHub
         temp_file_path = normalize_path(manifest_file.name, temp_path)
 
         logger.info(LOG_TAG) { "      Loading #{temp_file_path}.patch..." }
-        patch_mix = W3DHub::Mixer::Reader.new(file_path: "#{temp_file_path}.patch", ignore_crc_mismatches: false)
-        patch_info = JSON.parse(patch_mix.package.files.find { |f| f.name.casecmp?(".w3dhub.patch") || f.name.casecmp?(".bhppatch") }.data, symbolize_names: true)
+        patch_mix = W3DHub::WWMix.new(path: "#{temp_file_path}.patch")
+        unless patch_mix.load
+          raise patch_mix.error_reason
+        end
+        patch_entry = patch_mix.entries.find { |e| e.name.casecmp?(".w3dhub.patch") || e.name.casecmp?(".bhppatch") }
+        patch_entry.read
+
+        patch_info = JSON.parse(patch_entry.blob, symbolize_names: true)
 
         logger.info(LOG_TAG) { "      Loading #{file_path}..." }
-        target_mix = W3DHub::Mixer::Reader.new(file_path: "#{file_path}", ignore_crc_mismatches: false)
+        target_mix = W3DHub::WWMix.new(path: "#{file_path}")
+        unless target_mix.load
+          raise target_mix.error_reason
+        end
 
         logger.info(LOG_TAG) { "      Removing files..." } if patch_info[:removedFiles].size.positive?
         patch_info[:removedFiles].each do |file|
           logger.debug(LOG_TAG) { "        #{file}" }
-          target_mix.package.files.delete_if { |f| f.name.casecmp?(file) }
+          target_mix.entries.delete_if { |e| e.name.casecmp?(file) }
         end
 
         logger.info(LOG_TAG) { "      Adding/Updating files..." } if patch_info[:updatedFiles].size.positive?
         patch_info[:updatedFiles].each do |file|
           logger.debug(LOG_TAG) { "        #{file}" }
 
-          patch = patch_mix.package.files.find { |f| f.name.casecmp?(file) }
-          target = target_mix.package.files.find { |f| f.name.casecmp?(file) }
+          patch = patch_mix.entries.find { |e| e.name.casecmp?(file) }
+          target = target_mix.entries.find { |e| e.name.casecmp?(file) }
 
           if target
-            target_mix.package.files[target_mix.package.files.index(target)] = patch
+            target_mix.entries[target_mix.entries.index(target)] = patch
           else
-            target_mix.package.files << patch
+            target_mix.entries << patch
           end
         end
 
         logger.info(LOG_TAG) { "      Writing updated #{file_path}..." } if patch_info[:updatedFiles].size.positive?
-        W3DHub::Mixer::Writer.new(file_path: "#{file_path}", package: target_mix.package, memory_buffer: true, encrypted: target_mix.encrypted?)
+        temp_mix_path = "#{temp_path}/#{File.basename(file_path)}"
+        temp_mix = W3DHub::WWMix.new(path: temp_mix_path)
+        target_mix.entries.each { |e| temp_mix.add_entry(entry: e) }
+        unless temp_mix.save
+          raise temp_mix.error_reason
+        end
+
+        # Overwrite target mix with temp mix
+        FileUtils.mv(temp_mix_path, file_path)
 
         FileUtils.remove_dir(temp_path)
 

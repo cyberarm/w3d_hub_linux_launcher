@@ -11,4 +11,4 @@ Only requires OpenGL, Ruby, and a few gems.
 `ruby w3d_hub_linux_launcher.rb`
 
 ## Contributing
-Contributors welcome, especially if anyone can lend a hand at reducing patching memory usage.
+Contributors welcome.
