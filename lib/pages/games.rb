@@ -369,7 +369,7 @@ class W3DHub
                     flow(width: 1.0, height: 28, padding: 8) do
                       para "Favorite", fill: true
                       toggle_button checked: Store.application_manager.favorite?(game.id), height: 18, padding_top: 3, padding_right: 3, padding_bottom: 3, padding_left: 3 do |btn|
-                        Store.application_manager.favorive(game.id, btn.value)
+                        Store.application_manager.favorite(game.id, btn.value)
                         Store.settings.save_settings
 
                         populate_games_list

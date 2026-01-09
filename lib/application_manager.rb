@@ -249,9 +249,17 @@ class W3DHub
 
       return nil unless app_data
 
-      found_server = Store.server_list.select do |server|
-        server.game == app_id && server.channel == channel && !server.status.password && server.status.player_count < server.status.max_players
-      end&.first
+      server_options = Store.server_list.select do |server|
+        server.game == app_id &&
+        server.channel == channel &&
+        !server.status.password &&
+        server.status.player_count < server.status.max_players
+      end
+
+      # try to find server with lowest ping and matching version
+      found_server = server_options.find { |server| server.version == app_data[:installed_version] }
+      # try to find server with lowest ping and undefined version
+      found_server ||= server_options.find { |server| server.version == Api::ServerListServer::NO_OR_DEFAULT_VERSION }
 
       found_server ? found_server : nil
     end
@@ -283,7 +291,7 @@ class W3DHub
       end
     end
 
-    def favorive(app_id, bool)
+    def favorite(app_id, bool)
       Store.settings[:favorites] ||= {}
 
       if bool
