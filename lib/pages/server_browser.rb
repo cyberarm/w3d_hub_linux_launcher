@@ -3,7 +3,7 @@ class W3DHub
     class ServerBrowser < Page
       def setup
         @server_locked_icons = {}
-        @refresh_server_list = false
+        @refresh_server_list_at_ms = nil
         refresh_server = false
 
         @selected_server ||= nil
@@ -138,8 +138,8 @@ class W3DHub
       def update
         super
 
-        if @refresh_server_list && Gosu.milliseconds >= @refresh_server_list
-          @refresh_server_list = nil
+        if @refresh_server_list_at_ms && Gosu.milliseconds >= @refresh_server_list_at_ms
+          @refresh_server_list_at_ms = nil
 
           # populate_server_list
           reorder_server_list
@@ -213,25 +213,13 @@ class W3DHub
         server.ping == W3DHub::Api::ServerListServer::NO_OR_BAD_PING ? "Ping failed" : "Ping #{server.ping}ms"
       end
 
-      def find_element_by_tag(container, tag, list = [])
-        return unless container
-
-        container.children.each do |child|
-          list << child if child.style.tag == tag
-
-          find_element_by_tag(child, tag, list) if child.is_a?(CyberarmEngine::Element::Container)
-        end
-
-        return list.first
-      end
-
       def refresh_server_list(server, mode = :update) # :remove, :refresh_all
         if mode == :refresh_all
           populate_server_list
           return
         end
 
-        @refresh_server_list = Gosu.milliseconds + 3_000
+        @refresh_server_list_at_ms = Gosu.milliseconds + 3_000
         @refresh_server = server if @selected_server&.id == server.id
 
         server_container = find_element_by_tag(@server_list_container, server.id)
@@ -333,7 +321,8 @@ class W3DHub
             para server&.status&.name, tag: :server_name, font: BOLD_FONT, text_wrap: :none
 
             flow(width: 1.0, height: 1.0) do
-              para Store.application_manager.channel_name(server.game, server.channel).to_s, width: 172, margin_right: 8, tag: :server_channel
+              para server.version, margin_right: 8, tag: :server_version
+              para Store.application_manager.channel_name(server.game, server.channel).to_s, width: 148, margin_right: 8, tag: :server_channel
               para server.region, tag: :server_region
             end
           end
@@ -389,11 +378,12 @@ class W3DHub
               flow(width: 1.0, height: 46, margin_top: 16, margin_bottom: 16) do
                 game_installed = Store.application_manager.installed?(server.game, server.channel)
                 game_updatable = Store.application_manager.updateable?(server.game, server.channel)
+                matching_version = (game_installed && game_installed[:installed_version] == server.version) || server.version == Api::ServerListServer::NO_OR_DEFAULT_VERSION
                 channel = Store.application_manager.channel(server.game, server.channel)
                 style = ((channel && channel.user_level.downcase.strip == "public") || server.channel == "release") ? {} : TESTING_BUTTON
 
                 flow(fill: true)
-                button "<b>#{I18n.t(:"server_browser.join_server")}</b>", enabled: (game_installed && !game_updatable), **style do
+                button "<b>#{I18n.t(:"server_browser.join_server")}</b>", enabled: (game_installed && !game_updatable && matching_version), **style do
                   # Check for nickname
                   #   prompt for nickname
                   # !abort unless nickname set

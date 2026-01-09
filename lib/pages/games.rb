@@ -141,6 +141,8 @@ class W3DHub
 
               stack(width: 1.0, fill: true, scroll: true, margin_top: 32) do
                 if Store.application_manager.installed?(game.id, channel.id)
+                  para "v#{Store.application_manager.installed?(game.id, channel.id)[:installed_version]}"
+
                   Hash.new.tap { |hash|
                     # hash[I18n.t(:"games.game_settings")] = { icon: "gear", block: proc { Store.application_manager.settings(game.id, channel.id) } }
                     # hash[I18n.t(:"games.wine_configuration")] = { icon: "gear", block: proc { Store.application_manager.wine_configuration(game.id, channel.id) } } if W3DHub.unix?
@@ -367,7 +369,7 @@ class W3DHub
                     flow(width: 1.0, height: 28, padding: 8) do
                       para "Favorite", fill: true
                       toggle_button checked: Store.application_manager.favorite?(game.id), height: 18, padding_top: 3, padding_right: 3, padding_bottom: 3, padding_left: 3 do |btn|
-                        Store.application_manager.favorive(game.id, btn.value)
+                        Store.application_manager.favorite(game.id, btn.value)
                         Store.settings.save_settings
 
                         populate_games_list

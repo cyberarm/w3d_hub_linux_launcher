@@ -14,7 +14,10 @@ require "logger"
 require "time"
 require "base64"
 require "zip"
-require "excon"
+require "async"
+require "async/http/endpoint"
+require "async/websocket/client"
+require "async/http/internet/instance"
 
 class W3DHub
   W3DHUB_DEBUG = ARGV.join.include?("--debug")
@@ -32,7 +35,7 @@ class W3DHub
   FileUtils.mkdir_p(CACHE_PATH) unless Dir.exist?(CACHE_PATH)
   FileUtils.mkdir_p(LOGS_PATH) unless Dir.exist?(LOGS_PATH)
 
-  LOGGER = Logger.new("#{LOGS_PATH}/w3d_hub_linux_launcher.log", "daily")
+  LOGGER = W3DHUB_DEBUG ? Logger.new(STDOUT) : Logger.new("#{LOGS_PATH}/w3d_hub_linux_launcher.log", "daily")
   LOGGER.level = Logger::Severity::DEBUG # W3DHUB_DEBUG ? Logger::Severity::DEBUG : Logger::Severity::WARN
 
   LOG_TAG = "W3DHubLinuxLauncher"
@@ -84,11 +87,10 @@ class W3DHub
   BLACK_IMAGE = Gosu::Image.from_blob(1, 1, "\x00\x00\x00\xff")
 end
 
-require "i18n"
-require "websocket-client-simple"
 require "English"
 require "sdl2"
 
+require_relative "lib/i18n"
 I18n.load_path << Dir["#{W3DHub::GAME_ROOT_PATH}/locales/*.yml"]
 I18n.default_locale = :en
 
@@ -102,11 +104,12 @@ require_relative "lib/store"
 require_relative "lib/window"
 require_relative "lib/cache"
 require_relative "lib/settings"
-require_relative "lib/mixer"
+require_relative "lib/ww_mix"
 require_relative "lib/ico"
-require_relative "lib/multicast_server"
+require_relative "lib/broadcast_server"
 require_relative "lib/hardware_survey"
 require_relative "lib/game_settings"
+require_relative "lib/websocket_client"
 require_relative "lib/background_worker"
 require_relative "lib/application_manager"
 require_relative "lib/application_manager/manifest"

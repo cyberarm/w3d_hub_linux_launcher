@@ -2,6 +2,9 @@ class W3DHub
   class Api
     class ServerListUpdater
       LOG_TAG = "W3DHub::Api::ServerListUpdater".freeze
+
+      TYPE_PING = 6
+
       include CyberarmEngine::Common
       @@instance = nil
 
@@ -15,6 +18,7 @@ class W3DHub
 
       def initialize
         @auto_reconnect = false
+        @reconnection_delay = 1
 
         @invocation_id = 0
 
@@ -24,19 +28,21 @@ class W3DHub
 
       def run
         Thread.new do
-          begin
-            connect
+          Sync do |task|
+            begin
+              @auto_reconnect = true
 
-            while W3DHub::BackgroundWorker.alive?
-              connect if @auto_reconnect
-              sleep 1
+              while W3DHub::BackgroundWorker.alive?
+                connect if @auto_reconnect
+                sleep @reconnection_delay
+              end
+            rescue => e
+              puts e
+              puts e.backtrace
+
+              sleep 30
+              retry
             end
-          rescue => e
-            puts e
-            puts e.backtrace
-
-            sleep 30
-            retry
           end
         end
 
@@ -52,8 +58,12 @@ class W3DHub
 
         if response.status != 200
           @auto_reconnect = true
+          @reconnection_delay = @reconnection_delay * 2
+          @reconnection_delay = 60 if @reconnection_delay > 60
           return
         end
+
+        @reconnection_delay = 1
 
         data = JSON.parse(response.body, symbolize_names: true)
 
@@ -63,7 +73,7 @@ class W3DHub
 
         logger.debug(LOG_TAG) { "Connecting to websocket..." }
         this = self
-        @ws = WebSocket::Client::Simple.connect(endpoint, headers: Api::DEFAULT_HEADERS) do |ws|
+        @ws = WebSocketClient.new.connect(endpoint, headers: Api::DEFAULT_HEADERS) do |ws|
           ws.on(:open) do
             logger.debug(LOG_TAG) { "Requesting json protocol, v1..." }
             ws.send({ protocol: "json", version: 1 }.to_json + "\x1e")
@@ -78,65 +88,71 @@ class W3DHub
           end
 
           ws.on(:message) do |msg|
-            msg = msg.data.split("\x1e").first
+            msg = msg.to_str.split("\x1e").first
 
             hash = JSON.parse(msg, symbolize_names: true)
 
             # pp hash if hash[:target] != "ServerStatusChanged" && hash[:type] != 6 && hash[:type] != 3
 
             # Send PING(?)
-            if hash.empty? || hash[:type] == 6
-              ws.send({ type: 6 }.to_json + "\x1e")
-            else
-              case hash[:type]
-              when 1
-                case hash[:target]
-                when "ServerRegistered"
-                  data = hash[:arguments].first
+            if hash.empty? || hash[:type] == TYPE_PING
+              ws.send({ type: TYPE_PING }.to_json + "\x1e")
+              next
+            end
 
-                  this.invocation_id += 1
-                  out = { "type": 1, "invocationId": "#{this.invocation_id}", "target": "SubscribeToServerStatusUpdates", "arguments": [data[:id], 1] }
-                  ws.send(out.to_json + "\x1e")
+            case hash[:type]
+            when 1
+              case hash[:target]
+              when "ServerRegistered"
+                data = hash[:arguments].first
 
-                  BackgroundWorker.foreground_job(
-                    ->(data) { [Api.server_details(data[:id], 2), data] },
-                    ->(array) do
-                      server_data, data = array
+                this.invocation_id += 1
+                out = {
+                        "type": 1,
+                        "invocationId": "#{this.invocation_id}",
+                        "target": "SubscribeToServerStatusUpdates",
+                        "arguments": [data[:id], 1]
+                      }
+                ws.send(out.to_json + "\x1e")
 
-                      next unless server_data
+                BackgroundWorker.foreground_job(
+                  ->(data) { [Api.server_details(data[:id], 2), data] },
+                  ->(array) do
+                    server_data, data = array
 
-                      data[:status] = server_data
+                    next unless server_data
 
-                      server = ServerListServer.new(data)
-                      Store.server_list.push(server)
-                      States::Interface.instance&.update_server_browser(server, :update)
-                    end,
-                    nil,
-                    data
-                  )
+                    data[:status] = server_data
 
-                when "ServerStatusChanged"
-                  id, data = hash[:arguments]
-                  server = Store.server_list.find { |s| s.id == id }
-                  server_updated = server&.update(data)
+                    server = ServerListServer.new(data)
+                    Store.server_list.push(server)
+                    States::Interface.instance&.update_server_browser(server, :update)
+                  end,
+                  nil,
+                  data
+                )
 
-                  BackgroundWorker.foreground_job(->(server) { server }, ->(server) { States::Interface.instance&.update_server_browser(server, :update) }, nil, server) if server_updated
+              when "ServerStatusChanged"
+                id, data = hash[:arguments]
+                server = Store.server_list.find { |s| s.id == id }
+                server_updated = server&.update(data)
 
-                when "ServerUnregistered"
-                  id = hash[:arguments].first
-                  server = Store.server_list.find { |s| s.id == id }
+                BackgroundWorker.foreground_job(->(server) { server }, ->(server) { States::Interface.instance&.update_server_browser(server, :update) }, nil, server) if server_updated
 
-                  if server
-                    Store.server_list.delete(server)
-                    BackgroundWorker.foreground_job(->(server) { server }, ->(server) { States::Interface.instance&.update_server_browser(server, :remove) }, nil, server)
-                  end
+              when "ServerUnregistered"
+                id = hash[:arguments].first
+                server = Store.server_list.find { |s| s.id == id }
+
+                if server
+                  Store.server_list.delete(server)
+                  BackgroundWorker.foreground_job(->(server) { server }, ->(server) { States::Interface.instance&.update_server_browser(server, :remove) }, nil, server)
                 end
               end
             end
           end
 
-          ws.on(:close) do |e|
-            logger.error(LOG_TAG) { e }
+          ws.on(:close) do
+            logger.error(LOG_TAG) { "Connection closed." }
             this.auto_reconnect = true
             ws.close
           end
@@ -181,14 +197,24 @@ class W3DHub
           # unsubscribe from removed servers
           removed_servers.each do
             @invocation_id += 1
-            out = { "type": 1, "invocationId": "#{@invocation_id}", "target": "SubscribeToServerStatusUpdates", "arguments": [server.id, 0] }
+            out = {
+                    "type": 1,
+                    "invocationId": "#{@invocation_id}",
+                    "target": "SubscribeToServerStatusUpdates",
+                    "arguments": [server.id, 0]
+                  }
             ws.send(out.to_json + "\x1e")
           end
 
           # subscribe to new servers
           new_servers.each do
             @invocation_id += 1
-            out = { "type": 1, "invocationId": "#{@invocation_id}", "target": "SubscribeToServerStatusUpdates", "arguments": [server.id, 1] }
+            out = {
+                    "type": 1,
+                    "invocationId": "#{@invocation_id}",
+                    "target": "SubscribeToServerStatusUpdates",
+                    "arguments": [server.id, 1]
+                  }
             ws.send(out.to_json + "\x1e")
           end
         end

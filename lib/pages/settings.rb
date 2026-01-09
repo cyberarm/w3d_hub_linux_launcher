@@ -51,10 +51,16 @@ class W3DHub
               end
             end
 
-            stack(width: 128, max_height: 256, h_align: :center, margin_top: 16, fill: true) do
+            flow(width: 256, height: 64, h_align: :center, margin_top: 16) do
               button "Save", width: 1.0 do
                 save_settings!
               end
+
+              flow(fill: true)
+
+            end
+            button("Clear package cache: #{W3DHub.format_size(Dir.glob("#{Store.settings[:package_cache_dir]}/**/**").map { |f| File.file?(f) ? File.size(f) : 0}.sum)}", **DANGEROUS_BUTTON) do
+              # TODO.
             end
           end
         end
