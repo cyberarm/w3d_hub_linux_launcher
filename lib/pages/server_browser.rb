@@ -213,18 +213,6 @@ class W3DHub
         server.ping == W3DHub::Api::ServerListServer::NO_OR_BAD_PING ? "Ping failed" : "Ping #{server.ping}ms"
       end
 
-      def find_element_by_tag(container, tag, list = [])
-        return unless container
-
-        container.children.each do |child|
-          list << child if child.style.tag == tag
-
-          find_element_by_tag(child, tag, list) if child.is_a?(CyberarmEngine::Element::Container)
-        end
-
-        return list.first
-      end
-
       def refresh_server_list(server, mode = :update) # :remove, :refresh_all
         if mode == :refresh_all
           populate_server_list
