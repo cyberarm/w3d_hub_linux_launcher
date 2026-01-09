@@ -3,7 +3,7 @@ class W3DHub
     class ServerBrowser < Page
       def setup
         @server_locked_icons = {}
-        @refresh_server_list = false
+        @refresh_server_list_at_ms = nil
         refresh_server = false
 
         @selected_server ||= nil
@@ -138,8 +138,8 @@ class W3DHub
       def update
         super
 
-        if @refresh_server_list && Gosu.milliseconds >= @refresh_server_list
-          @refresh_server_list = nil
+        if @refresh_server_list_at_ms && Gosu.milliseconds >= @refresh_server_list_at_ms
+          @refresh_server_list_at_ms = nil
 
           # populate_server_list
           reorder_server_list
@@ -219,7 +219,7 @@ class W3DHub
           return
         end
 
-        @refresh_server_list = Gosu.milliseconds + 3_000
+        @refresh_server_list_at_ms = Gosu.milliseconds + 3_000
         @refresh_server = server if @selected_server&.id == server.id
 
         server_container = find_element_by_tag(@server_list_container, server.id)
