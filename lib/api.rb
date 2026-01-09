@@ -1,11 +1,6 @@
 class W3DHub
   class Api
 
-    # Set Excon default CA file if found
-    if (ca_file = W3DHub.ca_bundle_path)
-      Excon.defaults[:ssl_ca_file] = ca_file
-    end
-
     LOG_TAG = "W3DHub::Api".freeze
 
     API_TIMEOUT = 30 # seconds
