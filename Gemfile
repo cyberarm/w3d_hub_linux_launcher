@@ -10,7 +10,6 @@ gem "digest-crc"
 gem "ircparser"
 gem "rexml"
 gem "rubyzip"
-gem "websocket-client-simple"
 gem "win32-process", platforms: [:windows]
 gem "win32-security", platforms: [:windows]
 

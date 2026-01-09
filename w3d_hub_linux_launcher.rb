@@ -87,7 +87,6 @@ class W3DHub
   BLACK_IMAGE = Gosu::Image.from_blob(1, 1, "\x00\x00\x00\xff")
 end
 
-require "websocket-client-simple"
 require "English"
 require "sdl2"
 
@@ -110,6 +109,7 @@ require_relative "lib/ico"
 require_relative "lib/broadcast_server"
 require_relative "lib/hardware_survey"
 require_relative "lib/game_settings"
+require_relative "lib/websocket_client"
 require_relative "lib/background_worker"
 require_relative "lib/application_manager"
 require_relative "lib/application_manager/manifest"
