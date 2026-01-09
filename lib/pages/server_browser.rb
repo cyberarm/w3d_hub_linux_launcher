@@ -390,7 +390,7 @@ class W3DHub
               flow(width: 1.0, height: 46, margin_top: 16, margin_bottom: 16) do
                 game_installed = Store.application_manager.installed?(server.game, server.channel)
                 game_updatable = Store.application_manager.updateable?(server.game, server.channel)
-                matching_version = game_installed[:installed_version] == server.version || server.version == Api::ServerListServer::NO_OR_DEFAULT_VERSION
+                matching_version = (game_installed && game_installed[:installed_version] == server.version) || server.version == Api::ServerListServer::NO_OR_DEFAULT_VERSION
                 channel = Store.application_manager.channel(server.game, server.channel)
                 style = ((channel && channel.user_level.downcase.strip == "public") || server.channel == "release") ? {} : TESTING_BUTTON
 
