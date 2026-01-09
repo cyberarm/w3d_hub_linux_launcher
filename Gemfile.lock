@@ -7,14 +7,14 @@ GEM
       io-event (~> 1.11)
       metrics (~> 0.12)
       traces (~> 0.18)
-    async-http (0.92.1)
+    async-http (0.93.0)
       async (>= 2.10.2)
       async-pool (~> 0.11)
       io-endpoint (~> 0.14)
       io-stream (~> 0.6)
       metrics (~> 0.12)
-      protocol-http (~> 0.49)
-      protocol-http1 (~> 0.30)
+      protocol-http (~> 0.58)
+      protocol-http1 (~> 0.36)
       protocol-http2 (~> 0.22)
       protocol-url (~> 0.2)
       traces (~> 0.10)
@@ -31,13 +31,10 @@ GEM
       fiber-local (~> 1.1)
       json
     cri (2.15.12)
-    cyberarm_engine (0.24.5)
+    cyberarm_engine (0.25.0)
       gosu (~> 1.1)
     digest-crc (0.7.0)
       rake (>= 12.0.0, < 14.0.0)
-    event_emitter (0.2.6)
-    excon (1.3.2)
-      logger
     ffi (1.17.0)
     ffi-win32-extensions (1.1.0)
       ffi (>= 1.15.5, <= 1.17.0)
@@ -54,21 +51,19 @@ GEM
     json (2.18.0)
     libui (0.2.0-x64-mingw-ucrt)
       fiddle
-    logger (1.7.0)
     metrics (0.15.0)
-    mutex_m (0.3.0)
     ocran (1.3.17)
       fiddle (~> 1.0)
     protocol-hpack (1.5.1)
-    protocol-http (0.57.0)
-    protocol-http1 (0.35.2)
-      protocol-http (~> 0.22)
+    protocol-http (0.58.0)
+    protocol-http1 (0.36.0)
+      protocol-http (~> 0.58)
     protocol-http2 (0.23.0)
       protocol-hpack (~> 1.4)
       protocol-http (~> 0.47)
-    protocol-rack (0.20.0)
+    protocol-rack (0.21.0)
       io-stream (>= 0.10)
-      protocol-http (~> 0.43)
+      protocol-http (~> 0.58)
       rack (>= 1.0)
     protocol-url (0.4.0)
     protocol-websocket (0.20.2)
@@ -85,12 +80,6 @@ GEM
     sdl2-bindings (0.2.3)
       ffi (~> 1.15)
     traces (0.18.2)
-    websocket (1.2.11)
-    websocket-client-simple (0.9.0)
-      base64
-      event_emitter
-      mutex_m
-      websocket
     win32-process (0.10.0)
       ffi (>= 1.0.0)
     win32-security (0.5.0)
@@ -107,7 +96,6 @@ DEPENDENCIES
   bundler (~> 2.4.3)
   cyberarm_engine
   digest-crc
-  excon
   ircparser
   libui
   ocran
@@ -116,7 +104,6 @@ DEPENDENCIES
   rexml
   rubyzip
   sdl2-bindings
-  websocket-client-simple
   win32-process
   win32-security
 
