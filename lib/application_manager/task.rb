@@ -183,7 +183,8 @@ class W3DHub
         # Wine present?
         if W3DHub.unix?
           wine_present = W3DHub.command("which #{Store.settings[:wine_command]}")
-          fail!("FAIL FAST: `which #{Store.settings[:wine_command]}` command failed, wine is not installed. Will be unable to create prefixes or launch games.") unless wine_present
+          fail!("FAIL FAST: `which #{Store.settings[:wine_command]}` command failed, wine is not installed.\n\n"\
+                "Will be unable to launch game.\n\nCheck wine options in launcher's settings.") unless wine_present
         end
       end
 

@@ -53,6 +53,10 @@ class W3DHub
                 end
                 para "Leave empty to use default global prefix.", margin_left: 16
 
+                link "Wiki: Getting Started With Wine", tip: "https://github.com/cyberarm/w3d_hub_linux_launcher/wiki/Getting-Started-With-Wine", margin_top: 16, margin_left: 16, border_color_bottom: 0xff_777777 do
+                  W3DHub.url("https://github.com/cyberarm/w3d_hub_linux_launcher/wiki/Getting-Started-With-Wine")
+                end
+
                 # TODO: support winetricks stuff
                 # tagline "Winetricks", margin_top: 16
                 # caption "Winetricks Command", margin_left: 16
@@ -130,7 +134,7 @@ class W3DHub
         Store.settings[:wine_command] = @wine_command_input.value
         Store.settings[:wine_prefix] = @wine_prefix_input.value
 
-        Store.settings[:winetricks_command] = @winetricks_command_input.value
+        Store.settings[:winetricks_command] = @winetricks_command_input.value if @winetricks_command_input
 
         Store.settings.save_settings
 
