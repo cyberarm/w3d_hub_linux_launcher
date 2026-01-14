@@ -17,8 +17,8 @@ class W3DHub
       end
 
       # push_state(W3DHub::States::DemoInputDelay)
-      # push_state(W3DHub::States::Welcome)
       push_state(W3DHub::States::Boot)
+      push_state(W3DHub::States::Welcome) unless File.exist?(SETTINGS_FILE_PATH)
       # push_state(W3DHub::States::DirectConnectDialog)
       # push_state(W3DHub::Asterisk::States::IRCProfileForm)
     end
