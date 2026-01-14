@@ -53,24 +53,24 @@ class W3DHub
                 end
                 para "Leave empty to use default global prefix.", margin_left: 16
 
+                # TODO: support winetricks stuff
+                # tagline "Winetricks", margin_top: 16
+                # caption "Winetricks Command", margin_left: 16
+                # flow(width: 1.0, margin_left: 16) do
+                #   @winetricks_command_input = edit_line Store.settings[:winetricks_command], fill: true, enabled: false
+                #   button "Browse...", width: 128, tip: "Browse for winetricks executable", enabled: false do
+                #     path = W3DHub.ask_file(filters: %w[winetricks protontricks])
+                #     @winetricks_command_input.value = path unless path.empty?
+                #   end
+                # end
 
-                tagline "Winetricks", margin_top: 16
-                caption "Winetricks Command", margin_left: 16
-                flow(width: 1.0, margin_left: 16) do
-                  @winetricks_command_input = edit_line Store.settings[:winetricks_command], fill: true, enabled: false
-                  button "Browse...", width: 128, tip: "Browse for winetricks executable", enabled: false do
-                    path = W3DHub.ask_file(filters: %w[winetricks protontricks])
-                    @winetricks_command_input.value = path unless path.empty?
-                  end
-                end
+                # caption "Fixups", margin_left: 16, margin_top: 16
+                # button "Install d3dcompiler_47", margin_left: 16, enabled: false
+                # para "Fixes games instantly crashing at startup due to not being able to compile shaders.", margin_left: 16
 
-                caption "Fixups", margin_left: 16, margin_top: 16
-                button "Install d3dcompiler_47", margin_left: 16, enabled: false
-                para "Fixes games instantly crashing at startup due to not being able to compile shaders.", margin_left: 16
-
-                button "Install DXVK", margin_left: 16, margin_top: 16, enabled: false
-                para "Use Vulkan-based DirectX translation layers.", margin_left: 16
-                para "WARNING: Games will stop working if your hardware does not support Vulkan!", margin_left: 16
+                # button "Install DXVK", margin_left: 16, margin_top: 16, enabled: false
+                # para "Use Vulkan-based DirectX translation layers.", margin_left: 16
+                # para "WARNING: Games will stop working if your hardware does not support Vulkan!", margin_left: 16
               end
             end
 

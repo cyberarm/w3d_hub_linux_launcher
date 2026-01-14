@@ -278,7 +278,7 @@ class W3DHub
               end
 
               # Game Events
-              @game_events_container = flow(width: 1.0, height: 128, padding: 8, visible: false) do
+              @game_events_container = stack(width: 1.0, height: 128, padding: 8, scroll: true, visible: false) do
               end
 
               # Game News
@@ -513,15 +513,15 @@ class W3DHub
           @game_events_container.show unless events.empty?
           @game_events_container.hide if events.empty?
 
-          @game_events_container.clear do
-            events.flatten.each do |event|
-              stack(fill: true, height: 1.0, margin_left: 8, margin_right: 8, border_thickness: 1, border_color: lighten(Gosu::Color.new(game.color))) do
-                background 0x44_000000
+          return unless (event = events.flatten.first)
 
-                title event.title, width: 1.0, text_align: :center
-                title event.start_time.strftime("%A"), width: 1.0, text_align: :center
-                caption event.start_time.strftime("%B %e, %Y %l:%M %p"), width: 1.0, text_align: :center
-              end
+          @game_events_container.clear do
+            stack(width: 1.0, fill: true, margin_left: 8, margin_right: 8, border_thickness: 1, border_color: lighten(Gosu::Color.new(game.color))) do
+              background 0x44_000000
+
+              title event.title, width: 1.0, text_align: :center
+              title event.start_time.strftime("%A"), width: 1.0, text_align: :center
+              caption event.start_time.strftime("%B %e, %Y %l:%M %p"), width: 1.0, text_align: :center
             end
           end
         end
