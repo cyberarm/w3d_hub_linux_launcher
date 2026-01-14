@@ -140,18 +140,16 @@ class W3DHub
       end
 
       status.zero?
-    else
-      if block
-        IO.popen(command, "r") do |io|
-          io.each_line do |line|
-            block&.call(line)
-          end
+    elsif block
+      IO.popen(command, "r") do |io|
+        io.each_line do |line|
+          block&.call(line)
         end
-
-        $CHILD_STATUS.success?
-      else
-        system(command)
       end
+
+      $CHILD_STATUS.success?
+    else
+      system(command)
     end
   end
 
@@ -159,23 +157,26 @@ class W3DHub
     File.expand_path("~")
   end
 
-  def self.ask_file(title: "Open File", filter: "*game*.exe")
+  def self.ask_file(title: "Open File", filter: "*game*.exe", filters: [])
+    filters << filter if filters.empty?
+
     if W3DHub.unix?
       # search for command
-      cmds = %w{ zenity matedialog qarma kdialog }
+      cmds = %w[zenity matedialog qarma kdialog]
 
       command = cmds.find do |cmd|
         cmd if system("which #{cmd}")
       end
 
       path = case File.basename(command)
-      when "zenity", "matedialog", "qarma"
-        `#{command} --file-selection --title "#{title}" --file-filter "#{filter}"`
-      when "kdialog"
-        `#{command} --title "#{title}" --getopenfilename . "#{filter}"`
-      else
-        raise "No known command found for system file selection dialog!"
-      end
+             when "zenity", "matedialog", "qarma"
+               options = filters.map { |s| format("--file-filter=\"%s\"", s) }.join(" ")
+               `#{command} --file-selection --title \"#{title}\" #{options}`
+             when "kdialog"
+               `#{command} --title "#{title}" --getopenfilename . "#{filters.join(" ")}"`
+             else
+               raise "No known command found for system file selection dialog!"
+             end
 
       path.strip
     else
@@ -189,20 +190,20 @@ class W3DHub
   def self.ask_folder(title: "Open Folder")
     if W3DHub.unix?
       # search for command
-      cmds = %w{ zenity matedialog qarma kdialog }
+      cmds = %w[zenity matedialog qarma kdialog]
 
       command = cmds.find do |cmd|
         cmd if system("which #{cmd}")
       end
 
       path = case File.basename(command)
-      when "zenity", "matedialog", "qarma"
-        `#{command} --file-selection --directory --title "#{title}"`
-      when "kdialog"
-        `#{command} --title "#{title}" --getexistingdirectory #{Dir.home}"`
-      else
-        raise "No known command found for system file selection dialog!"
-      end
+             when "zenity", "matedialog", "qarma"
+               `#{command} --file-selection --directory --title "#{title}"`
+             when "kdialog"
+               `#{command} --title "#{title}" --getexistingdirectory #{Dir.home}"`
+             else
+               raise "No known command found for system file selection dialog!"
+             end
 
       path.strip
     else

@@ -86,15 +86,15 @@ class W3DHub
 
       # open wwconfig.exe or config.exe for ecw
 
-      if (app_data = installed?(app_id, channel) && W3DHub.unix?)
-        exe = if Store.settings[:wine_prefix]
-          "WINEPREFIX=\"#{Store.settings[:wine_prefix]}\" winecfg"
-        else
-          "winecfg"
-        end
+      return unless (app_data = installed?(app_id, channel) && W3DHub.unix?)
 
-        Process.spawn("#{exe}")
-      end
+      exe = if !Store.settings[:wine_prefix].to_s.empty?
+              "WINEPREFIX=\"#{Store.settings[:wine_prefix]}\" winecfg"
+            else
+              "winecfg"
+            end
+
+      Process.spawn(exe)
     end
 
     def repair(app_id, channel)
@@ -169,7 +169,7 @@ class W3DHub
     def wine_command(app_id, channel)
       return "" if W3DHub.windows?
 
-      if Store.settings[:wine_prefix]
+      if !Store.settings[:wine_prefix].to_s.empty?
         "WINEPREFIX=\"#{Store.settings[:wine_prefix]}\" \"#{Store.settings[:wine_command]}\" "
       else
         "#{Store.settings[:wine_command]} "

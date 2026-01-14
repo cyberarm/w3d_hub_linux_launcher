@@ -7,7 +7,8 @@ class W3DHub
         package_cache_dir: default_package_cache_dir,
         parallel_downloads: 4,
         wine_command: "wine",
-        create_wine_prefixes: true,
+        wine_prefix: "",
+        winetricks_command: "winetricks",
         allow_diagnostic_reports: false,
         server_list_username: "",
         server_list_filters: {},
@@ -66,6 +67,14 @@ class W3DHub
 
     def load_settings
       @settings = JSON.parse(File.read(SETTINGS_FILE_PATH), symbolize_names: true)
+
+      # FIXUPS
+      # FOR: v0.9.0
+      @settings.delete(:create_wine_prefixes)
+      @settings[:wine_prefix] ||= ""
+      @settings[:winetricks_command] ||= "winetricks"
+
+      @settings
     end
 
     def save_settings
