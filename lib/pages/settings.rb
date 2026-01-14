@@ -59,8 +59,10 @@ class W3DHub
               flow(fill: true)
 
             end
-            button("Clear package cache: #{W3DHub.format_size(Dir.glob("#{Store.settings[:package_cache_dir]}/**/**").map { |f| File.file?(f) ? File.size(f) : 0}.sum)}", **DANGEROUS_BUTTON) do
-              # TODO.
+            button("Clear package cache: #{W3DHub.format_size(Dir.glob("#{Store.settings[:package_cache_dir]}/**/**").map { |f| File.file?(f) ? File.size(f) : 0}.sum)}", tip: "Purge #{Store.settings[:package_cache_dir]}", **DANGEROUS_BUTTON) do |btn|
+              logger.info(LOG_TAG) { "Purging cache (#{Store.settings[:package_cache_dir]})..." }
+              FileUtils.remove_dir(Store.settings[:package_cache_dir], force: true)
+              btn.value = "Clear package cache: #{W3DHub.format_size(Dir.glob("#{Store.settings[:package_cache_dir]}/**/**").map { |f| File.file?(f) ? File.size(f) : 0}.sum)}"
             end
           end
         end
