@@ -60,14 +60,14 @@ class W3DHub
       end
 
       # Handle arbitrary urls that may come through
-      url = nil
       if path.start_with?("http")
         uri = URI(path)
+
         endpoint = uri.origin
         path = uri.request_uri
-      else
-        url = "#{endpoint}#{path}"
       end
+
+      url = "#{endpoint}#{path}"
 
       logger.debug(LOG_TAG) { "Fetching #{method.to_s.upcase} \"#{url}\"..." }
 
