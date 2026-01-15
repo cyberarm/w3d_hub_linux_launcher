@@ -75,24 +75,24 @@ class W3DHub
 
       result = false
       Sync do
-        response = nil
+        uri = URI(endpoint_download_url)
 
-        Async::HTTP::Internet.send(package.download_url ? :get : :post, endpoint_download_url, headers, body) do |r|
-          response = r
-          if r.success?
-            total_bytes = package.size
+        response = W3DHub::Api.provision_http_client(uri.origin).send((package.download_url ? :get : :post), uri.request_uri, headers, body)
+        if response.success?
+          total_bytes = package.size
 
-            r.each do |chunk|
-              file.write(chunk)
+          response.each do |chunk|
+            file.write(chunk)
 
-              block.call(chunk, total_bytes - file.pos, total_bytes)
-            end
-
-            result = true
+            block.call(chunk, total_bytes - file.pos, total_bytes)
           end
+
+          result = true
         end
 
-        if response.status == 200 || response.status == 206
+        binding.irb unless response
+
+        if response&.status == 200 || response&.status == 206
           result = true
         else
           logger.debug(LOG_TAG) { "    Failed to retrieve package: (#{package.category}:#{package.subcategory}:#{package.name}:#{package.version})" }
@@ -114,11 +114,12 @@ class W3DHub
         logger.debug(LOG_TAG) { "      Download URL: #{endpoint_download_url}, response: #{response&.status || -1}" }
 
         result = false
+      ensure
+        file&.close
+        response&.close
       end
 
       result
-    ensure
-      file&.close
     end
 
     # Download a W3D Hub package

@@ -47,7 +47,9 @@ class W3DHub
     W3DHUB_API_ENDPOINT = "https://secure.w3dhub.com".freeze # "https://example.com" # "http://127.0.0.1:9292".freeze #
     ALT_W3DHUB_API_ENDPOINT = "https://w3dhub-api.w3d.cyberarm.dev".freeze # "https://secure.w3dhub.com".freeze # "https://example.com" # "http://127.0.0.1:9292".freeze #
 
-    def self.async_http(method, url, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub)
+    HTTP_CLIENTS = {}
+
+    def self.async_http(method, path, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub)
       case backend
       when :w3dhub
         endpoint   = W3DHUB_API_ENDPOINT
@@ -57,7 +59,15 @@ class W3DHub
         endpoint   = SERVER_LIST_ENDPOINT
       end
 
-      url = "#{endpoint}#{url}" unless url.start_with?("http")
+      # Handle arbitrary urls that may come through
+      url = nil
+      if path.start_with?("http")
+        uri = URI(path)
+        endpoint = uri.origin
+        path = uri.request_uri
+      else
+        url = "#{endpoint}#{path}"
+      end
 
       logger.debug(LOG_TAG) { "Fetching #{method.to_s.upcase} \"#{url}\"..." }
 
@@ -70,7 +80,7 @@ class W3DHub
 
       Sync do
         begin
-         response = Async::HTTP::Internet.send(method, url, headers, body)
+          response = provision_http_client(endpoint).send(method, path, headers, body)
 
           Response.new(status: response.status, body: response.read)
         rescue Async::TimeoutError => e
@@ -88,17 +98,32 @@ class W3DHub
       end
     end
 
-    def self.post(url, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub)
-      async_http(:post, url, headers, body, backend)
+    def self.provision_http_client(hostname)
+      # Pin http clients to their host Thread so the fiber scheduler doesn't get upset and raise an error
+      HTTP_CLIENTS[Thread.current] ||= {}
+      return HTTP_CLIENTS[Thread.current][hostname.downcase] if HTTP_CLIENTS[Thread.current][hostname.downcase]
+
+      ssl_context = W3DHub.ca_bundle_path ? OpenSSL::SSL::SSLContext.new : nil
+      ssl_context&.set_params(
+        ca_file: W3DHub.ca_bundle_path,
+        verify_mode: OpenSSL::SSL::VERIFY_PEER
+      )
+
+      endpoint = Async::HTTP::Endpoint.parse(hostname, ssl_context: ssl_context)
+      HTTP_CLIENTS[Thread.current][hostname.downcase] = Async::HTTP::Client.new(endpoint)
     end
 
-    def self.get(url, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub)
-      async_http(:get, url, headers, body, backend)
+    def self.post(path, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub)
+      async_http(:post, path, headers, body, backend)
+    end
+
+    def self.get(path, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub)
+      async_http(:get, path, headers, body, backend)
     end
 
     # Api.get but handles any URL instead of known hosts
-    def self.fetch(url, headers = DEFAULT_HEADERS, body = nil, backend = nil)
-      async_http(:get, url, headers, body, backend)
+    def self.fetch(path, headers = DEFAULT_HEADERS, body = nil, backend = nil)
+      async_http(:get, path, headers, body, backend)
     end
 
     # Method: POST
