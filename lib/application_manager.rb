@@ -254,7 +254,8 @@ class W3DHub
         server.channel == channel &&
         !server.status.password &&
         server.status.player_count < server.status.max_players
-      end.sort_by(&:ping)
+      end
+      server_options.sort_by! { |s| [s.status.player_count, s.ping] }.reverse!
 
       # try to find server with lowest ping and matching version
       found_server = server_options.find { |server| server.version == app_data[:installed_version] }
