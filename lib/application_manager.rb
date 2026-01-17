@@ -254,14 +254,14 @@ class W3DHub
         server.channel == channel &&
         !server.status.password &&
         server.status.player_count < server.status.max_players
-      end
+      end.sort_by(&:ping)
 
       # try to find server with lowest ping and matching version
       found_server = server_options.find { |server| server.version == app_data[:installed_version] }
       # try to find server with lowest ping and undefined version
       found_server ||= server_options.find { |server| server.version == Api::ServerListServer::NO_OR_DEFAULT_VERSION }
 
-      found_server ? found_server : nil
+      found_server || nil
     end
 
     def play_now(app_id, channel)
