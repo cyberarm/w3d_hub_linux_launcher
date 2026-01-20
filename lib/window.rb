@@ -7,6 +7,9 @@ class W3DHub
       Store[:server_list] = []
       Store[:settings] = Settings.new
       Store[:application_manager] = ApplicationManager.new
+      Store[:ping_manager] = PingManager.new
+
+      BackgroundWorker.parallel_job(-> { Async { |task| Store.ping_manager.monitor(task) } }, nil)
 
       Store[:main_thread_queue] = []
 

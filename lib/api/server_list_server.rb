@@ -20,8 +20,12 @@ class W3DHub
 
         @status  = Status.new(@data[:status])
 
-        @ping_interval = 30_000
+        # if we're on unix and using the PingManager then check every second since
+        # we're not _actually_ pinging the server.
+        @ping_interval = W3DHub.unix? ? 1_000 : 60_000
         @last_pinged = Gosu.milliseconds + @ping_interval + 1_000
+
+        Store.ping_manager.add_address(@address)
       end
 
       def update(hash)
@@ -48,6 +52,16 @@ class W3DHub
       def send_ping(force_ping = false)
         if force_ping || Gosu.milliseconds - @last_pinged >= @ping_interval
           @last_pinged = Gosu.milliseconds
+
+          if W3DHub.unix?
+            average_ping = Store.ping_manager.ping_for(@address)
+
+            @ping = average_ping.negative? ? NO_OR_BAD_PING : average_ping
+
+            States::Interface.instance&.update_server_ping(self)
+          end
+
+          return unless W3DHub.windows?
 
           W3DHub::BackgroundWorker.foreground_parallel_job(
             lambda do
