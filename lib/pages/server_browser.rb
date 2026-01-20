@@ -196,13 +196,13 @@ class W3DHub
 
       def ping_icon(server)
         case server.ping
-        when 0..150
+        when 0..50
           @ping_icons[:good]
-        when 151..200
+        when 51..150
           @ping_icons[:fair]
-        when 201..1_000
+        when 151..200
           @ping_icons[:poor]
-        when 1_001..5_000
+        when 201..1_000
           @ping_icons[:bad]
         else
           @ping_icons[:unknown]
