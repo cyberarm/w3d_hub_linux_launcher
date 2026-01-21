@@ -5,6 +5,7 @@ class W3DHub
 
     def initialize
       @tasks = [] # :installer, :importer, :repairer, :uninstaller
+      @running_applications = {}
     end
 
     def install(app_id, channel)
@@ -169,11 +170,17 @@ class W3DHub
     def wine_command(app_id, channel)
       return "" if W3DHub.windows?
 
-      if !Store.settings[:wine_prefix].to_s.empty?
-        "WINEPREFIX=\"#{Store.settings[:wine_prefix]}\" \"#{Store.settings[:wine_command]}\" "
-      else
-        "#{Store.settings[:wine_command]} "
-      end
+      "\"#{Store.settings[:wine_command]}\" "
+    end
+
+    def wine_enviroment_variables(app_id, channel)
+      vars = {}
+      return vars if W3DHub.windows?
+
+      vars["WINEPREFIX"] = Store.settings[:wine_prefix] unless Store.settings[:wine_prefix].to_s.empty?
+      # vars["WINEDEBUG"] = "-all" if true # TODO make this an option. wine debug interferences with pid returned from Process.spawn
+
+      vars
     end
 
     def mangohud_command(app_id, channel)
@@ -188,6 +195,13 @@ class W3DHub
       end
     end
 
+    def mangohud_enviroment_variables(app_id, channel)
+      vars = {}
+      return vars if W3DHub.windows?
+
+      vars
+    end
+
     def dxvk_command(app_id, channel)
       return "" if W3DHub.windows?
 
@@ -199,6 +213,13 @@ class W3DHub
       else
         ""
       end
+    end
+
+    def dxvk_enviroment_variables(app_id, channel)
+      vars = {}
+      return vars if W3DHub.windows?
+
+      vars
     end
 
     def start_command(path, exe)
@@ -219,10 +240,26 @@ class W3DHub
         exe = File.basename(exe_path)
         path = File.dirname(exe_path)
 
+        env = {}
+        if W3DHub.unix?
+          env.merge!(
+            dxvk_enviroment_variables(app_id, channel),
+            mangohud_enviroment_variables(app_id, channel),
+            wine_enviroment_variables(app_id, channel)
+          )
+        end
         attempted = false
         begin
-          pid = Process.spawn("#{dxvk_command(app_id, channel)}#{mangohud_command(app_id, channel)}#{wine_command(app_id, channel)}#{attempted ? start_command(path, exe) : "\"#{exe_path}\""} -launcher #{args.join(' ')}")
+          pid = Process.spawn(
+            env,
+            "#{dxvk_command(app_id, channel)}"\
+            "#{mangohud_command(app_id, channel)}"\
+            "#{wine_command(app_id, channel)}"\
+            "#{attempted ? start_command(path, exe) : "\"#{exe_path}\""} "\
+            "-launcher #{args.join(' ')}"
+          )
           Process.detach(pid)
+          BackgroundWorker.foreground_parallel_job(-> { monitor_process(app_id, channel, pid) }, ->(result) { handle_process_result(app_id, channel, result) })
         rescue Errno::EINVAL => e
           retryable = !attempted
           attempted = true
@@ -235,13 +272,52 @@ class W3DHub
       end
     end
 
+    def monitor_process(app_id, channel, pid)
+      key = "#{app_id}-#{channel}"
+      @running_applications[key] = pid
+
+      status = Process::Status.wait(pid)
+      pp [pid, status]
+
+      @running_applications.delete(key)
+
+      status
+    end
+
+    def handle_process_result(app_id, channel, status)
+      pp [app_id, channel, status]
+
+      # Everything's fine
+      return if status.pid >= 0 && status.success?
+
+      # Everything's not fine
+      reason = status.pid.positive? ? "Crashed" : "Failed to Launch"
+      game = Store.applications.games.find { |g| g.id == app_id }
+      title = "#{reason}: #{game.name}" if game
+      title = "Application #{reason}" unless game
+
+      message = if status.pid.negative?
+                  "Command Not Found."
+                else
+                  "Application crashed."
+                end
+
+      push_state(
+        States::MessageDialog,
+        title: title,
+        message: message,
+        accept_callback: proc {
+        }
+      )
+    end
+
     def join_server(app_id, channel, server, username = Store.settings[:server_list_username], password = nil, multi = false)
-      if installed?(app_id, channel) && username.to_s.length.positive?
-        run(
-          app_id, channel,
-          "+connect #{server.address}:#{server.port} +netplayername #{username}#{password ? " +password \"#{password}\"" : ""}#{multi ? " +multi" : ""}"
-        )
-      end
+      return unless installed?(app_id, channel) && username.to_s.length.positive?
+
+      run(
+        app_id, channel,
+        "+connect #{server.address}:#{server.port} +netplayername #{username}#{password ? " +password \"#{password}\"" : ""}#{multi ? " +multi" : ""}"
+      )
     end
 
     def play_now_server(app_id, channel)
