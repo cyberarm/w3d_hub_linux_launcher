@@ -29,7 +29,7 @@ class W3DHub
 
             subtask.async do
               container.pinger.ping
-              pp [container.pinger.address, container.pinger.average_ping]
+              # pp [container.pinger.address, container.pinger.average_ping]
             end
           end
 
