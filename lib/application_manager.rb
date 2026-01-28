@@ -233,7 +233,7 @@ class W3DHub
     def run(app_id, channel, *args)
       if (app_data = installed?(app_id, channel))
         install_directory = app_data[:install_directory]
-        exe_path = app_id == "ecw" ? "#{install_directory}/game500.exe" : "#{install_directory}/game.exe"
+        exe_path = app_id == "ecw" ? "#{install_directory}/game500.exe" : app_data[:install_path]
         exe_path.gsub!("/", "\\") if W3DHub.windows?
         exe_path.gsub!("\\", "/") if W3DHub.unix?
 
