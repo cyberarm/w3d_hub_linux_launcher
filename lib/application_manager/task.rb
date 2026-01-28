@@ -642,8 +642,7 @@ class W3DHub
           verified = verify_package(package)
 
           # download manifest if not valid
-          package_fetch(package) unless verified
-          true if verified
+          verified ? true : package_fetch(package)
         else
           # download manifest if not cached
           package_fetch(package)
@@ -657,9 +656,10 @@ class W3DHub
           block&.call(chunk, remaining_bytes, total_bytes)
         end
 
-        fail!("Failed to retrieve package: (#{package.category}:#{package.subcategory}:#{package.name}:#{package.version})") unless status_okay
+        return status_okay if status_okay
 
-        status_okay
+        fail!("Failed to retrieve package: (#{package.category}:#{package.subcategory}:#{package.name}:#{package.version})")
+        false
       end
 
       def verify_package(package, &block)

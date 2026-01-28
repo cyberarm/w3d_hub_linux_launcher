@@ -1,13 +1,13 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    async (2.35.2)
+    async (2.36.0)
       console (~> 1.29)
       fiber-annotation
       io-event (~> 1.11)
       metrics (~> 0.12)
       traces (~> 0.18)
-    async-http (0.94.0)
+    async-http (0.94.2)
       async (>= 2.10.2)
       async-pool (~> 0.11)
       io-endpoint (~> 0.14)
@@ -30,7 +30,7 @@ GEM
       fiber-annotation
       fiber-local (~> 1.1)
       json
-    cyberarm_engine (0.25.0)
+    cyberarm_engine (0.25.1)
       gosu (~> 1.1)
     digest-crc (0.7.0)
       rake (>= 12.0.0, < 14.0.0)
@@ -43,7 +43,7 @@ GEM
     fiber-storage (1.0.1)
     fiddle (1.1.8)
     gosu (1.4.6)
-    io-endpoint (0.16.0)
+    io-endpoint (0.17.1)
     io-event (1.14.2)
     io-stream (0.11.1)
     ircparser (1.0.0)
@@ -52,8 +52,8 @@ GEM
       fiddle
     metrics (0.15.0)
     protocol-hpack (1.5.1)
-    protocol-http (0.58.0)
-    protocol-http1 (0.36.0)
+    protocol-http (0.58.1)
+    protocol-http1 (0.37.0)
       protocol-http (~> 0.58)
     protocol-http2 (0.24.0)
       protocol-hpack (~> 1.4)
