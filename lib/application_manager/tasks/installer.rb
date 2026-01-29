@@ -8,9 +8,7 @@ class W3DHub
       end
 
       def execute_task
-        show_application_taskbar
-
-        fail_fast
+        fail_fast!
         return false if failed?
 
         fetch_manifests
@@ -45,9 +43,6 @@ class W3DHub
 
         mark_application_installed
         return false if failed?
-
-        sleep 1
-        hide_application_taskbar
 
         true
       end

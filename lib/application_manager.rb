@@ -23,9 +23,7 @@ class W3DHub
       # unpack packages
       # install dependencies (e.g. visual C runtime)
 
-      installer = Installer.new(app_id, channel)
-
-      @tasks.push(installer)
+      @tasks.push(Installer.new(context: task_context(app_id, channel, "version")))
     end
 
     def update(app_id, channel)
@@ -33,7 +31,7 @@ class W3DHub
 
       return false unless installed?(app_id, channel)
 
-      updater = Updater.new(app_id, channel)
+      updater = Updater.new(Installer.new(context: task_context(app_id, channel, "version")))
 
       @tasks.push(updater)
     end
@@ -98,6 +96,18 @@ class W3DHub
       Process.spawn(exe)
     end
 
+    def task_context(app_id, channel, version)
+      Task::Context.new(
+        SecureRandom.hex,
+        "games",
+        app_id,
+        channel,
+        version,
+        "",
+        ""
+      )
+    end
+
     def repair(app_id, channel)
       logger.info(LOG_TAG) { "Repair Installation Request: #{app_id}-#{channel}" }
 
@@ -110,7 +120,7 @@ class W3DHub
       # unpack packages
       # install dependencies (e.g. visual C runtime) if appropriate
 
-      @tasks.push(Repairer.new(app_id, channel))
+      @tasks.push(Repairer.new(context: task_context(app_id, channel, "version")))
     end
 
     def uninstall(app_id, channel)
@@ -125,7 +135,7 @@ class W3DHub
         title: "Uninstall #{game.name}?",
         message: "Are you sure you want to uninstall #{game.name} (#{channel})?",
         accept_callback: proc {
-          @tasks.push(Uninstaller.new(app_id, channel))
+          @tasks.push(Uninstaller.new(context: task_context(app_id, channel, "version")))
         }
       )
     end
@@ -598,6 +608,39 @@ class W3DHub
       app.channels.detect { |g| g.id.to_s == channel_id.to_s }
     end
 
+    def handle_task_event(event)
+      # ONLY CALL on MAIN Ractor
+      raise "Something has gone horribly wrong!" unless Ractor.current == Ractor.main
+
+      task = @tasks.find { |t| t.context.task_id == event.task_id }
+      return unless task # FIXME: This is probably a fatal error
+
+      case event.type
+      when Task::EVENT_FAILURE
+        window.push_state(
+          W3DHub::States::MessageDialog,
+          type: event.data[:type],
+          title: event.data[:title],
+          message: event.data[:message]
+        )
+
+        States::Interface.instance&.hide_application_taskbar
+        @tasks.delete(task)
+      when Task::EVENT_START
+        task.started! # mark ApplicationManager's version of Task as :running
+        States::Interface.instance&.show_application_taskbar
+      when Task::EVENT_SUCCESS
+        States::Interface.instance&.hide_application_taskbar
+        @tasks.delete(task)
+      when Task::EVENT_PROGRESS
+        :FIXME
+      when Task::EVENT_PACKAGE_LIST
+        :FIXME
+      when Task::EVENT_PACKAGE_STATUS
+        :FIXME
+      end
+    end
+
     # No application tasks are being done
     def idle?
       !busy?
@@ -624,9 +667,9 @@ class W3DHub
     def task?(type, app_id, channel)
       @tasks.find do |t|
         t.type == type &&
-        t.app_id == app_id &&
-        t.release_channel == channel &&
-        [ :not_started, :running, :paused ].include?(t.state)
+          t.context.app_id == app_id &&
+          t.context.channel_id == channel &&
+          [ :not_started, :running, :paused ].include?(t.state)
       end
     end
   end
