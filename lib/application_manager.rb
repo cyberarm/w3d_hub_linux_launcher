@@ -555,7 +555,7 @@ class W3DHub
     end
 
     def installing?(app_id, channel)
-      @tasks.find { |t| t.is_a?(Installer) && t.app_id == app_id && t.release_channel == channel }
+      @tasks.find { |t| t.is_a?(Installer) && t.context.app_id == app_id && t.context.channel_id == channel }
     end
 
     def updateable?(app_id, channel)
@@ -610,34 +610,49 @@ class W3DHub
 
     def handle_task_event(event)
       # ONLY CALL on MAIN Ractor
-      raise "Something has gone horribly wrong!" unless Ractor.current == Ractor.main
+      raise "Something has gone horribly wrong!" unless Ractor.main?
 
+      pp event
       task = @tasks.find { |t| t.context.task_id == event.task_id }
       return unless task # FIXME: This is probably a fatal error
 
       case event.type
       when Task::EVENT_FAILURE
-        window.push_state(
-          W3DHub::States::MessageDialog,
-          type: event.data[:type],
-          title: event.data[:title],
-          message: event.data[:message]
-        )
+        Store.main_thread_queue << proc do
+          window.push_state(
+            W3DHub::States::MessageDialog,
+            type: event.data[:type],
+            title: event.data[:title],
+            message: event.data[:message]
+          )
+        end
+        # FIXME: Send event to Games page to trigger refresh
 
         States::Interface.instance&.hide_application_taskbar
         @tasks.delete(task)
+
       when Task::EVENT_START
-        task.started! # mark ApplicationManager's version of Task as :running
         States::Interface.instance&.show_application_taskbar
+
       when Task::EVENT_SUCCESS
         States::Interface.instance&.hide_application_taskbar
         @tasks.delete(task)
-      when Task::EVENT_PROGRESS
-        :FIXME
-      when Task::EVENT_PACKAGE_LIST
-        :FIXME
-      when Task::EVENT_PACKAGE_STATUS
-        :FIXME
+        # FIXME: Send event to Games page to trigger refresh
+      when Task::EVENT_STATUS
+        task.status = event.data
+        States::Interface.instance&.update_interface_task_status(task)
+
+      when Task::EVENT_STATUS_OPERATION
+        hash = event.data
+        operation = task.status.operations[operation[:id]]
+
+        if operation
+          operation.label = hash[:label]
+          operation.value = hash[:value]
+          operation.progress = hash[:progress]
+
+          States::Interface.instance&.update_interface_task_status(task)
+        end
       end
     end
 
@@ -661,7 +676,13 @@ class W3DHub
       @tasks.delete_if { |t| t.state == :complete || t.state == :halted || t.state == :failed }
 
       task = @tasks.find { |t| t.state == :not_started }
-      task&.start
+
+      return unless task
+
+      # mark MAIN ractor's task as started before handing off to background ractor
+      # so that we don't start up multiple tasks at once.
+      task.start
+      BackgroundWorker.ractor_task(task)
     end
 
     def task?(type, app_id, channel)

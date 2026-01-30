@@ -1,4 +1,8 @@
 class W3DHub
+  PLATFORM_WINDOWS = RbConfig::CONFIG["host_os"] =~ /(mingw|mswin|windows)/i
+  PLATFORM_DARWIN = RbConfig::CONFIG["host_os"] =~ /(darwin|mac os)/i
+  PLATFORM_LINUX = RbConfig::CONFIG["host_os"] =~ /(linux|bsd|aix|solaris)/i
+
   def self.format_size(bytes)
     case bytes
     when 0..1023 # Bytes
@@ -17,15 +21,15 @@ class W3DHub
   end
 
   def self.windows?
-    RbConfig::CONFIG["host_os"] =~ /(mingw|mswin|windows)/i
+    PLATFORM_WINDOWS
   end
 
   def self.mac?
-    RbConfig::CONFIG["host_os"] =~ /(darwin|mac os)/i
+    PLATFORM_DARWIN
   end
 
   def self.linux?
-    RbConfig::CONFIG["host_os"] =~ /(linux|bsd|aix|solaris)/i
+    PLATFORM_LINUX
   end
 
   def self.unix?

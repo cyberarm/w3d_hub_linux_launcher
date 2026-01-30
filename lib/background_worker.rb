@@ -59,6 +59,26 @@ class W3DHub
       @@instance.add_parallel_job(Job.new(job: job, callback: callback, error_handler: error_handler, deliver_to_queue: true, data: data))
     end
 
+    def self.ractor_task(task)
+      raise "Something has gone horribly wrong!!!" unless Ractor.main?
+
+      ractor = Ractor.new do
+        t = Ractor.receive
+
+        t.start
+      end
+
+      ractor.send(task)
+
+      Thread.new do
+        while (message_event = ractor.take)
+          break unless message_event.is_a?(W3DHub::ApplicationManager::Task::MessageEvent)
+
+          Store.application_manager.handle_task_event(message_event)
+        end
+      end
+    end
+
     def initialize
       @busy = false
       @jobs = []
