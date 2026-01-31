@@ -103,73 +103,91 @@ class W3DHub
     # On a failed login the service responds with:
     # {"error":"login-failed"}
     def self.refresh_user_login(refresh_token, backend = :w3dhub, &callback)
-      body = URI.encode_www_form("data": JSON.dump({refreshToken: refresh_token}))
-      post("/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body, backend) do |result|
+      handler = lambda do |result|
         if result.okay?
           user_data = JSON.parse(result.data, symbolize_names: true)
 
-          return false if user_data[:error]
+          if user_data[:error]
+            callback.call(false)
+            next
+          end
 
           user_details_data = user_details(user_data[:userid]) || {}
 
-          Account.new(user_data, user_details_data)
+          callback.call(Account.new(user_data, user_details_data))
         else
           logger.error(LOG_TAG) { "Failed to fetch refresh user login:" }
-          logger.error(LOG_TAG) { response }
-          false
+          logger.error(LOG_TAG) { result.error }
+
+          callback.call(false)
         end
       end
+
+      body = URI.encode_www_form("data": JSON.dump({ refreshToken: refresh_token }))
+      post("/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body, backend, &handler)
     end
 
     # See #user_refresh_token
     def self.user_login(username, password, backend = :w3dhub, &callback)
-      body = URI.encode_www_form("data": JSON.dump({username: username, password: password}))
-      response = post("/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body, backend)
+      handler = lambda do |result|
+        if result.okay?
+          user_data = JSON.parse(result.data, symbolize_names: true)
 
-      if response.status == 200
-        user_data = JSON.parse(response.body, symbolize_names: true)
+          if user_data[:error]
+            callback.call(false)
+            next
+          end
 
-        return false if user_data[:error]
+          user_details_data = user_details(user_data[:userid]) || {}
 
-        user_details_data = user_details(user_data[:userid]) || {}
+          callback.call(Account.new(user_data, user_details_data))
+        else
+          logger.error(LOG_TAG) { "Failed to fetch user login:" }
+          logger.error(LOG_TAG) { result.error }
 
-        Account.new(user_data, user_details_data)
-      else
-        logger.error(LOG_TAG) { "Failed to fetch user login:" }
-        logger.error(LOG_TAG) { response }
-        false
+          callback.call(false)
+        end
       end
+
+      body = URI.encode_www_form("data": JSON.dump({ username: username, password: password }))
+      post("/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body, backend, &handler)
     end
 
     # /apis/w3dhub/1/get-user-details
     #
     # Response: avatar-uri (Image download uri), id, username
     def self.user_details(id, backend = :w3dhub, &callback)
-      body = URI.encode_www_form("data": JSON.dump({ id: id }))
-      user_details = post("/apis/w3dhub/1/get-user-details", FORM_ENCODED_HEADERS, body, backend)
+      handler = lambda do |result|
+        if result.okay?
+          callback.call(JSON.parse(result.data, symbolize_names: true))
+        else
+          logger.error(LOG_TAG) { "Failed to fetch user details:" }
+          logger.error(LOG_TAG) { result.error }
 
-      if user_details.status == 200
-        JSON.parse(user_details.body, symbolize_names: true)
-      else
-        logger.error(LOG_TAG) { "Failed to fetch user details:" }
-        logger.error(LOG_TAG) { user_details }
-        false
+          callback.call(false)
+        end
       end
+
+      body = URI.encode_www_form("data": JSON.dump({ id: id }))
+      post("/apis/w3dhub/1/get-user-details", FORM_ENCODED_HEADERS, body, backend, &handler)
     end
 
     # /apis/w3dhub/1/get-service-status
     # Service response:
     # {"services":{"authentication":true,"packageDownload":true}}
     def self.service_status(backend = :w3dhub, &callback)
-      response = post("/apis/w3dhub/1/get-service-status", DEFAULT_HEADERS, nil, backend) do |result|
+      handler = lambda do |result|
         if result.okay?
-          ServiceStatus.new(result.data)
+          callback.call(ServiceStatus.new(result.data))
         else
           logger.error(LOG_TAG) { "Failed to fetch service status:" }
-          logger.error(LOG_TAG) { response }
-          false
+          logger.error(LOG_TAG) { result.error }
+
+          callback.call(false)
         end
       end
+
+      post("/apis/w3dhub/1/get-service-status", DEFAULT_HEADERS, nil, backend, &handler)
     end
 
     # /apis/launcher/1/get-applications
@@ -177,15 +195,18 @@ class W3DHub
     # Launcher sends an empty data request: data={}
     # Response is a list of applications/games
     def self.applications(backend = :w3dhub, &callback)
-      response = post("/apis/launcher/1/get-applications", DEFAULT_HEADERS, nil, backend)
+      handler = lambda do |result|
+        if result.okay?
+          callback.call(Applications.new(result.data, backend))
+        else
+          logger.error(LOG_TAG) { "Failed to fetch applications list:" }
+          logger.error(LOG_TAG) { result.error }
 
-      if response.status == 200
-        Applications.new(response.body, backend)
-      else
-        logger.error(LOG_TAG) { "Failed to fetch applications list:" }
-        logger.error(LOG_TAG) { response }
-        false
+          callback.call(false)
+        end
       end
+
+      post("/apis/launcher/1/get-applications", DEFAULT_HEADERS, nil, backend, &handler)
     end
 
     # Populate applications list from primary and alternate backends
@@ -262,17 +283,20 @@ class W3DHub
     # Client requests news for a specific application/game e.g.: data={"category":"ia"} ("launcher-home" retrieves the weekly hub updates)
     # Response is a JSON hash with a "highlighted" and "news" keys; the "news" one seems to be the desired one
     def self.news(category, backend = :w3dhub, &callback)
-      body = URI.encode_www_form("data": JSON.dump({category: category}))
-      response = post("/apis/w3dhub/1/get-news", FORM_ENCODED_HEADERS, body, backend)
+      handler = lambda do |result|
+        if result.okay?
+          callback.call(News.new(result.data))
+        else
+          logger.error(LOG_TAG) { "Failed to fetch news for:" }
+          logger.error(LOG_TAG) { category }
+          logger.error(LOG_TAG) { result.error }
 
-      if response.status == 200
-        News.new(response.body)
-      else
-        logger.error(LOG_TAG) { "Failed to fetch news for:" }
-        logger.error(LOG_TAG) { category }
-        logger.error(LOG_TAG) { response }
-        false
+          callback.call(false)
+        end
       end
+
+      body = URI.encode_www_form("data": JSON.dump({ category: category }))
+      post("/apis/w3dhub/1/get-news", FORM_ENCODED_HEADERS, body, backend, &handler)
     end
 
     # Downloading games
@@ -280,19 +304,22 @@ class W3DHub
     # /apis/launcher/1/get-package-details
     # client requests package details: data={"packages":[{"category":"games","name":"apb.ico","subcategory":"apb","version":""}]}
     def self.package_details(packages, backend = :w3dhub, &callback)
-      body = URI.encode_www_form("data": JSON.dump({ packages: packages }))
-      response = post("/apis/launcher/1/get-package-details", FORM_ENCODED_HEADERS, body, backend)
+      handler = lambda do |result|
+        if result.okay?
+          hash = JSON.parse(result.data, symbolize_names: true)
 
-      if response.status == 200
-        hash = JSON.parse(response.body, symbolize_names: true)
+          callback.call(hash[:packages].map { |pkg| Package.new(pkg) })
+        else
+          logger.error(LOG_TAG) { "Failed to fetch package details for:" }
+          logger.error(LOG_TAG) { packages }
+          logger.error(LOG_TAG) { result.error }
 
-        hash[:packages].map { |pkg| Package.new(pkg) }
-      else
-        logger.error(LOG_TAG) { "Failed to fetch package details for:" }
-        logger.error(LOG_TAG) { packages }
-        logger.error(LOG_TAG) { response }
-        false
+          callback.call(false)
+        end
       end
+
+      body = URI.encode_www_form("data": JSON.dump({ packages: packages }))
+      post("/apis/launcher/1/get-package-details", FORM_ENCODED_HEADERS, body, backend, &handler)
     end
 
     # /apis/launcher/1/get-package
@@ -308,15 +335,17 @@ class W3DHub
     #
     # clients requests events: data={"serverPath":"apb"}
     def self.events(app_id, backend = :w3dhub, &callback)
-      body = URI.encode_www_form("data": JSON.dump({ serverPath: app_id }))
-      response = post("/apis/w3dhub/1/get-server-events", FORM_ENCODED_HEADERS, body, backend)
-
-      if response.status == 200
-        array = JSON.parse(response.body, symbolize_names: true)
-        array.map { |e| Event.new(e) }
-      else
-        false
+      handler = lambda do |result|
+        if result.okay?
+          array = JSON.parse(response.body, symbolize_names: true)
+          callback.call(array.map { |e| Event.new(e) })
+        else
+          callback.call(false)
+        end
       end
+
+      body = URI.encode_www_form("data": JSON.dump({ serverPath: app_id }))
+      post("/apis/w3dhub/1/get-server-events", FORM_ENCODED_HEADERS, body, backend, &handler)
     end
 
     #! === Server List API === !#
@@ -344,23 +373,15 @@ class W3DHub
     #     nick, team (index of teams array), score, kills, deaths
     def self.server_list(level = 1, backend = :gsh, &callback)
       handler = lambda do |result|
-        unless result.okay?
+        if result.okay?
+          data = JSON.parse(result.data, symbolize_names: true)
+          callback.call(data.map { |hash| ServerListServer.new(hash) })
+        else
           callback.call(false)
-          next
         end
-
-        data = JSON.parse(result.data, symbolize_names: true)
-        callback.call(data.map { |hash| ServerListServer.new(hash) })
       end
 
       get("/listings/getAll/v2?statusLevel=#{level}", DEFAULT_HEADERS, nil, backend, &handler)
-
-      # if response.status == 200
-      #   data = JSON.parse(response.body, symbolize_names: true)
-      #   callback&.call(data.map { |hash| ServerListServer.new(hash) })
-      # end
-
-      # callback&.call(false)
     end
 
     # /listings/getStatus/v2/:id?statusLevel=#{0-2}
@@ -377,14 +398,15 @@ class W3DHub
     def self.server_details(id, level, backend = :gsh, &callback)
       return false unless id && level
 
-      response = get("/listings/getStatus/v2/#{id}?statusLevel=#{level}", DEFAULT_HEADERS, nil, backend)
-
-      if response.status == 200
-        hash = JSON.parse(response.body, symbolize_names: true)
-        return hash
+      handler = lambda do |result|
+        if result.okay?
+          callback.call(JSON.parse(response.body, symbolize_names: true))
+        else
+          callback.call(false)
+        end
       end
 
-      false
+      get("/listings/getStatus/v2/#{id}?statusLevel=#{level}", DEFAULT_HEADERS, nil, backend, &handler)
     end
 
     # /listings/push/v2/negotiate?negotiateVersion=1

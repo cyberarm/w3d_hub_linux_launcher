@@ -231,14 +231,14 @@ class W3DHub
       def applications
         @status_label.value = I18n.t(:"boot.checking_for_updates")
 
-        Api.on_thread(:_applications) do |applications|
+        # Api.on_thread(:_applications) do |applications|
+        Api.on_thread(:applications, :alt_w3dhub) do |applications|
           if applications
             Store.applications = applications
             Store.settings.save_application_cache(applications.data.to_json)
             @tasks[:applications][:complete] = true
           else
-            # FIXME: Failed to retreive!
-            BackgroundWorker.foreground_job(-> {}, ->(_) { @status_label.value = "FAILED TO RETREIVE APPS LIST" })
+            @status_label.value = "FAILED TO RETREIVE APPS LIST"
 
             @offline_mode = true
             Store.offline_mode = true
