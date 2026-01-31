@@ -16,32 +16,7 @@ class W3DHub
     ].freeze
 
     def self.on_thread(method, *args, &callback)
-      raise "Renew."
-      BackgroundWorker.foreground_job(-> { Api.send(method, *args) }, callback)
-    end
-
-    class Response
-      def initialize(error: nil, status: -1, body: "")
-        @status = status
-        @body = body
-        @error = error
-      end
-
-      def success?
-        @status == 200
-      end
-
-      def status
-        @status
-      end
-
-      def body
-        @body
-      end
-
-      def error
-        @error
-      end
+      Api.send(method, *args, &callback)
     end
 
     #! === W3D Hub API === !#
@@ -50,7 +25,9 @@ class W3DHub
 
     HTTP_CLIENTS = {}
 
-    def self.async_http(method, path, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub)
+    def self.async_http(method, path, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub, &callback)
+      raise "NO CALLBACK DEFINED!" unless callback
+
       case backend
       when :w3dhub
         endpoint   = W3DHUB_API_ENDPOINT
@@ -79,24 +56,7 @@ class W3DHub
         headers << ["authorization", "Bearer #{Store.account.access_token}"]
       end
 
-      Sync do
-        begin
-          response = provision_http_client(endpoint).send(method, path, headers, body)
-
-          Response.new(status: response.status, body: response.read)
-        rescue Async::TimeoutError => e
-          logger.error(LOG_TAG) { "Connection to \"#{url}\" timed out after: #{API_TIMEOUT} seconds" }
-
-          Response.new(error: e)
-        rescue StandardError => e
-          logger.error(LOG_TAG) { "Connection to \"#{url}\" errored:" }
-          logger.error(LOG_TAG) { e }
-
-          Response.new(error: e)
-        ensure
-          response&.close
-        end
-      end
+      Store.network_manager.request(method, url, headers, body, nil, &callback)
     end
 
     def self.provision_http_client(hostname)
@@ -114,17 +74,17 @@ class W3DHub
       HTTP_CLIENTS[Thread.current][hostname.downcase] = Async::HTTP::Client.new(endpoint)
     end
 
-    def self.post(path, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub)
-      async_http(:post, path, headers, body, backend)
+    def self.post(path, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub, &callback)
+      async_http(:post, path, headers, body, backend, &callback)
     end
 
-    def self.get(path, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub)
-      async_http(:get, path, headers, body, backend)
+    def self.get(path, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub, &callback)
+      async_http(:get, path, headers, body, backend, &callback)
     end
 
     # Api.get but handles any URL instead of known hosts
-    def self.fetch(path, headers = DEFAULT_HEADERS, body = nil, backend = nil)
-      async_http(:get, path, headers, body, backend)
+    def self.fetch(path, headers = DEFAULT_HEADERS, body = nil, backend = nil, &callback)
+      async_http(:get, path, headers, body, backend, &callback)
     end
 
     # Method: POST
@@ -142,27 +102,27 @@ class W3DHub
     #
     # On a failed login the service responds with:
     # {"error":"login-failed"}
-    def self.refresh_user_login(refresh_token, backend = :w3dhub)
+    def self.refresh_user_login(refresh_token, backend = :w3dhub, &callback)
       body = URI.encode_www_form("data": JSON.dump({refreshToken: refresh_token}))
-      response = post("/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body, backend)
+      post("/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body, backend) do |result|
+        if result.okay?
+          user_data = JSON.parse(result.data, symbolize_names: true)
 
-      if response.status == 200
-        user_data = JSON.parse(response.body, symbolize_names: true)
+          return false if user_data[:error]
 
-        return false if user_data[:error]
+          user_details_data = user_details(user_data[:userid]) || {}
 
-        user_details_data = user_details(user_data[:userid]) || {}
-
-        Account.new(user_data, user_details_data)
-      else
-        logger.error(LOG_TAG) { "Failed to fetch refresh user login:" }
-        logger.error(LOG_TAG) { response }
-        false
+          Account.new(user_data, user_details_data)
+        else
+          logger.error(LOG_TAG) { "Failed to fetch refresh user login:" }
+          logger.error(LOG_TAG) { response }
+          false
+        end
       end
     end
 
     # See #user_refresh_token
-    def self.user_login(username, password, backend = :w3dhub)
+    def self.user_login(username, password, backend = :w3dhub, &callback)
       body = URI.encode_www_form("data": JSON.dump({username: username, password: password}))
       response = post("/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body, backend)
 
@@ -184,7 +144,7 @@ class W3DHub
     # /apis/w3dhub/1/get-user-details
     #
     # Response: avatar-uri (Image download uri), id, username
-    def self.user_details(id, backend = :w3dhub)
+    def self.user_details(id, backend = :w3dhub, &callback)
       body = URI.encode_www_form("data": JSON.dump({ id: id }))
       user_details = post("/apis/w3dhub/1/get-user-details", FORM_ENCODED_HEADERS, body, backend)
 
@@ -200,15 +160,15 @@ class W3DHub
     # /apis/w3dhub/1/get-service-status
     # Service response:
     # {"services":{"authentication":true,"packageDownload":true}}
-    def self.service_status(backend = :w3dhub)
-      response = post("/apis/w3dhub/1/get-service-status", DEFAULT_HEADERS, nil, backend)
-
-      if response.status == 200
-        ServiceStatus.new(response.body)
-      else
-        logger.error(LOG_TAG) { "Failed to fetch service status:" }
-        logger.error(LOG_TAG) { response }
-        false
+    def self.service_status(backend = :w3dhub, &callback)
+      response = post("/apis/w3dhub/1/get-service-status", DEFAULT_HEADERS, nil, backend) do |result|
+        if result.okay?
+          ServiceStatus.new(result.data)
+        else
+          logger.error(LOG_TAG) { "Failed to fetch service status:" }
+          logger.error(LOG_TAG) { response }
+          false
+        end
       end
     end
 
@@ -216,7 +176,7 @@ class W3DHub
     # Client sends an Authorization header bearer token which is received from logging in (Optional)
     # Launcher sends an empty data request: data={}
     # Response is a list of applications/games
-    def self.applications(backend = :w3dhub)
+    def self.applications(backend = :w3dhub, &callback)
       response = post("/apis/launcher/1/get-applications", DEFAULT_HEADERS, nil, backend)
 
       if response.status == 200
@@ -301,7 +261,7 @@ class W3DHub
     # Client sends an Authorization header bearer token which is received from logging in (Optional)
     # Client requests news for a specific application/game e.g.: data={"category":"ia"} ("launcher-home" retrieves the weekly hub updates)
     # Response is a JSON hash with a "highlighted" and "news" keys; the "news" one seems to be the desired one
-    def self.news(category, backend = :w3dhub)
+    def self.news(category, backend = :w3dhub, &callback)
       body = URI.encode_www_form("data": JSON.dump({category: category}))
       response = post("/apis/w3dhub/1/get-news", FORM_ENCODED_HEADERS, body, backend)
 
@@ -319,7 +279,7 @@ class W3DHub
 
     # /apis/launcher/1/get-package-details
     # client requests package details: data={"packages":[{"category":"games","name":"apb.ico","subcategory":"apb","version":""}]}
-    def self.package_details(packages, backend = :w3dhub)
+    def self.package_details(packages, backend = :w3dhub, &callback)
       body = URI.encode_www_form("data": JSON.dump({ packages: packages }))
       response = post("/apis/launcher/1/get-package-details", FORM_ENCODED_HEADERS, body, backend)
 
@@ -339,14 +299,15 @@ class W3DHub
     # client requests package: data={"category":"games","name":"ECW_Asteroids.zip","subcategory":"ecw","version":"1.0.0.0"}
     #
     # server responds with download bytes, probably supports chunked download and resume
-    def self.package(package, &block)
-      Cache.fetch_package(package, block)
+    # FIXME: REFACTOR Cache.fetch_package to use HttpClient
+    def self.package(package, &callback)
+      Cache.fetch_package(package, callback)
     end
 
     # /apis/w3dhub/1/get-events
     #
     # clients requests events: data={"serverPath":"apb"}
-    def self.events(app_id, backend = :w3dhub)
+    def self.events(app_id, backend = :w3dhub, &callback)
       body = URI.encode_www_form("data": JSON.dump({ serverPath: app_id }))
       response = post("/apis/w3dhub/1/get-server-events", FORM_ENCODED_HEADERS, body, backend)
 
@@ -381,15 +342,25 @@ class W3DHub
     #     id, name, score, kills, deaths
     #   ...players[]:
     #     nick, team (index of teams array), score, kills, deaths
-    def self.server_list(level = 1, backend = :gsh)
-      response = get("/listings/getAll/v2?statusLevel=#{level}", DEFAULT_HEADERS, nil, backend)
+    def self.server_list(level = 1, backend = :gsh, &callback)
+      handler = lambda do |result|
+        unless result.okay?
+          callback.call(false)
+          next
+        end
 
-      if response.status == 200
-        data = JSON.parse(response.body, symbolize_names: true)
-        return data.map { |hash| ServerListServer.new(hash) }
+        data = JSON.parse(result.data, symbolize_names: true)
+        callback.call(data.map { |hash| ServerListServer.new(hash) })
       end
 
-      false
+      get("/listings/getAll/v2?statusLevel=#{level}", DEFAULT_HEADERS, nil, backend, &handler)
+
+      # if response.status == 200
+      #   data = JSON.parse(response.body, symbolize_names: true)
+      #   callback&.call(data.map { |hash| ServerListServer.new(hash) })
+      # end
+
+      # callback&.call(false)
     end
 
     # /listings/getStatus/v2/:id?statusLevel=#{0-2}
@@ -403,7 +374,7 @@ class W3DHub
     #     id, name, score, kills, deaths
     #   ...players[]:
     #     nick, team (index of teams array), score, kills, deaths
-    def self.server_details(id, level, backend = :gsh)
+    def self.server_details(id, level, backend = :gsh, &callback)
       return false unless id && level
 
       response = get("/listings/getStatus/v2/#{id}?statusLevel=#{level}", DEFAULT_HEADERS, nil, backend)
@@ -419,7 +390,7 @@ class W3DHub
     # /listings/push/v2/negotiate?negotiateVersion=1
     ##? /listings/push/v2/?id=#{websocket token?}
     ## Websocket server list listener
-    def self.server_list_push(id)
+    def self.server_list_push(id, &callback)
     end
   end
 end

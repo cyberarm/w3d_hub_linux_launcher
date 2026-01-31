@@ -175,7 +175,11 @@ class W3DHub
       end
 
       def service_status
+        @status_label.value = "Checking service status..." #I18n.t(:"server_browser.fetching_server_list")
+
         Api.on_thread(:service_status) do |service_status|
+          pp service_status
+
           @service_status = service_status
 
           if @service_status

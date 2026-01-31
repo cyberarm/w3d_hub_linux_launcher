@@ -23,7 +23,7 @@ class W3DHub
         @invocation_id = 0
 
         logger.info(LOG_TAG) { "Starting emulated SignalR Server List Updater..." }
-        run
+        # run
       end
 
       def run
@@ -32,7 +32,8 @@ class W3DHub
             begin
               @auto_reconnect = true
 
-              while W3DHub::BackgroundWorker.alive?
+              # FIXME
+              while true #W3DHub::BackgroundWorker.alive?
                 connect if @auto_reconnect
                 sleep @reconnection_delay
               end
@@ -54,19 +55,31 @@ class W3DHub
         @auto_reconnect = false
 
         logger.debug(LOG_TAG) { "Requesting connection token..." }
-        response = Api.post("/listings/push/v2/negotiate?negotiateVersion=1", Api::DEFAULT_HEADERS, "", :gsh)
 
-        if response.status != 200
+        result = nil
+        Api.post("/listings/push/v2/negotiate?negotiateVersion=1", Api::DEFAULT_HEADERS, "", :gsh) do |callback_result|
+          result = callback_result
+        end
+
+        # FIXME: we've introduced ourselves to callback hell, yay!
+        while result.nil?
+          sleep 0.1
+        end
+
+        if result.error?
           @auto_reconnect = true
-          @reconnection_delay = @reconnection_delay * 2
+          @reconnection_delay *= 2
           @reconnection_delay = 60 if @reconnection_delay > 60
+
           return
         end
 
         @reconnection_delay = 1
 
-        data = JSON.parse(response.body, symbolize_names: true)
+        connect_websocket(JSON.parse(result.data, symbolize_names: true))
+      end
 
+      def connect_websocket(data)
         @invocation_id = 0 if @invocation_id > 9095
         id = data[:connectionToken]
         endpoint = "#{Api::SERVER_LIST_ENDPOINT}/listings/push/v2?id=#{id}"
