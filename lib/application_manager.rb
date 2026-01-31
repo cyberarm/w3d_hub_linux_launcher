@@ -682,7 +682,23 @@ class W3DHub
       # mark MAIN ractor's task as started before handing off to background ractor
       # so that we don't start up multiple tasks at once.
       task.start
-      BackgroundWorker.ractor_task(task)
+      on_ractor(task)
+    end
+
+    def on_ractor(task)
+      raise "Something has gone horribly wrong!!!" unless Ractor.main?
+
+      ractor = Ractor.new(task) do |t|
+        t.start
+      end
+
+      Thread.new do
+        while (message_event = ractor.take)
+          break unless message_event.is_a?(Task::MessageEvent)
+
+          Store.application_manager.handle_task_event(message_event)
+        end
+      end
     end
 
     def task?(type, app_id, channel)

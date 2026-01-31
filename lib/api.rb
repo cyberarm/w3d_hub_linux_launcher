@@ -16,6 +16,7 @@ class W3DHub
     ].freeze
 
     def self.on_thread(method, *args, &callback)
+      raise "Renew."
       BackgroundWorker.foreground_job(-> { Api.send(method, *args) }, callback)
     end
 

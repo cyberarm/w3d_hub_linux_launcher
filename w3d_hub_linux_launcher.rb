@@ -112,7 +112,8 @@ require_relative "lib/broadcast_server"
 require_relative "lib/hardware_survey"
 require_relative "lib/game_settings"
 require_relative "lib/websocket_client"
-require_relative "lib/background_worker"
+require_relative "lib/network_manager"
+require_relative "lib/network_manager/api_client"
 require_relative "lib/application_manager"
 require_relative "lib/application_manager/manifest"
 require_relative "lib/application_manager/status"
@@ -178,27 +179,18 @@ end
 
 logger.info(W3DHub::LOG_TAG) { "W3D Hub Linux Launcher v#{W3DHub::VERSION}" }
 
-Thread.new do
-  W3DHub::BackgroundWorker.create
-end
-
-until W3DHub::BackgroundWorker.alive?
-  sleep 0.1
-end
-
 logger.info(W3DHub::LOG_TAG) { "Launching window..." }
 # W3DHub::Window.new(width: 980, height: 720, borderless: false, resizable: true).show unless defined?(Ocra)
 W3DHub::Window.new(width: 1280, height: 800, borderless: false, resizable: true).show unless defined?(Ocra)
 # W3DHub::Window.new(width: 1920, height: 1080, borderless: false, resizable: true).show unless defined?(Ocra)
-W3DHub::BackgroundWorker.shutdown!
 
-worker_soft_halt = Gosu.milliseconds
+# worker_soft_halt = Gosu.milliseconds
 
-# Wait for BackgroundWorker to return
-while W3DHub::BackgroundWorker.alive?
-  W3DHub::BackgroundWorker.kill! if Gosu.milliseconds - worker_soft_halt >= 1_000
+# # Wait for BackgroundWorker to return
+# while W3DHub::BackgroundWorker.alive?
+#   W3DHub::BackgroundWorker.kill! if Gosu.milliseconds - worker_soft_halt >= 1_000
 
-  sleep 0.1
-end
+#   sleep 0.1
+# end
 
 W3DHub::LOGGER&.close

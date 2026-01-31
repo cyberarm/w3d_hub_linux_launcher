@@ -6,10 +6,12 @@ class W3DHub
 
       Store[:server_list] = []
       Store[:settings] = Settings.new
+      Store[:network_manager] = NetworkManager.new
       Store[:application_manager] = ApplicationManager.new
       Store[:ping_manager] = PingManager.new
 
-      BackgroundWorker.parallel_job(-> { Async { |task| Store.ping_manager.monitor(task) } }, nil)
+      # FIXME
+      # BackgroundWorker.parallel_job(-> { Async { |task| Store.ping_manager.monitor(task) } }, nil)
 
       Store[:main_thread_queue] = []
 
@@ -34,9 +36,6 @@ class W3DHub
       while (block = Store.main_thread_queue.shift)
         block&.call
       end
-
-      # Manually sleep main thread so that the BackgroundWorker thread can be scheduled
-      sleep(update_interval / 1000.0) if W3DHub::BackgroundWorker.busy? || Store.application_manager.busy?
     end
 
     def needs_redraw?
