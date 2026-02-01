@@ -228,27 +228,34 @@ class W3DHub
       @encrypted
     end
 
-    def add_file(path:)
+    def add_file(path:, replace: false)
       return false unless File.exist?(path)
       return false if File.directory?(path)
 
-      info = EntryInfoHeader.new(0, 0, File.size(path))
-      @entries << Entry.new(name: File.basename(path), path: path, info: info)
-
-      true
+      entry = Entry.new(name: File.basename(path), path: path, info: EntryInfoHeader.new(0, 0, File.size(path)))
+      add_entry(entry: entry, replace: replace)
     end
 
-    def add_blob(path:, blob:)
+    def add_blob(path:, blob:, replace: false)
       info = EntryInfoHeader.new(0, 0, blob.size)
-      @entries << Entry.new(name: File.basename(path), path: path, info: info, blob: blob)
+      entry = Entry.new(name: File.basename(path), path: path, info: info, blob: blob)
       into.crc32 = @entries.last.calculate_crc32
 
-      true
+      add_entry(entry: entry, replace: replace)
     end
 
-    def add_entry(entry:)
-      @entries << entry
+    def add_entry(entry:, replace: false)
+      duplicate = @entries.find { |e| e.name.upcase == entry.name.upcase }
 
+      if duplicate
+        if replace
+          @entries.delete(duplicate)
+        else
+          return false
+        end
+      end
+
+      @entries << entry
       true
     end
 
