@@ -746,6 +746,8 @@ class W3DHub
         end
         patch_entry = patch_mix.entries.find { |e| e.name.casecmp?(".w3dhub.patch") || e.name.casecmp?(".bhppatch") }
         patch_entry.read
+        # "remove" patch meta file from patch before copying patch data
+        patch_mix.entries.delete(patch_entry)
 
         patch_info = JSON.parse(patch_entry.blob, symbolize_names: true)
 
@@ -765,20 +767,15 @@ class W3DHub
         patch_info[:updatedFiles].each do |file|
           logger.debug(LOG_TAG) { "        #{file}" }
 
-          patch = patch_mix.entries.find { |e| e.name.casecmp?(file) }
-          target = target_mix.entries.find { |e| e.name.casecmp?(file) }
-
-          if target
-            target_mix.entries[target_mix.entries.index(target)] = patch
-          else
-            target_mix.entries << patch
+          patch_mix.entries.each do |entry|
+            target_mix.add_entry(entry: entry, replace: true)
           end
         end
 
         logger.info(LOG_TAG) { "      Writing updated #{file_path}..." } if patch_info[:updatedFiles].size.positive?
         temp_mix_path = "#{temp_path}/#{File.basename(file_path)}"
-        temp_mix = W3DHub::WWMix.new(path: temp_mix_path)
-        target_mix.entries.each { |e| temp_mix.add_entry(entry: e) }
+        temp_mix = W3DHub::WWMix.new(path: temp_mix_path, encrypted: target_mix.encrypted?)
+        target_mix.entries.each { |e| temp_mix.add_entry(entry: e, replace: true) }
         unless temp_mix.save
           raise temp_mix.error_reason
         end
