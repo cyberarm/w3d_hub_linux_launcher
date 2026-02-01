@@ -15,7 +15,7 @@ class W3DHub
       if !force_fetch && File.exist?(path)
         path
       else
-        Api.fetch(uri, W3DHub::Api::DEFAULT_HEADERS, nil, backend) do |result|
+        Api.fetch(path: uri, backend: backend) do |result|
           if result.okay?
             File.open(path, "wb") { |f| f.write result.data }
           end

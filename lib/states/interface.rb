@@ -164,15 +164,15 @@ class W3DHub
         if Gosu.milliseconds >= @server_list_expire
           @server_list_expire = Gosu.milliseconds + 30_000
 
-          Api.on_thread(:server_list, 2) do |list|
-            if list
+          Api.on_thread(:server_list, 2) do |result|
+            if result.okay?
               @server_list_expire = Gosu.milliseconds + SERVER_LIST_UPDATE_INTERVAL # five minutes
 
               Store.server_list_last_fetch = Gosu.milliseconds
 
-              Api::ServerListUpdater.instance.refresh_server_list(list)
+              Api::ServerListUpdater.instance.refresh_server_list(result.data)
 
-              BackgroundWorker.foreground_job(-> {}, ->(_) { States::Interface.instance&.update_server_browser(nil, :refresh_all) })
+              Store.main_thread_queue << -> { States::Interface.instance&.update_server_browser(nil, :refresh_all) }
             end
           end
         end

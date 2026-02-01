@@ -145,15 +145,7 @@ class W3DHub
           reorder_server_list
 
           if @selected_server&.id == @refresh_server&.id
-            if @refresh_server
-              BackgroundWorker.foreground_job(
-                -> { fetch_server_details(@refresh_server) },
-                ->(result) {
-                  populate_server_info(@refresh_server) if @refresh_server == @selected_server
-                  @refresh_server = nil
-                }
-              )
-            end
+            fetch_server_details(@refresh_server) if @refresh_server
           end
         end
       end
@@ -353,10 +345,7 @@ class W3DHub
 
           reorder_server_list if @selected_server_container
 
-          BackgroundWorker.foreground_job(
-            -> { fetch_server_details(server) },
-            ->(result) { populate_server_info(server) if server == @selected_server }
-          )
+          fetch_server_details(server)
         end
 
         stylize_selected_server(server_container) if server.id == @selected_server&.id
@@ -523,10 +512,13 @@ class W3DHub
       end
 
       def fetch_server_details(server)
-        BackgroundWorker.foreground_job(
-          -> { Api.server_details(server.id, 2) },
-          ->(server_data) { server.update(server_data) if server_data }
-        )
+        Api.server_details(server.id, 2) do |result|
+          if result.okay?
+            server.update(result.data)
+            populate_server_info(server) if server == @selected_server
+            @refresh_server = nil
+          end
+        end
       end
 
       def game_icon(server)

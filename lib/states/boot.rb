@@ -130,7 +130,7 @@ class W3DHub
 
           Store.settings[:account][:data] = account
 
-          Cache.fetch(uri: account.avatar_uri, force_fetch: true, async: false, backend: :w3dhub)
+          Cache.fetch(uri: account.avatar_uri, force_fetch: true, backend: :w3dhub)
         else
           Store.settings[:account] = {}
         end
@@ -176,10 +176,8 @@ class W3DHub
       def service_status
         @status_label.value = "Checking service status..." #I18n.t(:"server_browser.fetching_server_list")
 
-        Api.on_thread(:service_status) do |service_status|
-          pp service_status
-
-          @service_status = service_status
+        Api.on_thread(:service_status) do |result|
+          @service_status = result.okay? ? result.data : nil
 
           if @service_status
             Store.service_status = @service_status
@@ -190,9 +188,7 @@ class W3DHub
 
             @tasks[:service_status][:complete] = true
           else
-            BackgroundWorker.foreground_job(-> {}, lambda { |_|
-              @status_label.value = I18n.t(:"boot.w3dhub_service_is_down")
-            })
+            Store.main_thread_queue << -> { @status_label.value = I18n.t(:"boot.w3dhub_service_is_down") }
             @tasks[:service_status][:complete] = true
 
             @offline_mode = true
@@ -204,9 +200,9 @@ class W3DHub
       def launcher_updater
         @status_label.value = "Checking for Launcher updates..." # I18n.t(:"boot.checking_for_updates")
 
-        Api.on_thread(:fetch, "https://api.github.com/repos/cyberarm/w3d_hub_linux_launcher/releases/latest") do |response|
-          if response.status == 200
-            hash = JSON.parse(response.body, symbolize_names: true)
+        Api.on_thread(:fetch, "https://api.github.com/repos/cyberarm/w3d_hub_linux_launcher/releases/latest") do |result|
+          if result.okay?
+            hash = JSON.parse(result.data, symbolize_names: true)
             available_version = hash[:tag_name].downcase.sub("v", "")
 
             pp Gem::Version.new(available_version) > Gem::Version.new(W3DHub::VERSION)
@@ -230,14 +226,13 @@ class W3DHub
       def applications
         @status_label.value = I18n.t(:"boot.checking_for_updates")
 
-        # Api.on_thread(:_applications) do |applications|
-        Api.on_thread(:applications, :alt_w3dhub) do |applications|
-          if applications
-            Store.applications = applications
-            Store.settings.save_application_cache(applications.data.to_json)
+        Api.on_thread(:_applications) do |result|
+          if result.okay?
+            Store.applications = result.data
+            Store.settings.save_application_cache(Store.applications.data.to_json)
             @tasks[:applications][:complete] = true
           else
-            @status_label.value = "FAILED TO RETREIVE APPS LIST"
+            @status_label.value = "FAILED TO RETRIEVE APPS LIST"
 
             @offline_mode = true
             Store.offline_mode = true
@@ -256,40 +251,39 @@ class W3DHub
           packages << { category: app.category, subcategory: app.id, name: "#{app.id}.ico", version: "" }
         end
 
-        Api.on_thread(:package_details, packages, :alt_w3dhub) do |package_details|
-          package_details ||= nil
+        Api.on_thread(:package_details, packages, :alt_w3dhub) do |result|
+          if result.okay?
+            result.data.each do |package|
+              next if package.error?
 
-          package_details&.each do |package|
-            next if package.error?
+              path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
+              generated_icon_path = "#{CACHE_PATH}/#{package.subcategory}.png"
 
-            path = Cache.package_path(package.category, package.subcategory, package.name, package.version)
-            generated_icon_path = "#{CACHE_PATH}/#{package.subcategory}.png"
+              regenerate = false
 
-            regenerate = false
-
-            if File.exist?(path)
-              broken_or_out_dated_icon = Digest::SHA256.new.hexdigest(File.binread(path)).upcase != package.checksum.upcase
-            end
-
-            if File.exist?(path) && !broken_or_out_dated_icon
-              regenerate = !File.exist?(generated_icon_path)
-            else
-              begin
-                Cache.fetch_package(package, proc {})
-                regenerate = true
-              rescue Errno::EACCES => e
-                failure = true
-                push_state(MessageDialog, title: "Fatal Error",
-                                          message: "Directory Permission Error (#{e.class}):\n#{e}.\n\nIs the required drive mounted?",
-                                          accept_callback: -> { window.close })
+              if File.exist?(path)
+                broken_or_out_dated_icon = Digest::SHA256.new.hexdigest(File.binread(path)).upcase != package.checksum.upcase
               end
+
+              if File.exist?(path) && !broken_or_out_dated_icon
+                regenerate = !File.exist?(generated_icon_path)
+              else
+                begin
+                  Cache.fetch_package(package, proc {})
+                  regenerate = true
+                rescue Errno::EACCES => e
+                  failure = true
+                  push_state(MessageDialog, title: "Fatal Error",
+                                            message: "Directory Permission Error (#{e.class}):\n#{e}.\n\nIs the required drive mounted?",
+                                            accept_callback: -> { window.close })
+                end
+              end
+
+              next unless regenerate
+
+              icon = ICO.new(file: path)
+              icon.save(icon.images.max_by(&:width), generated_icon_path)
             end
-
-            next unless regenerate
-
-            BackgroundWorker.foreground_job(-> { ICO.new(file: path) }, lambda { |result|
-              result.save(result.images.max_by(&:width), generated_icon_path)
-            })
           end
 
           @tasks[:app_icons][:complete] = true unless failure
@@ -307,18 +301,18 @@ class W3DHub
           packages << { category: app.category, subcategory: app.id, name: "background.png", version: "" }
         end
 
-        Api.on_thread(:package_details, packages, :alt_w3dhub) do |package_details|
-          package_details ||= nil
+        Api.on_thread(:package_details, packages, :alt_w3dhub) do |result|
+          if result.okay?
+            result.data.each do |package|
+              next if package.error?
 
-          package_details&.each do |package|
-            next if package.error?
+              package_cache_path = Cache.package_path(package.category, package.subcategory, package.name,
+                                                      package.version)
 
-            package_cache_path = Cache.package_path(package.category, package.subcategory, package.name,
-                                                    package.version)
+              missing_or_broken_image = File.exist?(package_cache_path) ? Digest::SHA256.new.hexdigest(File.binread(package_cache_path)).upcase != package.checksum.upcase : true
 
-            missing_or_broken_image = File.exist?(package_cache_path) ? Digest::SHA256.new.hexdigest(File.binread(package_cache_path)).upcase != package.checksum.upcase : true
-
-            Cache.fetch_package(package, proc {}) if missing_or_broken_image
+              Cache.fetch_package(package, proc {}) if missing_or_broken_image
+            end
           end
 
           @tasks[:app_logos_and_backgrounds][:complete] = true
@@ -328,15 +322,15 @@ class W3DHub
       def server_list
         @status_label.value = I18n.t(:"server_browser.fetching_server_list")
 
-        Api.on_thread(:server_list, 2) do |list|
-          if list
-            Store.server_list = list.sort_by! { |s| s&.status&.players&.size }.reverse
+        Api.on_thread(:server_list, 2) do |result|
+          if result.okay?
+            Store.server_list = result.data.sort_by! { |s| s&.status&.players&.size }.reverse
 
             Store.server_list_last_fetch = Gosu.milliseconds
 
             Api::ServerListUpdater.instance
 
-            list.each do |server|
+            Store.server_list.each do |server|
               server.send_ping(true)
             end
           else

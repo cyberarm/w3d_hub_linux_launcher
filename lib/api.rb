@@ -3,7 +3,7 @@ class W3DHub
 
     LOG_TAG = "W3DHub::Api".freeze
 
-    API_TIMEOUT = 30 # seconds
+    API_TIMEOUT = 10 # seconds
     USER_AGENT = "Cyberarm's Linux Friendly W3D Hub Launcher v#{W3DHub::VERSION}".freeze
     DEFAULT_HEADERS = [
       ["user-agent", USER_AGENT],
@@ -25,7 +25,7 @@ class W3DHub
 
     HTTP_CLIENTS = {}
 
-    def self.async_http(method, path, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub, &callback)
+    def self.async_http(method:, path:, headers:, body:, backend:, async:, &callback)
       raise "NO CALLBACK DEFINED!" unless callback
 
       case backend
@@ -56,35 +56,20 @@ class W3DHub
         headers << ["authorization", "Bearer #{Store.account.access_token}"]
       end
 
-      Store.network_manager.request(method, url, headers, body, nil, &callback)
+      Store.network_manager.request(method, url, headers, body, async, &callback)
     end
 
-    def self.provision_http_client(hostname)
-      # Pin http clients to their host Thread so the fiber scheduler doesn't get upset and raise an error
-      HTTP_CLIENTS[Thread.current] ||= {}
-      return HTTP_CLIENTS[Thread.current][hostname.downcase] if HTTP_CLIENTS[Thread.current][hostname.downcase]
-
-      ssl_context = W3DHub.ca_bundle_path ? OpenSSL::SSL::SSLContext.new : nil
-      ssl_context&.set_params(
-        ca_file: W3DHub.ca_bundle_path,
-        verify_mode: OpenSSL::SSL::VERIFY_PEER
-      )
-
-      endpoint = Async::HTTP::Endpoint.parse(hostname, ssl_context: ssl_context)
-      HTTP_CLIENTS[Thread.current][hostname.downcase] = Async::HTTP::Client.new(endpoint)
+    def self.post(path:, headers: DEFAULT_HEADERS, body: nil, backend: :w3dhub, async: true, &callback)
+      async_http(method: :post, path: path, headers: headers, body: body, backend: backend, async: async, &callback)
     end
 
-    def self.post(path, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub, &callback)
-      async_http(:post, path, headers, body, backend, &callback)
-    end
-
-    def self.get(path, headers = DEFAULT_HEADERS, body = nil, backend = :w3dhub, &callback)
-      async_http(:get, path, headers, body, backend, &callback)
+    def self.get(path:, headers: DEFAULT_HEADERS, body: nil, backend: :w3dhub, async: true, &callback)
+      async_http(method: :get, path: path, headers: headers, body: body, backend: backend, async: async, &callback)
     end
 
     # Api.get but handles any URL instead of known hosts
-    def self.fetch(path, headers = DEFAULT_HEADERS, body = nil, backend = nil, &callback)
-      async_http(:get, path, headers, body, backend, &callback)
+    def self.fetch(path:, headers: DEFAULT_HEADERS, body: nil, backend: :w3dhub, async: true, &callback)
+      async_http(method: :get, path: path, headers: headers, body: body, backend: backend, async: async, &callback)
     end
 
     # Method: POST
@@ -103,73 +88,76 @@ class W3DHub
     # On a failed login the service responds with:
     # {"error":"login-failed"}
     def self.refresh_user_login(refresh_token, backend = :w3dhub, &callback)
+      body = URI.encode_www_form("data": JSON.dump({ refreshToken: refresh_token }))
+
       handler = lambda do |result|
         if result.okay?
           user_data = JSON.parse(result.data, symbolize_names: true)
 
           if user_data[:error]
-            callback.call(false)
+            callback.call(CyberarmEngine::Result.new(data: false))
             next
           end
 
           user_details_data = user_details(user_data[:userid]) || {}
 
-          callback.call(Account.new(user_data, user_details_data))
+          callback.call(CyberarmEngine::Result.new(data: Account.new(user_data, user_details_data)))
         else
           logger.error(LOG_TAG) { "Failed to fetch refresh user login:" }
           logger.error(LOG_TAG) { result.error }
 
-          callback.call(false)
+          callback.call(result)
         end
       end
 
-      body = URI.encode_www_form("data": JSON.dump({ refreshToken: refresh_token }))
-      post("/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body, backend, &handler)
+      post(path: "/apis/launcher/1/user-login", headers: FORM_ENCODED_HEADERS, body: body, backend: backend, &handler)
     end
 
     # See #user_refresh_token
     def self.user_login(username, password, backend = :w3dhub, &callback)
+      body = URI.encode_www_form("data": JSON.dump({ username: username, password: password }))
+
       handler = lambda do |result|
         if result.okay?
           user_data = JSON.parse(result.data, symbolize_names: true)
 
           if user_data[:error]
-            callback.call(false)
+            callback.call(CyberarmEngine::Result.new(data: false))
             next
           end
 
           user_details_data = user_details(user_data[:userid]) || {}
 
-          callback.call(Account.new(user_data, user_details_data))
+          callback.call(CyberarmEngine::Result.new(data: Account.new(user_data, user_details_data)))
         else
           logger.error(LOG_TAG) { "Failed to fetch user login:" }
           logger.error(LOG_TAG) { result.error }
 
-          callback.call(false)
+          callback.call(result)
         end
       end
 
-      body = URI.encode_www_form("data": JSON.dump({ username: username, password: password }))
-      post("/apis/launcher/1/user-login", FORM_ENCODED_HEADERS, body, backend, &handler)
+      post(path: "/apis/launcher/1/user-login", headers: FORM_ENCODED_HEADERS, body: body, backend: backend, &handler)
     end
 
     # /apis/w3dhub/1/get-user-details
     #
     # Response: avatar-uri (Image download uri), id, username
     def self.user_details(id, backend = :w3dhub, &callback)
+      body = URI.encode_www_form("data": JSON.dump({ id: id }))
+
       handler = lambda do |result|
         if result.okay?
-          callback.call(JSON.parse(result.data, symbolize_names: true))
+          callback.call(CyberarmEngine::Result.new(data: JSON.parse(result.data, symbolize_names: true)))
         else
           logger.error(LOG_TAG) { "Failed to fetch user details:" }
           logger.error(LOG_TAG) { result.error }
 
-          callback.call(false)
+          callback.call(result)
         end
       end
 
-      body = URI.encode_www_form("data": JSON.dump({ id: id }))
-      post("/apis/w3dhub/1/get-user-details", FORM_ENCODED_HEADERS, body, backend, &handler)
+      post(path: "/apis/w3dhub/1/get-user-details", headers: FORM_ENCODED_HEADERS, body: body, backend: backend, &handler)
     end
 
     # /apis/w3dhub/1/get-service-status
@@ -178,16 +166,16 @@ class W3DHub
     def self.service_status(backend = :w3dhub, &callback)
       handler = lambda do |result|
         if result.okay?
-          callback.call(ServiceStatus.new(result.data))
+          callback.call(CyberarmEngine::Result.new(data: ServiceStatus.new(result.data)))
         else
           logger.error(LOG_TAG) { "Failed to fetch service status:" }
           logger.error(LOG_TAG) { result.error }
 
-          callback.call(false)
+          callback.call(result)
         end
       end
 
-      post("/apis/w3dhub/1/get-service-status", DEFAULT_HEADERS, nil, backend, &handler)
+      post(path: "/apis/w3dhub/1/get-service-status", backend: backend, &handler)
     end
 
     # /apis/launcher/1/get-applications
@@ -195,87 +183,104 @@ class W3DHub
     # Launcher sends an empty data request: data={}
     # Response is a list of applications/games
     def self.applications(backend = :w3dhub, &callback)
+      async = !callback.nil?
+
+      # Complicated why to "return" direct value
+      callback = ->(result) { result }
+
       handler = lambda do |result|
         if result.okay?
-          callback.call(Applications.new(result.data, backend))
+          callback.call(CyberarmEngine::Result.new(data: Applications.new(result.data, backend)))
         else
           logger.error(LOG_TAG) { "Failed to fetch applications list:" }
           logger.error(LOG_TAG) { result.error }
 
-          callback.call(false)
+          callback.call(result)
         end
       end
 
-      post("/apis/launcher/1/get-applications", DEFAULT_HEADERS, nil, backend, &handler)
+      post(path: "/apis/launcher/1/get-applications", async: async, backend: backend, &handler)
     end
 
     # Populate applications list from primary and alternate backends
     # (alternate only has latest public builds of _most_ games)
-    def self._applications
-      applications_primary = Store.account ? Api.applications(:w3dhub) : false
-      applications_alternate = Api.applications(:alt_w3dhub)
+    def self._applications(&callback)
+      handler = lambda do |result|
+        # nothing special on offer if we're not logged in
+        applications_primary = Store.account ? Api.applications(:w3dhub).data : false
+        applications_alternate = Api.applications(:alt_w3dhub).data
 
-      # Fail if we fail to fetch applications list from either backend
-      return false unless applications_primary || applications_alternate
+        # Fail if we fail to fetch applications list from either backend
+        unless applications_primary || applications_alternate
+          callback.call(CyberarmEngine::Result.new)
+          next
+        end
 
-      return applications_alternate unless applications_primary
+        unless applications_primary
+          callback.call(CyberarmEngine::Result.new(data: applications_alternate))
+          next
+        end
 
-      # Merge the two app lists together
-      apps = applications_alternate
-      if applications_primary
-        applications_primary.games.each do |game|
-          # Check if game exists in alternate list
-          _game = apps.games.find { |g| g.id == game.id }
-          unless _game
-            apps.games << game
+        # Merge the two app lists together
+        apps = applications_alternate
+        if applications_primary
+          applications_primary.games.each do |game|
+            # Check if game exists in alternate list
+            _game = apps.games.find { |g| g.id == game.id }
+            unless _game
+              apps.games << game
 
-            # App didn't exist in alternates list
-            # comparing channels isn't useful
-            next
-          end
-
-          # If it does, check that all of its channels also exist in alternate list
-          # and that the primary versions are the same as the alternates list
-          game.channels.each do |channel|
-            _channel = _game.channels.find { |c| c.id == channel.id }
-
-            unless _channel
-              _game.channels << channel
-
-              # App didn't have channel in alternates list
-              # comparing channel isn't useful
+              # App didn't exist in alternates list
+              # comparing channels isn't useful
               next
             end
 
-            # If channel versions and access levels match then all's well
-            if channel.current_version == _channel.current_version &&
-              channel.user_level == _channel.user_level
+            # If it does, check that all of its channels also exist in alternate list
+            # and that the primary versions are the same as the alternates list
+            game.channels.each do |channel|
+              _channel = _game.channels.find { |c| c.id == channel.id }
 
-              # All's Well!
-              next
-            end
+              unless _channel
+                _game.channels << channel
 
-            # If the access levels don't match then overwrite alternate's channel with primary's channel
-            if channel.user_level != _channel.user_level
-              # Replace alternate's channel with primary's channel
-              _game.channels[_game.channels.index(_channel)] = channel
+                # App didn't have channel in alternates list
+                # comparing channel isn't useful
+                next
+              end
 
-              # Replaced, continue.
-              next
-            end
+              # If channel versions and access levels match then all's well
+              if channel.current_version == _channel.current_version &&
+                channel.user_level == _channel.user_level
 
-            # If versions don't match then pick whichever one is higher
-            if Gem::Version.new(channel.current_version) > Gem::Version.new(_channel.current_version)
-              # Replace alternate's channel with primary's channel
-              _game.channels[_game.channels.index(_channel)] = channel
-            else
-              # Do nothing, alternate backend version is greater.
+                # All's Well!
+                next
+              end
+
+              # If the access levels don't match then overwrite alternate's channel with primary's channel
+              if channel.user_level != _channel.user_level
+                # Replace alternate's channel with primary's channel
+                _game.channels[_game.channels.index(_channel)] = channel
+
+                # Replaced, continue.
+                next
+              end
+
+              # If versions don't match then pick whichever one is higher
+              if Gem::Version.new(channel.current_version) > Gem::Version.new(_channel.current_version)
+                # Replace alternate's channel with primary's channel
+                _game.channels[_game.channels.index(_channel)] = channel
+              else
+                # Do nothing, alternate backend version is greater.
+              end
             end
           end
         end
+
+        callback.call(CyberarmEngine::Result.new(data: apps))
       end
 
-      apps
+      # Bit hacky but we just need to run this handler from the networking thread and async reactor
+      get(path: "", backend: nil, &handler)
     end
 
     # /apis/w3dhub/1/get-news
@@ -285,18 +290,18 @@ class W3DHub
     def self.news(category, backend = :w3dhub, &callback)
       handler = lambda do |result|
         if result.okay?
-          callback.call(News.new(result.data))
+          callback.call(CyberarmEngine::Result.new(data: News.new(result.data)))
         else
           logger.error(LOG_TAG) { "Failed to fetch news for:" }
           logger.error(LOG_TAG) { category }
           logger.error(LOG_TAG) { result.error }
 
-          callback.call(false)
+          callback.call(result)
         end
       end
 
       body = URI.encode_www_form("data": JSON.dump({ category: category }))
-      post("/apis/w3dhub/1/get-news", FORM_ENCODED_HEADERS, body, backend, &handler)
+      post(path: "/apis/w3dhub/1/get-news", headers: FORM_ENCODED_HEADERS, body: body, backend: backend, &handler)
     end
 
     # Downloading games
@@ -308,18 +313,18 @@ class W3DHub
         if result.okay?
           hash = JSON.parse(result.data, symbolize_names: true)
 
-          callback.call(hash[:packages].map { |pkg| Package.new(pkg) })
+          callback.call(CyberarmEngine::Result.new(data: hash[:packages].map { |pkg| Package.new(pkg) }))
         else
           logger.error(LOG_TAG) { "Failed to fetch package details for:" }
           logger.error(LOG_TAG) { packages }
           logger.error(LOG_TAG) { result.error }
 
-          callback.call(false)
+          callback.call(result)
         end
       end
 
       body = URI.encode_www_form("data": JSON.dump({ packages: packages }))
-      post("/apis/launcher/1/get-package-details", FORM_ENCODED_HEADERS, body, backend, &handler)
+      post(path: "/apis/launcher/1/get-package-details", headers: FORM_ENCODED_HEADERS, body: body, backend: backend, &handler)
     end
 
     # /apis/launcher/1/get-package
@@ -337,15 +342,15 @@ class W3DHub
     def self.events(app_id, backend = :w3dhub, &callback)
       handler = lambda do |result|
         if result.okay?
-          array = JSON.parse(response.body, symbolize_names: true)
-          callback.call(array.map { |e| Event.new(e) })
+          array = JSON.parse(result.data, symbolize_names: true)
+          callback.call(CyberarmEngine::Result.new(data: array.map { |e| Event.new(e) }))
         else
-          callback.call(false)
+          callback.call(result)
         end
       end
 
       body = URI.encode_www_form("data": JSON.dump({ serverPath: app_id }))
-      post("/apis/w3dhub/1/get-server-events", FORM_ENCODED_HEADERS, body, backend, &handler)
+      post(path: "/apis/w3dhub/1/get-server-events", headers: FORM_ENCODED_HEADERS, body: body, backend: backend, &handler)
     end
 
     #! === Server List API === !#
@@ -375,13 +380,13 @@ class W3DHub
       handler = lambda do |result|
         if result.okay?
           data = JSON.parse(result.data, symbolize_names: true)
-          callback.call(data.map { |hash| ServerListServer.new(hash) })
+          callback.call(CyberarmEngine::Result.new(data: data.map { |hash| ServerListServer.new(hash) }))
         else
-          callback.call(false)
+          callback.call(result)
         end
       end
 
-      get("/listings/getAll/v2?statusLevel=#{level}", DEFAULT_HEADERS, nil, backend, &handler)
+      get(path: "/listings/getAll/v2?statusLevel=#{level}", backend: backend, &handler)
     end
 
     # /listings/getStatus/v2/:id?statusLevel=#{0-2}
@@ -400,13 +405,13 @@ class W3DHub
 
       handler = lambda do |result|
         if result.okay?
-          callback.call(JSON.parse(response.body, symbolize_names: true))
+          callback.call(CyberarmEngine::Result.new(data: JSON.parse(result.data, symbolize_names: true)))
         else
-          callback.call(false)
+          callback.call(result)
         end
       end
 
-      get("/listings/getStatus/v2/#{id}?statusLevel=#{level}", DEFAULT_HEADERS, nil, backend, &handler)
+      get(path: "/listings/getStatus/v2/#{id}?statusLevel=#{level}", backend: backend, &handler)
     end
 
     # /listings/push/v2/negotiate?negotiateVersion=1

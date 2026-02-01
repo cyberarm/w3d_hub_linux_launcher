@@ -31,30 +31,16 @@ class W3DHub
       def update
         super
 
-
         @game_news.each do |key, value|
-          next if key.end_with?("_expires")
+          next unless key.end_with?("_expires")
 
-          if Gosu.milliseconds >= @game_news["#{key}_expires"]
-            @game_news.delete(key)
-            @game_news["#{key}_expires"] = Gosu.milliseconds + 30_000 # seconds
+          next unless Gosu.milliseconds >= value
 
-            if @focused_game && @focused_game.id == key
-              @game_news_container.clear do
-                title I18n.t(:"games.fetching_news"), padding: 8
-              end
+          # try to refresh game news after last data 'expired', every 30 seconds until success
+          @game_news[key] = Gosu.milliseconds + 30_000 # seconds
 
-              BackgroundWorker.foreground_job(
-                -> { fetch_game_news(@focused_game) },
-                lambda do |result|
-                  if result
-                    populate_game_news(@focused_game)
-                    Cache.release_net_lock(result)
-                  end
-                end
-              )
-            end
-          end
+          game = Store.applications.games.find { |g| g.id == key.split("_").first }
+          fetch_game_news(game)
         end
       end
 
@@ -292,22 +278,6 @@ class W3DHub
         return if Store.offline_mode
 
         unless Cache.net_lock?("game_news_#{game.id}")
-          if @game_events[game.id]
-            populate_game_events(game)
-          else
-            # BackgroundWorker.foreground_job(
-            #   -> { fetch_game_events(game) },
-            #   lambda do |result|
-            #     if result
-            #       populate_game_events(game)
-            #       Cache.release_net_lock(result)
-            #     end
-            #   end
-            # )
-          end
-        end
-
-        unless Cache.net_lock?("game_events_#{game.id}")
           if @game_news[game.id]
             populate_game_news(game)
           else
@@ -315,15 +285,15 @@ class W3DHub
               title I18n.t(:"games.fetching_news"), padding: 8
             end
 
-            # BackgroundWorker.foreground_job(
-            #   -> { fetch_game_news(game) },
-            #   lambda do |result|
-            #     if result
-            #       populate_game_news(game)
-            #       Cache.release_net_lock(result)
-            #     end
-            #   end
-            # )
+            fetch_game_news(game)
+          end
+        end
+
+        unless Cache.net_lock?("game_events_#{game.id}")
+          if @game_events[game.id]
+            populate_game_events(game)
+          else
+            fetch_game_events(game)
           end
         end
       end
@@ -413,19 +383,25 @@ class W3DHub
         lock = Cache.acquire_net_lock("game_news_#{game.id}")
         return false unless lock
 
-        news = Api.news(game.id)
-        Cache.release_net_lock("game_news_#{game.id}") unless news
+        Api.news(game.id) do |result|
+          news = result.data
 
-        return false unless news
+          unless news
+            @game_news["#{game.id}_expires"] = Gosu.milliseconds + 30_000 # retry in 30 seconds
+            next false
+          end
 
-        news.items[0..15].each do |item|
-          Cache.fetch(uri: item.image, async: false, backend: :w3dhub)
+          news.items[0..15].each do |item|
+            Cache.fetch(uri: item.image, backend: :w3dhub)
+          end
+
+          @game_news[game.id] = news
+          @game_news["#{game.id}_expires"] = Gosu.milliseconds + (60 * 60 * 1000) # 1 hour (in ms)
+
+          populate_game_news(@focused_game)
+        ensure
+          Cache.release_net_lock("game_news_#{game.id}")
         end
-
-        @game_news[game.id] = news
-        @game_news["#{game.id}_expires"] = Gosu.milliseconds + (60 * 60 * 1000) # 1 hour (in ms)
-
-        "game_news_#{game.id}"
       end
 
       def populate_game_news(game)
@@ -436,38 +412,11 @@ class W3DHub
           game_color.alpha = 0xaa
 
           @game_news_container.clear do
-            # Patch Notes
-            if false # Patch notes
-              flow(width: 1.0, max_width: 346 * 3 + (8 * 4), height: 346, margin: 8, margin_right: 32, border_thickness: 1, border_color: darken(Gosu::Color.new(game.color))) do
-                background darken(Gosu::Color.new(game.color), 10)
-
-                stack(width: 346, height: 1.0, padding: 8) do
-                  background 0xff_181d22
-
-                  para "Patch Notes"
-
-                  tagline "<b>Patch 2.0 is now out!</b>"
-
-                  para "words go here " * 20
-
-                  flow(fill: true)
-
-                  button "Read More", width: 1.0
-                end
-
-                flow(fill: true)
-
-                title "Eye Candy Banner Goes Here."
-              end
-            end
-
-            feed.items.sort_by { |i| i.timestamp }.reverse[0..9].each do |item|
+            feed.items.sort_by(&:timestamp).reverse[0..9].each do |item|
               image_path = Cache.path(item.image)
 
               flow(width: 1.0, max_width: 869, height: 200, margin: 8, background: game_color, border_thickness: 1, border_color: lighten(Gosu::Color.new(game.color))) do
-                if File.file?(image_path)
-                  image image_path, height: 1.0
-                end
+                image image_path, height: 1.0 if File.file?(image_path)
 
                 stack(fill: true, height: 1.0, padding: 4, border_thickness_left: 1, border_color_left: lighten(Gosu::Color.new(game.color))) do
                   tagline "<b>#{item.title}</b>", width: 1.0
@@ -494,14 +443,14 @@ class W3DHub
         lock = Cache.acquire_net_lock("game_events_#{game.id}")
         return false unless lock
 
-        events = Api.events(game.id)
-        Cache.release_net_lock("game_events_#{game.id}") unless events
+        Api.events(game.id) do |result|
+          next unless result.okay?
 
-        return false unless events
-
-        @game_events[game.id] = events
-
-        "game_events_#{game.id}"
+          @game_events[game.id] = result.data
+          populate_game_events(game)
+        ensure
+          Cache.release_net_lock("game_events_#{game.id}")
+        end
       end
 
       def populate_game_events(game)

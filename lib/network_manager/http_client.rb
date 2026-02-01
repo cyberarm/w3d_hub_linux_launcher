@@ -10,22 +10,18 @@ class W3DHub
         result = CyberarmEngine::Result.new
         context = request.context
 
-        task.with_timeout(30) do
+        task.with_timeout(W3DHub::Api::API_TIMEOUT) do
           uri = URI(context.url)
-
-          pp uri
 
           response = provision_http_client(uri.origin).send(
             context.method,
-            uri.path,
+            uri.request_uri,
             context.headers,
             context.body
           )
 
-          pp response
-
           if response.success?
-            result.data = response.body.read
+            result.data = response.read
           else
             result.error = response
           end

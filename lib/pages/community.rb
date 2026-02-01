@@ -65,15 +65,7 @@ class W3DHub
             para I18n.t(:"games.fetching_news"), padding: 8
           end
 
-          BackgroundWorker.foreground_job(
-            -> { fetch_w3dhub_news },
-            lambda do |result|
-              if result
-                populate_w3dhub_news
-                Cache.release_net_lock(result)
-              end
-            end
-          )
+          fetch_w3dhub_news
         end
       end
 
@@ -89,15 +81,7 @@ class W3DHub
             title I18n.t(:"games.fetching_news"), padding: 8
           end
 
-          BackgroundWorker.foreground_job(
-            -> { fetch_w3dhub_news },
-            lambda do |result|
-              if result
-                populate_w3dhub_news
-                Cache.release_net_lock(result)
-              end
-            end
-          )
+          fetch_w3dhub_news
         end
       end
 
@@ -105,19 +89,24 @@ class W3DHub
         lock = Cache.acquire_net_lock("w3dhub_news")
         return false unless lock
 
-        news = Api.news("launcher-home")
-        Cache.release_net_lock("w3dhub_news") unless news
+        Api.news("launcher-home") do |result|
+          news = result.data
 
-        return unless news
+          Cache.release_net_lock("w3dhub_news") unless news
 
-        news.items[0..15].each do |item|
-          Cache.fetch(uri: item.image, async: false, backend: :w3dhub)
+          next false unless news
+
+          news.items[0..15].each do |item|
+            Cache.fetch(uri: item.image, backend: :w3dhub)
+          end
+
+          @w3dhub_news = news
+          @w3dhub_news_expires = Gosu.milliseconds + (60 * 60 * 1000) # 1 hour (in ms)
+
+          populate_w3dhub_news
+        ensure
+          Cache.release_net_lock("w3dhub_news")
         end
-
-        @w3dhub_news = news
-        @w3dhub_news_expires = Gosu.milliseconds + (60 * 60 * 1000) # 1 hour (in ms)
-
-        "w3dhub_news"
       end
 
       def populate_w3dhub_news
@@ -125,37 +114,7 @@ class W3DHub
 
         if (feed = @w3dhub_news)
           @wd3hub_news_container.clear do
-            # feed.items.sort_by { |i| i.timestamp }.reverse[0..9].each do |item|
-            #   flow(width: 0.5, max_width: 312, height: 128, margin: 4) do
-            #     # background 0x88_000000
-
-            #     path = Cache.path(item.image)
-
-            #     if File.exist?(path)
-            #       image path, height: 1.0, padding: 4
-            #     else
-            #       image BLACK_IMAGE, height: 1.0, padding: 4
-            #     end
-
-            #     stack(width: 0.6, height: 1.0) do
-            #       stack(width: 1.0, height: 112) do
-            #         link "<b>#{item.title}</b>", text_size: 22 do
-            #           W3DHub.url(item.uri)
-            #         end
-            #         para item.blurb.gsub(/\n+/, "\n").strip[0..180]
-            #       end
-
-            #       flow(width: 1.0) do
-            #         para item.timestamp.strftime("%Y-%m-%d"), width: 0.499
-            #         link I18n.t(:"games.read_more"), width: 0.5, text_align: :right, text_size: 22 do
-            #           W3DHub.url(item.uri)
-            #         end
-            #       end
-            #     end
-            #   end
-            # end
-
-            feed.items.sort_by { |i| i.timestamp }.reverse[0..9].each do |item|
+            feed.items.sort_by(&:timestamp).reverse[0..9].each do |item|
               image_path = Cache.path(item.image)
 
               flow(width: 1.0, max_width: 1230, height: 200, margin: 8, border_thickness: 1, border_color: lighten(Gosu::Color.new(0xff_252525))) do
