@@ -61,7 +61,7 @@ class W3DHub
             States::Interface.instance&.update_server_ping(self)
           end
 
-          return unless W3DHub.windows?
+          return #unless W3DHub.windows?
 
           W3DHub::BackgroundWorker.foreground_parallel_job(
             lambda do

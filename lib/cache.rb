@@ -9,19 +9,17 @@ class W3DHub
     end
 
     # Fetch a generic uri
-    def self.fetch(uri:, force_fetch: false, async: true, backend: :w3dhub)
+    def self.fetch(uri:, force_fetch: false, backend: :w3dhub)
       path = path(uri)
 
       if !force_fetch && File.exist?(path)
         path
-      elsif async
-        BackgroundWorker.job(
-          -> { Api.fetch(uri, W3DHub::Api::DEFAULT_HEADERS, nil, backend) },
-          ->(response) { File.open(path, "wb") { |f| f.write response.body } if response.status == 200 }
-        )
       else
-        response = Api.fetch(uri, W3DHub::Api::DEFAULT_HEADERS, nil, backend)
-        File.open(path, "wb") { |f| f.write response.body } if response.status == 200
+        Api.fetch(uri, W3DHub::Api::DEFAULT_HEADERS, nil, backend) do |result|
+          if result.okay?
+            File.open(path, "wb") { |f| f.write result.data }
+          end
+        end
       end
     end
 

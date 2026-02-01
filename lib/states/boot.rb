@@ -115,9 +115,8 @@ class W3DHub
             Api.on_thread(:refresh_user_login, account.refresh_token) do |refreshed_account|
               update_account_data(refreshed_account)
             end
-
           else
-            BackgroundWorker.foreground_job(-> { update_account_data(account) }, ->(_) {})
+            Store.main_thread_queue << -> { update_account_data(account) }
           end
 
         else

@@ -295,15 +295,15 @@ class W3DHub
           if @game_events[game.id]
             populate_game_events(game)
           else
-            BackgroundWorker.foreground_job(
-              -> { fetch_game_events(game) },
-              lambda do |result|
-                if result
-                  populate_game_events(game)
-                  Cache.release_net_lock(result)
-                end
-              end
-            )
+            # BackgroundWorker.foreground_job(
+            #   -> { fetch_game_events(game) },
+            #   lambda do |result|
+            #     if result
+            #       populate_game_events(game)
+            #       Cache.release_net_lock(result)
+            #     end
+            #   end
+            # )
           end
         end
 
@@ -315,15 +315,15 @@ class W3DHub
               title I18n.t(:"games.fetching_news"), padding: 8
             end
 
-            BackgroundWorker.foreground_job(
-              -> { fetch_game_news(game) },
-              lambda do |result|
-                if result
-                  populate_game_news(game)
-                  Cache.release_net_lock(result)
-                end
-              end
-            )
+            # BackgroundWorker.foreground_job(
+            #   -> { fetch_game_news(game) },
+            #   lambda do |result|
+            #     if result
+            #       populate_game_news(game)
+            #       Cache.release_net_lock(result)
+            #     end
+            #   end
+            # )
           end
         end
       end

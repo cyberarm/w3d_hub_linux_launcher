@@ -36,6 +36,8 @@ class W3DHub
       while (block = Store.main_thread_queue.shift)
         block&.call
       end
+
+      sleep(update_interval / 1000.0) if Store.application_manager.busy? || Store.network_manager.busy?
     end
 
     def needs_redraw?

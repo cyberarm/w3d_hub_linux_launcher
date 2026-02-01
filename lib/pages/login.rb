@@ -34,9 +34,8 @@ class W3DHub
 
                   # Do network stuff
 
-                  BackgroundWorker.foreground_job(
-                    lambda do
-                      account = Api.user_login(@username.value, @password.value)
+                  Api.user_login(@username.value, @password.value) do |result|
+                    if result.okay?
                       applications = nil
 
                       if account
@@ -45,14 +44,15 @@ class W3DHub
                         Store.settings.save_settings
 
                         if account
-                          Cache.fetch(uri: account.avatar_uri, force_fetch: true, async: false, backend: :w3dhub)
-                          applications = Api._applications
+                          Cache.fetch(uri: account.avatar_uri, force_fetch: true, backend: :w3dhub) {}
+                          Api._applications do |r|
+                            applications = r.result if r.okay?
+                          end
                         end
                       end
 
                       [account, applications]
-                    end,
-                    lambda do |result|
+                    else
                       account, applications = result
 
                       if account
@@ -70,7 +70,7 @@ class W3DHub
                         @error_label.value = "Incorrect username or password.\nOr too many failed login attempts, try again in a few minutes."
                       end
                     end
-                  )
+                  end
                 end
 
                 @error_label = caption "", width: 1.0, text_align: :center, color: 0xff_800000
@@ -80,13 +80,10 @@ class W3DHub
         end
 
         if Store.account
-          BackgroundWorker.foreground_job(
-            -> { Cache.fetch(uri: Store.account.avatar_uri, async: false, backend: :w3dhub) },
-            ->(result) {
-              populate_account_info
-              page(W3DHub::Pages::Games)
-            }
-          )
+          Cache.fetch(uri: Store.account.avatar_uri, backend: :w3dhub) do |result|
+            populate_account_info
+            page(W3DHub::Pages::Games)
+          end
         end
       end
 
@@ -153,29 +150,26 @@ class W3DHub
         Store.settings.save_settings
         Store.account = nil
 
-        BackgroundWorker.foreground_job(
-          -> { Api._applications },
-          lambda do |applications|
-            if applications
-              Store.applications = applications
-              page(W3DHub::Pages::Games) if @host.current_page.is_a?(W3DHub::Pages::Games)
-              page(W3DHub::Pages::ServerBrowser) if @host.current_page.is_a?(W3DHub::Pages::ServerBrowser)
-            end
+        Api._applications do |result|
+          if result.okay?
+            Store.applications = result.data
+            page(W3DHub::Pages::Games) if @host.current_page.is_a?(W3DHub::Pages::Games)
+            page(W3DHub::Pages::ServerBrowser) if @host.current_page.is_a?(W3DHub::Pages::ServerBrowser)
+          end
 
-            @host.instance_variable_get(:"@account_container").clear do
-              stack(width: 1.0, height: 1.0) do
-                tagline "<b>#{I18n.t(:"interface.not_logged_in")}</b>", text_wrap: :none
+          @host.instance_variable_get(:"@account_container").clear do
+            stack(width: 1.0, height: 1.0) do
+              tagline "<b>#{I18n.t(:"interface.not_logged_in")}</b>", text_wrap: :none
 
-                flow(width: 1.0) do
-                  link(I18n.t(:"interface.log_in"), text_size: 22, width: 0.5) { page(W3DHub::Pages::Login) }
-                  link I18n.t(:"interface.register"), text_size: 22, width: 0.49 do
-                    W3DHub.url("https://secure.w3dhub.com/forum/index.php?app=core&module=global&section=register")
-                  end
+              flow(width: 1.0) do
+                link(I18n.t(:"interface.log_in"), text_size: 22, width: 0.5) { page(W3DHub::Pages::Login) }
+                link I18n.t(:"interface.register"), text_size: 22, width: 0.49 do
+                  W3DHub.url("https://secure.w3dhub.com/forum/index.php?app=core&module=global&section=register")
                 end
               end
             end
           end
-        )
+        end
       end
     end
   end

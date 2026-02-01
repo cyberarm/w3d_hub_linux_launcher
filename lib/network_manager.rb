@@ -2,7 +2,7 @@ class W3DHub
   # all http(s) requests for API calls and downloading images run through here
   class NetworkManager
     NetworkEvent = Data.define(:context, :result)
-    Request = Struct.new(:context, :callback)
+    Request = Struct.new(:active, :context, :callback)
     Context = Data.define(
       :request_id,
       :method,
@@ -21,7 +21,7 @@ class W3DHub
 
         Sync do
           while @running
-            request = @requests.shift
+            request = @requests.find { |r| !r.active }
 
             # goto sleep for an second if there is no work to be doing
             unless request
@@ -29,11 +29,13 @@ class W3DHub
               next
             end
 
+            request.active = true
+
             Async do |task|
               assigned_request = request
               result = http_client.handle(task, assigned_request)
 
-              pp [assigned_request, result]
+              @requests.delete(assigned_request)
 
               Store.main_thread_queue << -> { assigned_request.callback.call(result) }
             end
@@ -46,6 +48,7 @@ class W3DHub
       request_id = SecureRandom.hex
 
       request = Request.new(
+        false,
         Context.new(
           request_id,
           method,
@@ -60,6 +63,10 @@ class W3DHub
       @requests << request
 
       request_id
+    end
+
+    def busy?
+      @requests.any?(&:active)
     end
   end
 end
