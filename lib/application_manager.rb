@@ -5,6 +5,7 @@ class W3DHub
 
     def initialize
       @tasks = [] # :installer, :importer, :repairer, :uninstaller
+      @running_applications = {}
     end
 
     def install(app_id, channel)
@@ -22,9 +23,7 @@ class W3DHub
       # unpack packages
       # install dependencies (e.g. visual C runtime)
 
-      installer = Installer.new(app_id, channel)
-
-      @tasks.push(installer)
+      @tasks.push(Installer.new(app_id, channel))
     end
 
     def update(app_id, channel)
@@ -32,9 +31,7 @@ class W3DHub
 
       return false unless installed?(app_id, channel)
 
-      updater = Updater.new(app_id, channel)
-
-      @tasks.push(updater)
+      @tasks.push(Updater.new(app_id, channel))
     end
 
     def import(app_id, channel)
@@ -169,11 +166,16 @@ class W3DHub
     def wine_command(app_id, channel)
       return "" if W3DHub.windows?
 
-      if !Store.settings[:wine_prefix].to_s.empty?
-        "WINEPREFIX=\"#{Store.settings[:wine_prefix]}\" \"#{Store.settings[:wine_command]}\" "
-      else
-        "#{Store.settings[:wine_command]} "
-      end
+      "\"#{Store.settings[:wine_command]}\" "
+    end
+
+    def wine_enviroment_variables(app_id, channel)
+      vars = {}
+      return vars if W3DHub.windows?
+
+      vars["WINEPREFIX"] = Store.settings[:wine_prefix] unless Store.settings[:wine_prefix].to_s.empty?
+
+      vars
     end
 
     def mangohud_command(app_id, channel)
@@ -186,6 +188,13 @@ class W3DHub
       else
         ""
       end
+    end
+
+    def mangohud_enviroment_variables(app_id, channel)
+      vars = {}
+      return vars if W3DHub.windows?
+
+      vars
     end
 
     def dxvk_command(app_id, channel)
@@ -201,6 +210,13 @@ class W3DHub
       end
     end
 
+    def dxvk_enviroment_variables(app_id, channel)
+      vars = {}
+      return vars if W3DHub.windows?
+
+      vars
+    end
+
     def start_command(path, exe)
       if W3DHub.windows?
         "start /D \"#{path}\" /B #{exe}"
@@ -212,16 +228,32 @@ class W3DHub
     def run(app_id, channel, *args)
       if (app_data = installed?(app_id, channel))
         install_directory = app_data[:install_directory]
-        exe_path = app_id == "ecw" ? "#{install_directory}/game500.exe" : "#{install_directory}/game.exe"
+        exe_path = app_id == "ecw" ? "#{install_directory}/game500.exe" : app_data[:install_path]
         exe_path.gsub!("/", "\\") if W3DHub.windows?
         exe_path.gsub!("\\", "/") if W3DHub.unix?
 
         exe = File.basename(exe_path)
         path = File.dirname(exe_path)
 
+        env = {}
+        if W3DHub.unix?
+          env.merge!(
+            dxvk_enviroment_variables(app_id, channel),
+            mangohud_enviroment_variables(app_id, channel),
+            wine_enviroment_variables(app_id, channel)
+          )
+        end
+
         attempted = false
         begin
-          pid = Process.spawn("#{dxvk_command(app_id, channel)}#{mangohud_command(app_id, channel)}#{wine_command(app_id, channel)}#{attempted ? start_command(path, exe) : "\"#{exe_path}\""} -launcher #{args.join(' ')}")
+          pid = Process.spawn(
+            env,
+            "#{dxvk_command(app_id, channel)}"\
+            "#{mangohud_command(app_id, channel)}"\
+            "#{wine_command(app_id, channel)}"\
+            "#{attempted ? start_command(path, exe) : "\"#{exe_path}\""} "\
+            "-launcher #{args.join(' ')}"
+          )
           Process.detach(pid)
         rescue Errno::EINVAL => e
           retryable = !attempted
@@ -236,12 +268,14 @@ class W3DHub
     end
 
     def join_server(app_id, channel, server, username = Store.settings[:server_list_username], password = nil, multi = false)
-      if installed?(app_id, channel) && username.to_s.length.positive?
-        run(
-          app_id, channel,
-          "+connect #{server.address}:#{server.port} +netplayername #{username}#{password ? " +password \"#{password}\"" : ""}#{multi ? " +multi" : ""}"
-        )
-      end
+      return unless installed?(app_id, channel) && username.to_s.length.positive?
+
+      run(
+        app_id, channel,
+        "+connect #{server.address}:#{server.port} "\
+        "+netplayername #{username}#{password ? " +password \"#{password}\"" : ""}"\
+        "#{multi ? " +multi" : ""}"
+      )
     end
 
     def play_now_server(app_id, channel)
@@ -251,9 +285,14 @@ class W3DHub
 
       server_options = Store.server_list.select do |server|
         server.game == app_id &&
-        server.channel == channel &&
-        !server.status.password &&
-        server.status.player_count < server.status.max_players
+          server.channel == channel &&
+          !server.status.password &&
+          server.status.player_count < server.status.max_players
+      end
+      # sort by player count HIGH to LOW
+      # and by ping LOW to HIGH
+      server_options.sort! do |a, b|
+        [b.status.player_count, a.ping] <=> [a.status.player_count, b.ping]
       end
 
       # try to find server with lowest ping and matching version
@@ -261,7 +300,7 @@ class W3DHub
       # try to find server with lowest ping and undefined version
       found_server ||= server_options.find { |server| server.version == Api::ServerListServer::NO_OR_DEFAULT_VERSION }
 
-      found_server ? found_server : nil
+      found_server
     end
 
     def play_now(app_id, channel)
