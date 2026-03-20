@@ -78,7 +78,7 @@ class W3DHub
     end
 
     def save_settings
-      File.write(SETTINGS_FILE_PATH, @settings.to_json)
+      File.write(SETTINGS_FILE_PATH, JSON.pretty_generate(@settings))
     end
 
     def save_application_cache(json)

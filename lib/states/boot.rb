@@ -230,7 +230,7 @@ class W3DHub
         Api.on_thread(:_applications) do |applications|
           if applications
             Store.applications = applications
-            Store.settings.save_application_cache(applications.data.to_json)
+            Store.settings.save_application_cache(JSON.pretty_generate(applications.data))
             @tasks[:applications][:complete] = true
           else
             # FIXME: Failed to retreive!

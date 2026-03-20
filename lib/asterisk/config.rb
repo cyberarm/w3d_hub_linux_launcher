@@ -76,7 +76,7 @@ class W3DHub
       end
 
       def save_config(config = @config)
-        File.write(CONFIG_PATH, config.to_json)
+        File.write(CONFIG_PATH, JSON.pretty_generate(config))
       end
     end
   end
