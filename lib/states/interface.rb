@@ -23,6 +23,7 @@ class W3DHub
         @service_status = @options[:service_status]
         @applications = @options[:applications]
 
+        @account_expire = Gosu.milliseconds
         @applications_expire = Gosu.milliseconds + APPLICATIONS_UPDATE_INTERVAL # ten minutes
         @server_list_expire = Gosu.milliseconds + SERVER_LIST_UPDATE_INTERVAL # 5 minutes
 
@@ -132,6 +133,13 @@ class W3DHub
         end
 
         hide_application_taskbar
+
+        every(3_000) do
+          # NOTE: each method called, internally checks whether it should act.
+          refresh_account_token
+          refresh_applications
+          refresh_server_list
+        end
       end
 
       def draw
@@ -146,36 +154,6 @@ class W3DHub
         @page&.update
 
         update_interface_task_status(@interface_task_update_pending) if @interface_task_update_pending
-
-        if Gosu.milliseconds >= @applications_expire
-          @applications_expire = Gosu.milliseconds + 30_000
-
-          Api.on_thread(:_applications) do |applications|
-            if applications
-              @applications_expire = Gosu.milliseconds + APPLICATIONS_UPDATE_INTERVAL # ten minutes
-
-              Store.applications = applications
-
-              # TODO: Signal Games and ServerBrowser that applications have been updated
-            end
-          end
-        end
-
-        if Gosu.milliseconds >= @server_list_expire
-          @server_list_expire = Gosu.milliseconds + 30_000
-
-          Api.on_thread(:server_list, 2) do |list|
-            if list
-              @server_list_expire = Gosu.milliseconds + SERVER_LIST_UPDATE_INTERVAL # five minutes
-
-              Store.server_list_last_fetch = Gosu.milliseconds
-
-              Api::ServerListUpdater.instance.refresh_server_list(list)
-
-              BackgroundWorker.foreground_job(-> {}, ->(_) { States::Interface.instance&.update_server_browser(nil, :refresh_all) })
-            end
-          end
-        end
       end
 
       def button_down(id)
@@ -271,6 +249,63 @@ class W3DHub
               progress_.type = :linear unless progress_.type == :linear
               progress_.value = operation.progress.clamp(0.0, 1.0)
             end
+          end
+        end
+      end
+
+      def refresh_account_token
+        return if Gosu.milliseconds < @account_expire
+        return unless account = Store.account
+
+        @account_expire = Gosu.milliseconds + 30_000
+
+        if (account.access_token_expiry - Time.now) / 60 <= 60 * 3 # Refresh if token expires within 3 hours
+          logger.info(LOG_TAG) { "Refreshing user login..." }
+
+          Api.on_thread(:refresh_user_login, account.refresh_token) do |refreshed_account|
+            if refreshed_account
+              Store.account = refreshed_account
+
+              Store.settings[:account][:data] = refreshed_account
+            else
+              Store.settings[:account] = {}
+            end
+
+            Store.settings.save_settings
+          end
+        end
+      end
+
+      def refresh_applications
+        return if Gosu.milliseconds < @applications_expire
+
+        @applications_expire = Gosu.milliseconds + 30_000
+
+        Api.on_thread(:_applications) do |applications|
+          if applications
+            @applications_expire = Gosu.milliseconds + APPLICATIONS_UPDATE_INTERVAL # ten minutes
+
+            Store.applications = applications
+
+            # TODO: Signal Games and ServerBrowser that applications have been updated
+          end
+        end
+      end
+
+      def refresh_server_list
+        return if Gosu.milliseconds < @server_list_expire
+
+        @server_list_expire = Gosu.milliseconds + 30_000
+
+        Api.on_thread(:server_list, 2) do |list|
+          if list
+            @server_list_expire = Gosu.milliseconds + SERVER_LIST_UPDATE_INTERVAL # five minutes
+
+            Store.server_list_last_fetch = Gosu.milliseconds
+
+            Api::ServerListUpdater.instance.refresh_server_list(list)
+
+            BackgroundWorker.foreground_job(-> {}, ->(_) { States::Interface.instance&.update_server_browser(nil, :refresh_all) })
           end
         end
       end
