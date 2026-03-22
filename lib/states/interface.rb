@@ -60,25 +60,21 @@ class W3DHub
 
                 link I18n.t(:"interface.servers").upcase, text_size: 34, font: BOLD_FONT, margin_left: 12 do
                   @interface_container.style.background_image = DEFAULT_BACKGROUND_IMAGE
-                  @interface_container.style.default[:background_image] = DEFAULT_BACKGROUND_IMAGE
                   page(W3DHub::Pages::ServerBrowser)
                 end
 
                 link I18n.t(:"interface.community").upcase, text_size: 34, font: BOLD_FONT, margin_left: 12 do
                   @interface_container.style.background_image = DEFAULT_BACKGROUND_IMAGE
-                  @interface_container.style.default[:background_image] = DEFAULT_BACKGROUND_IMAGE
                   page(W3DHub::Pages::Community)
                 end
 
                 link I18n.t(:"interface.downloads").upcase, text_size: 34, font: BOLD_FONT, margin_left: 12 do
                   @interface_container.style.background_image = DEFAULT_BACKGROUND_IMAGE
-                  @interface_container.style.default[:background_image] = DEFAULT_BACKGROUND_IMAGE
                   page(W3DHub::Pages::DownloadManager)
                 end
 
                 link I18n.t(:"interface.settings").upcase, text_size: 34, font: BOLD_FONT, margin_left: 12 do
                   @interface_container.style.background_image = DEFAULT_BACKGROUND_IMAGE
-                  @interface_container.style.default[:background_image] = DEFAULT_BACKGROUND_IMAGE
                   page(W3DHub::Pages::Settings)
                 end
               end

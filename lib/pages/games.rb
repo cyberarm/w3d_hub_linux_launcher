@@ -123,7 +123,6 @@ class W3DHub
           background_image_path = Cache.package_path(game.category, game.id, "background.png", "")
           if File.exist?(background_image_path)
             States::Interface.instance&.instance_variable_get(:"@interface_container")&.style&.background_image = get_image(background_image_path)
-            States::Interface.instance&.instance_variable_get(:"@interface_container")&.style&.default[:background_image] = get_image(background_image_path)
           end
 
           # Game Stuff

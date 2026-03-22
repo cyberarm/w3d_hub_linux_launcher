@@ -271,9 +271,8 @@ class W3DHub
       def stylize_selected_server(server_container)
         server_container.style.background = @selected_color
 
-        server_container.style.default[:background] = @selected_color
-        server_container.style.hover[:background] = @selected_color
-        server_container.style.active[:background] = @selected_color
+        server_container.style.hover.background = @selected_color
+        server_container.style.active.background = @selected_color
       end
 
       def reorder_server_list
@@ -284,11 +283,11 @@ class W3DHub
         end.reverse!.each_with_index do |child, i|
           next if @selected_server_container && child == @selected_server_container
 
-          child.style.hover[:background] = 0xaa_555566
-          child.style.hover[:active] = 0xaa_555588
+          child.style.hover.background = 0xaa_555566
+          child.style.active.background = 0xaa_555588
 
-          child.style.default[:background] = 0xaa_333333 if i.even?
-          child.style.default[:background] = 0x00_000000 if i.odd?
+          child.style.background = 0xaa_333333 if i.even?
+          child.style.background = 0x00_000000 if i.odd?
         end
 
         @server_list_container.recalculate
