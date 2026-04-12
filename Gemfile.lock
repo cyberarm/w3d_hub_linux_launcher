@@ -1,0 +1,20 @@
+GEM
+  remote: https://gem.coop/
+  specs:
+    cyberarm_engine (0.25.1)
+      gosu (~> 1.1)
+    gosu (1.4.6)
+
+PLATFORMS
+  ruby
+  x86_64-linux
+
+DEPENDENCIES
+  cyberarm_engine
+
+CHECKSUMS
+  cyberarm_engine (0.25.1)
+  gosu (1.4.6)
+
+BUNDLED WITH
+  4.0.8
