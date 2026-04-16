@@ -10,6 +10,8 @@ module W3DHubLauncher
       # connect to and monitor Backend web service
       @threads << Thread.new { backend_websocket }
 
+      Ractor.main.send({ message: "3 o'clock 'nd all's well!" })
+
       listener.join
     end
 
