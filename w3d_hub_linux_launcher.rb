@@ -6,6 +6,6 @@ end
 
 require_relative "lib/window"
 
-GUI_DEBUG = true
-window = W3DHubLauncher::Window.new(width: 1280, height: 800, resizable: true)
+# window = W3DHubLauncher::Window.new(width: 1280, height: 800, resizable: true)
+window = W3DHubLauncher::Window.new(width: 1920, height: 1080, resizable: true)
 window.show
