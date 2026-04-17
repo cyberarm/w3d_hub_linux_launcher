@@ -45,6 +45,9 @@ module W3DHubLauncher
     Inscription: {
       text_size: 18
     },
+    Para: {
+      text_size: 20
+    },
     Caption: {
       font: FONT_BOLD
     },

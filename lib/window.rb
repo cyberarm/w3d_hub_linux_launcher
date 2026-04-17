@@ -26,7 +26,9 @@ module W3DHubLauncher
               button(safe_get_image("./media/logo.png"), image_height: 1.0, background: 0, border_color: 0, hover: { background: 0 }, active: { background: 0, color: 0xff_ffffff }) do |btn|
                 menu(parent: btn) do
                   menu_item("Settings")
-                  menu_item("About")
+                  menu_item("About") do
+                    dialog(Dialog::About)
+                  end
                   menu_item("Exit") do
                     window.close
                   end
@@ -92,7 +94,7 @@ module W3DHubLauncher
             stack(width: 1.0, fill: true, margin_top: LARGE_PADDING, scroll: true) do
               50.times do |i|
                 # friend container
-                flow(width: 1.0, height: 48, padding_top: HALF_PADDING, padding_bottom: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_color: 0, hover: { background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0x44_000000 }) do
+                flow(width: 1.0, height: 48, padding_top: HALF_PADDING, padding_bottom: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0, hover: { background_nine_slice_color: 0x44_000000 }) do
                   # friend avatar container
                   stack(width: 48, height: 1.0, margin_left: HALF_PADDING, background_image: rounded_avatar(safe_get_image("./media/default.png"))) do
                     stack(width: 12, height: 12, v_align: :bottom, h_align: :right, background_image: safe_get_image("./media/ui/circle_small.png"), background_image_color: 0xff_26a269)
