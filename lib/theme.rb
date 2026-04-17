@@ -11,8 +11,16 @@ module W3DHubLauncher
 
   FONT_MONO = "./media/fonts/NotoSansMono-Regular.ttf"
 
+  NINE_SLICE_EDGE = 8
+  NINE_SLICE_ROUNDED = "./media/ui/rounded.png"
+  NINE_SLICE_ROUNDED_LEFT = "./media/ui/rounded_left.png"
+  NINE_SLICE_ROUNDED_RIGHT = "./media/ui/rounded_right.png"
+  NINE_SLICE_ROUNDED_TOP = "./media/ui/rounded_top.png"
+  NINE_SLICE_ROUNDED_BOTTOM = "./media/ui/rounded_bottom.png"
+  NINE_SLICE_SQUARE = "./media/ui/square.png"
+
   CTA_BUTTON_THEME = {
-    background: 0xff_1a5fb4
+    background_nine_slice_color: 0xff_1a5fb4
   }
 
   THEME = {
@@ -35,9 +43,23 @@ module W3DHubLauncher
     Button: {
       font: FONT_BOLD,
       text_shadow: false,
-      background: 0x88_5e5c64,
-      border_thickness: 1,
-      border_color: 0xff_000000
+      color: 0xff_ffffff,
+      background: 0,#x88_5e5c64,
+      background_nine_slice: NINE_SLICE_ROUNDED,
+      background_nine_slice_from_edge: NINE_SLICE_EDGE,
+      background_nine_slice_mode: :stretched,
+      background_nine_slice_color: 0x88_5e5c64,
+      border_thickness: 0,
+      hover: {
+        color: 0xcc_ffffff,
+        background: 0,
+        background_nine_slice_color: 0xff_5e5c64
+      },
+      active: {
+        color: 0x88_ffffff,
+        background: 0,
+        background_nine_slice_color: 0xaa_5e5c64
+      }
     },
     EditLine: {
       font: FONT_REGULAR
@@ -63,6 +85,7 @@ module W3DHubLauncher
       text_size: 24,
       text_align: :left,
       font: FONT_REGULAR,
+      background_nine_slice: NINE_SLICE_SQUARE,
       background: 0xee_000000,
       border_color: 0xaa_000000,
       hover: {
@@ -71,6 +94,15 @@ module W3DHubLauncher
       active: {
         background: 0xee_444444
       }
+    },
+    ToolTip: {
+      text_size: 24,
+      background: 0,#x88_5e5c64,
+      background_nine_slice: NINE_SLICE_ROUNDED,
+      background_nine_slice_from_edge: NINE_SLICE_EDGE,
+      background_nine_slice_mode: :stretched,
+      background_nine_slice_color: 0xdd_5e5c64,
+      border_thickness: 0
     }
   }
 end
