@@ -7,6 +7,8 @@ end
 require_relative "lib/version"
 require_relative "lib/gui_ext"
 require_relative "lib/theme"
+require_relative "lib/pages/games"
+require_relative "lib/pages/server_browser"
 require_relative "lib/window"
 
 require_relative "lib/worker"

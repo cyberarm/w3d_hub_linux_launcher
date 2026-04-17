@@ -12,7 +12,9 @@ module W3DHubLauncher
   FONT_MONO = "./media/fonts/NotoSansMono-Regular.ttf"
 
   NINE_SLICE_EDGE = 8
+  NINE_SLICE_EDGE_SMALL = 4
   NINE_SLICE_ROUNDED = "./media/ui/rounded.png"
+  NINE_SLICE_ROUNDED_SMALL = "./media/ui/rounded_small.png"
   NINE_SLICE_ROUNDED_LEFT = "./media/ui/rounded_left.png"
   NINE_SLICE_ROUNDED_RIGHT = "./media/ui/rounded_right.png"
   NINE_SLICE_ROUNDED_TOP = "./media/ui/rounded_top.png"
@@ -39,6 +41,21 @@ module W3DHubLauncher
       active: {
         color: 0xff_888888
       }
+    },
+    Inscription: {
+      text_size: 18
+    },
+    Caption: {
+      font: FONT_BOLD
+    },
+    Tagline: {
+      font: FONT_BOLD
+    },
+    Title: {
+      font: FONT_BOLD
+    },
+    Banner: {
+      font: FONT_BLACK
     },
     Button: {
       font: FONT_BOLD,
@@ -68,6 +85,7 @@ module W3DHubLauncher
       text_align: :left,
       text_size: 24,
       font: FONT_REGULAR,
+      padding_left: HALF_PADDING
       # background: 0xaa_000000,
       # border_color: 0xff_000000,
       # hover: {
