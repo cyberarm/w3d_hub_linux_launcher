@@ -20,17 +20,14 @@ module W3DHubLauncher
             para "© 2026 cyberarm", margin_left: PADDING
             link "MIT licence", margin_left: PADDING
 
-            title "Thanks", margin_top: LARGE_PADDING
-            10.times do
-              tagline "NAME", margin_left: PADDING
-              para "REASON", margin_left: LARGE_PADDING
+            title "Special Thanks", margin_top: LARGE_PADDING
+            W3DHubLauncher::Attribution::SPECIAL_THANKS.each do |item|
+              present_item(item)
             end
 
-            title "Libraries", margin_top: LARGE_PADDING
-            10.times do
-              tagline "LIBRARY", margin_left: PADDING
-              para "LEGAL TEXT", margin_left: LARGE_PADDING
-              link "ABREV licence", margin_left: LARGE_PADDING
+            title "Software / Libraries", margin_top: LARGE_PADDING
+            W3DHubLauncher::Attribution::LIBRARIES.each do |item|
+              present_item(item)
             end
           end
 
@@ -40,6 +37,16 @@ module W3DHubLauncher
             end
           end
         end
+      end
+
+      def present_item(item)
+        unless item.url.empty?
+          link item.name, tip: item.url, margin_left: PADDING, font: FONT_BOLD
+        else
+          tagline item.name, margin_left: PADDING
+        end
+        para item.description, margin_left: LARGE_PADDING
+        link item.license, tip: item.license_url, margin_left: PADDING + LARGE_PADDING unless item.license.empty?
       end
     end
   end
