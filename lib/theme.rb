@@ -3,6 +3,7 @@ module W3DHubLauncher
   PADDING = 20
   HALF_PADDING = 10
   ALPHA_BLACK = 0x88_000000
+  ALPHA_GRAY = 0x88_5e5c64
 
   FONT_LIGHT = "./media/fonts/NotoSans-Light.ttf"
   FONT_REGULAR = "./media/fonts/NotoSans-Regular.ttf"
@@ -13,8 +14,10 @@ module W3DHubLauncher
 
   NINE_SLICE_EDGE = 8
   NINE_SLICE_EDGE_SMALL = 4
+  NINE_SLICE_EDGE_TINY = 2
   NINE_SLICE_ROUNDED = "./media/ui/rounded.png"
   NINE_SLICE_ROUNDED_SMALL = "./media/ui/rounded_small.png"
+  NINE_SLICE_ROUNDED_TINY = "./media/ui/rounded_small.png"
   NINE_SLICE_ROUNDED_LEFT = "./media/ui/rounded_left.png"
   NINE_SLICE_ROUNDED_RIGHT = "./media/ui/rounded_right.png"
   NINE_SLICE_ROUNDED_TOP = "./media/ui/rounded_top.png"
@@ -22,7 +25,16 @@ module W3DHubLauncher
   NINE_SLICE_SQUARE = "./media/ui/square.png"
 
   CTA_BUTTON_THEME = {
-    background_nine_slice_color: 0xff_1a5fb4
+    color: 0xff_ffffff,
+    background_nine_slice_color: 0xff_1c71d8,
+    hover: {
+      color: 0xff_ffffff,
+      background_nine_slice_color: 0xff_3584e4
+    },
+    active: {
+      color: 0xff_ffffff,
+      background_nine_slice_color: 0xff_1a5fb4
+    }
   }
 
   THEME = {
@@ -116,13 +128,24 @@ module W3DHubLauncher
         background: 0xee_444444
       }
     },
+    Progress: {
+      height: NINE_SLICE_EDGE_TINY * 2,
+      background: 0,
+      background_nine_slice: NINE_SLICE_ROUNDED_TINY,
+      background_nine_slice_from_edge: NINE_SLICE_EDGE_TINY,
+      background_nine_slice_mode: :stretched,
+      background_nine_slice_color: 0x88_5e5c64,
+      fraction_background: 0xff_1a5fb4,
+      border_thickness: 0,
+    },
     ToolTip: {
+      delay: 500,
       text_size: 24,
       background: 0,#x88_5e5c64,
       background_nine_slice: NINE_SLICE_ROUNDED,
       background_nine_slice_from_edge: NINE_SLICE_EDGE,
       background_nine_slice_mode: :stretched,
-      background_nine_slice_color: 0xdd_5e5c64,
+      background_nine_slice_color: 0xcc_000000,
       border_thickness: 0
     }
   }
