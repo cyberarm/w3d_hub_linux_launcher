@@ -6,14 +6,14 @@ module W3DHubLauncher
     def safe_get_image(path, retro: false)
       return get_image(path, retro: retro) if File.exist?(path)
 
-      path = "./media/default.png"
+      path = "#{ROOT_PATH}/media/default.png"
       return get_image(path, retro: retro) if File.exist?(path)
 
       WHITE_IMAGE
     end
 
     def rounded_avatar(image)
-      circle = get_image("./media/ui/circle.png")
+      circle = get_image("#{ROOT_PATH}/media/ui/circle.png")
       scale = [(circle.width.to_f / image.width).abs, (circle.width.to_f / image.height).abs].min
 
       Gosu.render(circle.width, circle.height) do

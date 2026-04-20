@@ -13,14 +13,14 @@ module W3DHubLauncher
           stack(width: 1.0, fill: true, padding: PADDING) do
             stack(width: 1.0, fill: true, scroll: true) do
               a = flow(width: 1.0, height: HALF_PADDING + PADDING, visible: false) do
-                image safe_get_image("./media/icons/checkmark.png"), height: 1.0, v_align: :center
+                image safe_get_image("#{ROOT_PATH}/media/icons/checkmark.png"), height: 1.0, v_align: :center
                 tagline "DNS resolution", height: 1.0, text_v_align: :center
               end
               after(500) do
                 a.show
               end
               b = flow(width: 1.0, height: HALF_PADDING + PADDING, visible: false) do
-                image safe_get_image("./media/icons/information.png"), height: 1.0, v_align: :center, color: 0xff_ff8800
+                image safe_get_image("#{ROOT_PATH}/media/icons/information.png"), height: 1.0, v_align: :center, color: 0xff_ff8800
                 tagline "Upstream backend", height: 1.0, text_v_align: :center
                 caption "Notice: Unreachable. Accounts will be unavailable.", height: 1.0, text_v_align: :center, color: 0xff_ff8800
               end
@@ -28,14 +28,14 @@ module W3DHubLauncher
                 b.show
               end
               c = flow(width: 1.0, height: HALF_PADDING + PADDING, visible: false) do
-                image safe_get_image("./media/icons/checkmark.png"), height: 1.0, v_align: :center
+                image safe_get_image("#{ROOT_PATH}/media/icons/checkmark.png"), height: 1.0, v_align: :center
                 tagline "Alternate backend", height: 1.0, text_v_align: :center
               end
               after(1500) do
                 c.show
               end
               d = flow(width: 1.0, height: HALF_PADDING + PADDING, visible: false) do
-                image safe_get_image("./media/icons/information.png"), height: 1.0, v_align: :center, color: 0xff_ff8800
+                image safe_get_image("#{ROOT_PATH}/media/icons/information.png"), height: 1.0, v_align: :center, color: 0xff_ff8800
                 tagline "Refresh account session", height: 1.0, text_v_align: :center
                 caption "Notice: Upstream backend unavailable, session not refreshed.", height: 1.0, text_v_align: :center, color: 0xff_ff8800
               end
@@ -43,14 +43,14 @@ module W3DHubLauncher
                 d.show
               end
               e = flow(width: 1.0, height: HALF_PADDING + PADDING, visible: false) do
-                image safe_get_image("./media/icons/checkmark.png"), height: 1.0, v_align: :center
+                image safe_get_image("#{ROOT_PATH}/media/icons/checkmark.png"), height: 1.0, v_align: :center
                 tagline "Fetch game servers", height: 1.0, text_v_align: :center
               end
               after(2500) do
                 e.show
               end
               f = flow(width: 1.0, height: HALF_PADDING + PADDING, visible: false) do
-                image safe_get_image("./media/icons/cross.png"), height: 1.0, v_align: :center, color: 0xff_ff0000
+                image safe_get_image("#{ROOT_PATH}/media/icons/cross.png"), height: 1.0, v_align: :center, color: 0xff_ff0000
                 tagline "Fetch applications", height: 1.0, text_v_align: :center
                 caption "Fatal: Failed to retrieve applications list and no local cache exists. Cannot continue.", height: 1.0, text_v_align: :center, color: 0xff_ff0000
               end

@@ -5,6 +5,7 @@ rescue LoadError
 end
 
 require_relative "lib/version"
+require_relative "lib/constants"
 require_relative "lib/attribution"
 require_relative "lib/gui_ext"
 require_relative "lib/state"

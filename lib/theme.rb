@@ -5,24 +5,24 @@ module W3DHubLauncher
   ALPHA_BLACK = 0x88_000000
   ALPHA_GRAY = 0x88_5e5c64
 
-  FONT_LIGHT = "./media/fonts/NotoSans-Light.ttf"
-  FONT_REGULAR = "./media/fonts/NotoSans-Regular.ttf"
-  FONT_BOLD = "./media/fonts/NotoSans-Bold.ttf"
-  FONT_BLACK = "./media/fonts/NotoSans-Black.ttf"
+  FONT_LIGHT = "#{ROOT_PATH}/media/fonts/NotoSans-Light.ttf"
+  FONT_REGULAR = "#{ROOT_PATH}/media/fonts/NotoSans-Regular.ttf"
+  FONT_BOLD = "#{ROOT_PATH}/media/fonts/NotoSans-Bold.ttf"
+  FONT_BLACK = "#{ROOT_PATH}/media/fonts/NotoSans-Black.ttf"
 
-  FONT_MONO = "./media/fonts/NotoSansMono-Regular.ttf"
+  FONT_MONO = "#{ROOT_PATH}/media/fonts/NotoSansMono-Regular.ttf"
 
   NINE_SLICE_EDGE = 8
   NINE_SLICE_EDGE_SMALL = 4
   NINE_SLICE_EDGE_TINY = 2
-  NINE_SLICE_ROUNDED = "./media/ui/rounded.png"
-  NINE_SLICE_ROUNDED_SMALL = "./media/ui/rounded_small.png"
-  NINE_SLICE_ROUNDED_TINY = "./media/ui/rounded_small.png"
-  NINE_SLICE_ROUNDED_LEFT = "./media/ui/rounded_left.png"
-  NINE_SLICE_ROUNDED_RIGHT = "./media/ui/rounded_right.png"
-  NINE_SLICE_ROUNDED_TOP = "./media/ui/rounded_top.png"
-  NINE_SLICE_ROUNDED_BOTTOM = "./media/ui/rounded_bottom.png"
-  NINE_SLICE_SQUARE = "./media/ui/square.png"
+  NINE_SLICE_ROUNDED = "#{ROOT_PATH}/media/ui/rounded.png"
+  NINE_SLICE_ROUNDED_SMALL = "#{ROOT_PATH}/media/ui/rounded_small.png"
+  NINE_SLICE_ROUNDED_TINY = "#{ROOT_PATH}/media/ui/rounded_small.png"
+  NINE_SLICE_ROUNDED_LEFT = "#{ROOT_PATH}/media/ui/rounded_left.png"
+  NINE_SLICE_ROUNDED_RIGHT = "#{ROOT_PATH}/media/ui/rounded_right.png"
+  NINE_SLICE_ROUNDED_TOP = "#{ROOT_PATH}/media/ui/rounded_top.png"
+  NINE_SLICE_ROUNDED_BOTTOM = "#{ROOT_PATH}/media/ui/rounded_bottom.png"
+  NINE_SLICE_SQUARE = "#{ROOT_PATH}/media/ui/square.png"
 
   CTA_BUTTON_THEME = {
     color: 0xff_ffffff,

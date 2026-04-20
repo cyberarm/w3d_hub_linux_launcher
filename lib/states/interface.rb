@@ -13,7 +13,7 @@ module W3DHubLauncher
               # header bar container
               flow(width: 1.0, height: 80, margin_bottom: PADDING) do |c|
                 # logo + menu button
-                button(safe_get_image("./media/logo.png"), image_height: 1.0, background: 0, border_color: 0, hover: { background: 0 }, active: { background: 0, color: 0xff_ffffff }) do |btn|
+                button(safe_get_image("#{ROOT_PATH}/media/logo.png"), image_height: 1.0, background: 0, border_color: 0, hover: { background: 0 }, active: { background: 0, color: 0xff_ffffff }) do |btn|
                   menu(parent: btn) do
                     menu_item("Settings")
                     menu_item("About") do
@@ -31,8 +31,8 @@ module W3DHubLauncher
                     link("GAMES", text_v_align: :center, font: FONT_BLACK, margin_left: PADDING) { page(Page::Games) }
                     link("SERVERS", text_v_align: :center, font: FONT_BLACK, margin_left: PADDING) { page(Page::ServerBrowser) }
                     stack(fill: true)
-                    image safe_get_image("./media/icons/import.png"), height: 40, color: 0xff_bbbbbb, tip: "Downloads"
-                    image safe_get_image("./media/icons/information.png"), height: 40, color: 0xff_bbbbbb, tip: "Notifications"
+                    image safe_get_image("#{ROOT_PATH}/media/icons/import.png"), height: 40, color: 0xff_bbbbbb, tip: "Downloads"
+                    image safe_get_image("#{ROOT_PATH}/media/icons/information.png"), height: 40, color: 0xff_bbbbbb, tip: "Notifications"
                   end
                   stack(fill: true)
                 end
@@ -48,9 +48,9 @@ module W3DHubLauncher
               # self account container
               flow(width: 1.0, height: 80) do
                 # self avatar container
-                stack(width: 80, height: 1.0, background_image: rounded_avatar(safe_get_image("./media/default.png"))) do
+                stack(width: 80, height: 1.0, background_image: rounded_avatar(safe_get_image("#{ROOT_PATH}/media/default.png"))) do
                   # self online state container
-                  stack(width: 20, height: 20, v_align: :bottom, h_align: :right, background_image: safe_get_image("./media/ui/circle_small.png"), background_image_color: 0xff_26a269)
+                  stack(width: 20, height: 20, v_align: :bottom, h_align: :right, background_image: safe_get_image("#{ROOT_PATH}/media/ui/circle_small.png"), background_image_color: 0xff_26a269)
                 end
 
                 stack(fill: true, height: 1.0, margin_left: HALF_PADDING) do
@@ -74,8 +74,8 @@ module W3DHubLauncher
               # friend management container
               flow(width: 1.0, height: 60, margin_top: PADDING) do
                 flow(width: 1.0, v_align: :center) do
-                  button safe_get_image("./media/icons/singleplayer.png"), image_height: 1.0
-                  button safe_get_image("./media/icons/gear.png"), image_height: 1.0, margin_left: HALF_PADDING
+                  button safe_get_image("#{ROOT_PATH}/media/icons/singleplayer.png"), image_height: 1.0
+                  button safe_get_image("#{ROOT_PATH}/media/icons/gear.png"), image_height: 1.0, margin_left: HALF_PADDING
                   edit_line "", margin_left: HALF_PADDING, fill: true, height: 1.0
                 end
               end
@@ -84,10 +84,15 @@ module W3DHubLauncher
               stack(width: 1.0, fill: true, margin_top: LARGE_PADDING, scroll: true) do
                 50.times do |i|
                   # friend container
-                  flow(width: 1.0, height: 48, padding_top: HALF_PADDING, padding_bottom: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0, hover: { background_nine_slice_color: ALPHA_GRAY }) do
+                  widget(width: 1.0, height: 48, padding_top: HALF_PADDING, padding_bottom: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0, hover: { background_nine_slice_color: ALPHA_GRAY }, active: { background_nine_slice_color: ALPHA_BLACK }) do |w|
+                    w.subscribe(:clicked_left_mouse_button) do
+                      puts "HELLO THERE"
+                    end
+
+
                     # friend avatar container
-                    stack(width: 48, height: 1.0, margin_left: HALF_PADDING, background_image: rounded_avatar(safe_get_image("./media/default.png"))) do
-                      stack(width: 12, height: 12, v_align: :bottom, h_align: :right, background_image: safe_get_image("./media/ui/circle_small.png"), background_image_color: 0xff_26a269)
+                    stack(width: 48, height: 1.0, margin_left: HALF_PADDING, background_image: rounded_avatar(safe_get_image("#{ROOT_PATH}/media/default.png"))) do
+                      stack(width: 12, height: 12, v_align: :bottom, h_align: :right, background_image: safe_get_image("#{ROOT_PATH}/media/ui/circle_small.png"), background_image_color: 0xff_26a269)
                     end
                     # friend name and status container
                     stack(fill: true, height: 1.0, margin_left: HALF_PADDING, margin_right: HALF_PADDING) do
@@ -97,7 +102,7 @@ module W3DHubLauncher
                       end
                     end
                     # friend active application container
-                    stack(width: 48, height: 1.0, margin_right: HALF_PADDING, background_image: safe_get_image("./media/logo.png"))
+                    stack(width: 48, height: 1.0, margin_right: HALF_PADDING, background_image: safe_get_image("#{ROOT_PATH}/media/logo.png"))
                   end
                 end
               end

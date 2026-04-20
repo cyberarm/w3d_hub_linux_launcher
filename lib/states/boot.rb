@@ -13,7 +13,7 @@ module W3DHubLauncher
               # header bar container
               flow(width: 1.0, height: 80, margin_bottom: PADDING) do |c|
                 # logo image
-                image(safe_get_image("./media/logo.png"), height: 1.0)
+                image(safe_get_image("#{ROOT_PATH}/media/logo.png"), height: 1.0)
 
                 stack(fill: true, height: 1.0) do
                   stack(fill: true)
