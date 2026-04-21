@@ -4,6 +4,17 @@ rescue LoadError
   require "cyberarm_engine"
 end
 
+require "rexml"
+require "base64"
+require "logger"
+
+require "async"
+require "async/http/internet/instance"
+require "async/websocket"
+require "digest/crc"
+require "ircparser"
+require "zip"
+
 require_relative "lib/version"
 require_relative "lib/constants"
 require_relative "lib/attribution"
@@ -23,6 +34,13 @@ require_relative "lib/window"
 
 require_relative "lib/worker"
 require_relative "lib/worker/api"
+require_relative "lib/worker/request"
+require_relative "lib/worker/w3dhub_api"
+require_relative "lib/worker/task"
+require_relative "lib/worker/tasks/install_application"
+require_relative "lib/worker/tasks/uninstall_application"
+require_relative "lib/worker/tasks/repair_application"
+require_relative "lib/worker/tasks/update_application"
 
 module W3DHubLauncher
   WORKER = Ractor.new(name: "Parallel Worker") { W3DHubLauncher::Worker.new }
@@ -37,8 +55,17 @@ end
 # NOTE: May need to mangle Window#update to do ruby-land sleep so thread gets time to process :(
 Thread.new do
   loop do
-    message = Ractor.receive
-    pp message
+    response = Ractor.receive
+    pp response
+
+    request = W3DHubLauncher::Worker::Request.requests.find { |r| r.request_id == response.request_id }
+    request&.handle_event(response.status, response.data)
+  end
+end
+
+10.times do
+  W3DHubLauncher::Worker::Request.new(W3DHubLauncher::Worker::Request::W3DHUB_API_CALL, { call: :fetch_applications }) do |result|
+    pp result
   end
 end
 
