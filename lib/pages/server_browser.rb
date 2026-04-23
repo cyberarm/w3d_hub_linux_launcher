@@ -54,10 +54,8 @@ class W3DHub
 
                     if @filters[app_id]
                       img.style.color = 0xff_ffffff
-                      img.style.default[:color] = 0xff_ffffff
                     else
                       img.style.color = 0xff_444444
-                      img.style.default[:color] = 0xff_444444
                     end
 
                     populate_server_list
@@ -339,8 +337,8 @@ class W3DHub
           end
         end
 
-        def server_container.hit_element?(x, y)
-          self if hit?(x, y)
+        def server_container.hit_element?(x, y, elements = [])
+          elements << self if hit?(x, y)
         end
 
         server_container.subscribe(:clicked_left_mouse_button) do

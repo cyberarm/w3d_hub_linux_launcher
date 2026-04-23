@@ -45,7 +45,6 @@ class W3DHub
               c = W3DHub::THEME[:Button][:border_color]
 
               @prompt_entry.style.border_color = c
-              @prompt_entry.style.default[:border_color] = c
               @prompt_entry.style.hover[:border_color]   = c
               @prompt_entry.style.active[:border_color]  = c
 
@@ -54,7 +53,6 @@ class W3DHub
               c = 0xff_ff0000
 
               @prompt_entry.style.border_color = c
-              @prompt_entry.style.default[:border_color] = c
               @prompt_entry.style.hover[:border_color]   = c
               @prompt_entry.style.active[:border_color]  = c
 

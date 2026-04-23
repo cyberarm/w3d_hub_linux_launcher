@@ -95,8 +95,8 @@ class W3DHub
               # para game.name, width: 1.0, text_align: :center
             end
 
-            def game_button.hit_element?(x, y)
-              self if hit?(x, y)
+            def game_button.hit_element?(x, y, elements = [])
+              elements << self if hit?(x, y)
             end
 
             game_button.subscribe(:clicked_left_mouse_button) do
@@ -386,10 +386,8 @@ class W3DHub
                       caption game.name, margin_top: 8
                     end
 
-                    def container.hit_element?(x, y)
-                      return unless hit?(x, y)
-
-                      self
+                    def container.hit_element?(x, y, elements = [])
+                      elements << self if hit?(x, y)
                     end
 
                     container.subscribe(:clicked_left_mouse_button) do |element|
