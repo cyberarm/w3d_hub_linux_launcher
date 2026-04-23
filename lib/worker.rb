@@ -6,6 +6,8 @@ module W3DHubLauncher
       @threads = []
       @requests = []
 
+      @settings = # Settings.new
+
       # next available request_id to assign incoming requests
       @request_id = 0
 
@@ -35,6 +37,13 @@ module W3DHubLauncher
             response = Response.new(result.okay? ? Request::STATUS_COMPLETE : Request::STATUS_ERROR, query.request_id, result)
             Ractor.main.send(response)
           end
+        when Request::LAUNCHER_UPDATE_SETTINGS
+          result = CyberarmEngine::Result.new
+          FileUtils.mkdir_p(W3DHubLauncher::CONFIG_PATH) # FAILABLE!
+          File.write("#{W3DHubLauncher::CONFIG_PATH}/settings.json", query.data) # FAILABLE!
+          result.data = query.data
+          response = Response.new(result.okay? ? Request::STATUS_COMPLETE : Request::STATUS_ERROR, query.request_id, result)
+          Ractor.main.send(response)
         else
           raise "UNKNOWN REQUEST"
         end

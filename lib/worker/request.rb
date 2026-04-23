@@ -6,6 +6,8 @@ module W3DHubLauncher
       FETCH_URL = 0
       DOWNLOAD_URL = 1
       W3DHUB_API_CALL = 10
+      LAUNCHER_SETTINGS = 1000
+      LAUNCHER_UPDATE_SETTINGS = 1001
 
       STATUS_ERROR = -1 # request has failed
       STATUS_PENDING = 0 # request has not yet started
@@ -53,9 +55,8 @@ module W3DHubLauncher
         pp [event, data]
 
         case event
-        when STATUS_COMPLETE
-          Request.requests.delete(self)
-        when STATUS_ERROR
+        when STATUS_ERROR, STATUS_COMPLETE
+          @callback&.call(data)
           Request.requests.delete(self)
         end
       end

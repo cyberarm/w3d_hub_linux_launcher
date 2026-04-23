@@ -4,6 +4,7 @@ source "https://gem.coop"
 gem "base64"
 gem "rexml"
 gem "logger"
+gem "json"
 
 # "game" library gem
 gem "cyberarm_engine"

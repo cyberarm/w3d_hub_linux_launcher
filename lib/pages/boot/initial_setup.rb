@@ -15,23 +15,16 @@ module W3DHubLauncher
               title "Initial Setup"
               caption "Please confirm launcher's default settings and make any desired tweaks.", font: FONT_REGULAR
 
-              flow(width: 1.0, height: 40, margin_top: PADDING) do
-              tagline "Launcher data directory", height: 1.0, text_v_align: :center
-              edit_line format("%s/.local/share/W3D Hub", Dir.home), fill: true
-              button "Browse..."
-              end
-              inscription "Location where the launcher stores it's configuration files and cache interface data."
-
               flow(width: 1.0, height: 40, margin_top: HALF_PADDING) do
               tagline "Launcher package cache directory", height: 1.0, text_v_align: :center
-              edit_line format("%s/.local/share/W3D Hub/package-cache", Dir.home), fill: true
+              edit_line DEFAULT_PACKAGE_CACHE_PATH, fill: true
               button "Browse..."
               end
               inscription "Location where the launcher will download application packages."
 
               flow(width: 1.0, height: 40, margin_top: HALF_PADDING) do
                 tagline "Application installation directory", height: 1.0, text_v_align: :center
-                edit_line format("%s/.local/share/W3D Hub/applications", Dir.home), fill: true
+                edit_line DEFAULT_APPLICATIONS_PATH, fill: true
                 button "Browse..."
               end
               inscription "Location where the launcher will install new applications."
@@ -53,8 +46,18 @@ module W3DHubLauncher
 
             flow(width: 1.0, padding_top: PADDING) do
               flow(fill: true)
-              button "Accept" do
-                page(Page::Boot::StartUp)
+              button "Accept" do |btn|
+                btn.enabled = false
+
+                Worker::Api.update_settings({}) do |result|
+                  if result.okay?
+                    page(Page::Boot::StartUp)
+                  else
+                    btn.enabled = true
+                  end
+
+                  puts "NOW!"
+                end
               end
             end
           end

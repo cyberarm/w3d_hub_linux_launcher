@@ -28,6 +28,7 @@ require_relative "lib/pages/boot/terms"
 require_relative "lib/pages/boot/initial_setup"
 require_relative "lib/pages/boot/start_up"
 require_relative "lib/dialogs/about"
+require_relative "lib/dialogs/downloads"
 require_relative "lib/states/boot"
 require_relative "lib/states/interface"
 require_relative "lib/window"
@@ -63,11 +64,11 @@ Thread.new do
   end
 end
 
-10.times do
-  W3DHubLauncher::Worker::Request.new(W3DHubLauncher::Worker::Request::W3DHUB_API_CALL, { call: :fetch_applications }) do |result|
-    pp result
-  end
-end
+# 10.times do
+#   W3DHubLauncher::Worker::Request.new(W3DHubLauncher::Worker::Request::W3DHUB_API_CALL, { call: :fetch_applications }) do |result|
+#     pp result
+#   end
+# end
 
 window = W3DHubLauncher::Window.new(width: 1280, height: 800, resizable: true)
 # window = W3DHubLauncher::Window.new(width: 1920, height: 1080, resizable: true)

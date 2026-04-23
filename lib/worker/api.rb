@@ -3,76 +3,71 @@
 module W3DHubLauncher
   class Worker
     class Api
-      Request = Data.define(:coming_soon)
-
-      def initialize
-        @requests = []
-      end
-
       # downloads requested resource, returns raw string
-      def fetch_url
+      def self.fetch_url
       end
 
       # downloads requested resource, periodically reporting progress until completion, returning path for file on disk
-      def download_url
+      def self.download_url
       end
 
       # returns user account data
       #
       # automatically handles signing in / refreshing token (DOES NOT remove account data if failed to refresh token due to network timeout)
-      def account
+      def self.account
       end
 
       # returns launcher settings
-      def settings
+      def self.settings
       end
 
       # write updated launcher settings
-      def update_settings
+      def self.update_settings(settings, &block)
+        Worker::Request.new(Request::LAUNCHER_UPDATE_SETTINGS, settings.to_json, &block)
       end
 
       # returns list of available applications
       #
       # if updated list is requested, return cached version immediately and then the updated list later.
-      def applications
+      def self.applications
       end
 
       # returns current list of servers as reported from GSH / cache
-      def servers
+      def self.servers
       end
 
       # returns news for application
-      def news
+      def self.news
       end
 
       # request installation of application
       #
       # periodically reports progress until completion
-      def install_application
+      def self.install_application
       end
 
       # request update of application
       #
       # periodically reports progress until completion
-      def update_application
+      def self.update_application
       end
 
       # request repair of application
       #
       # periodically reports progress until completion
-      def repair_application
+      def self.repair_application
       end
 
       # request relocation of application
       #
       # periodically reports progress until completion
-      def move_application
+      def self.move_application
       end
 
       # request removal of application
       #
       # periodically reports progress until completion
-      def uninstall_application
+      def self.uninstall_application
       end
     end
   end

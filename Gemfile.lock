@@ -80,6 +80,7 @@ DEPENDENCIES
   cyberarm_engine
   digest-crc
   ircparser
+  json
   logger
   rexml
   rubyzip
