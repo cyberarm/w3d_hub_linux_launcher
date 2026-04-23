@@ -25,16 +25,29 @@ module W3DHubLauncher
                   end.show
                 end
 
+                # navigation bar container
                 stack(fill: true, height: 1.0) do
-                  stack(fill: true)
+                  # stack(fill: true)
+
+                  # navigation container
                   flow(width: 1.0) do
                     link("GAMES", text_v_align: :center, font: FONT_BLACK, margin_left: PADDING) { page(Page::Games) }
                     link("SERVERS", text_v_align: :center, font: FONT_BLACK, margin_left: PADDING) { page(Page::ServerBrowser) }
                     stack(fill: true)
-                    image safe_get_image("#{ROOT_PATH}/media/icons/import.png"), height: 40, color: 0xff_bbbbbb, tip: "Downloads"
+                    image safe_get_image("#{ROOT_PATH}/media/icons/import.png"), height: 40, color: 0xff_bbbbbb, tip: "Downloads" do |img|
+                      dialog(Dialog::Downloads)
+                    end
                     image safe_get_image("#{ROOT_PATH}/media/icons/information.png"), height: 40, color: 0xff_bbbbbb, tip: "Notifications"
                   end
-                  stack(fill: true)
+                  # application task status bar container
+                  stack(width: 1.0, fill: true, margin_left: PADDING) do
+                    flow(width: 1.0) do
+                      para "Updating Red Alert: A Path Beyond (Release)"
+                      stack(fill: true)
+                      para "Fetching manifests..."
+                    end
+                    progress(width: 1.0, fraction: 0.75)
+                  end
                 end
 
                 # self account container
