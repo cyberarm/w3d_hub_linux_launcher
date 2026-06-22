@@ -8,9 +8,22 @@ module W3DHubLauncher
 
     def initialize
       @access_token = nil
+
+      @http_clients = {}
     end
 
     def headers(form_encoded: false)
+      array = [
+        ["user-agent", W3DHubLauncher::USER_AGENT],
+        ["accept", "application/json"],
+      ]
+
+      array << ["content-type", "application/x-www-form-urlencoded"] if form_encoded
+      array << ["authorization", "Bearer #{@access_token}"] if @access_token
+
+      pp array
+
+      array
     end
 
     # return raw response to requester
@@ -19,13 +32,19 @@ module W3DHubLauncher
 
       Sync do |task|
         task.with_timeout(API_TIMEOUT) do
-          Async::HTTP::Internet.send(method, url, headers, body) do |response|
-            result.data = response.read
-          rescue StandardError => e
-            result.error = e
-          end
-        rescue Async::TimeoutError
-          result.error = e
+          endpoint = Async::HTTP::Endpoint.parse(url)
+          client = @http_clients[endpoint.hostname.downcase] ||= Async::HTTP::Client.new(endpoint)
+
+          pp endpoint, endpoint.authority, client
+          response = client.get(endpoint.path)
+          pp response
+        #   client.send(method, endpoint.path, headers, body) do |response|
+        #     result.data = response.read
+        #   rescue StandardError => e
+        #     result.error = e
+        #   end
+        # rescue Async::TimeoutError
+        #   result.error = e
         end
       end
 
@@ -80,6 +99,10 @@ module W3DHubLauncher
 
     def fetch_applications
       result = CyberarmEngine::Result.new
+      primary_result = fetch("#{PRIMARY_W3DHUB_API_ENDPOINT}/apis/launcher/1/get-applications")
+      alternate_result = fetch("#{ALTERNATIVE_W3DHUB_API_ENDPOINT}/apis/launcher/1/get-applications")
+
+      pp [primary_result, alternate_result]
     end
 
     def fetch_news()

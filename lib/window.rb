@@ -11,5 +11,11 @@ module W3DHubLauncher
     def needs_redraw?
       states.any?(&:needs_repaint?)
     end
+
+    def update
+      super
+
+      sleep 0.001
+    end
   end
 end
