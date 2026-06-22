@@ -23,7 +23,7 @@ module W3DHubLauncher
 
       # write updated launcher settings
       def self.update_settings(settings, &block)
-        Worker::Request.new(Request::LAUNCHER_UPDATE_SETTINGS, settings.to_json, &block)
+        Worker::Request.new(:update_settings, settings.to_json, &block)
       end
 
       # returns list of available applications
@@ -37,37 +37,43 @@ module W3DHubLauncher
       end
 
       # returns news for application
-      def self.news
+      def self.news(category = "launcher-home", &block)
+        Worker::Request.new(:news, category, &block)
+      end
+
+      # returns news for application
+      def self.events(app_id, &block)
+        Worker::Request.new(:events, app_id, &block)
       end
 
       # request installation of application
       #
       # periodically reports progress until completion
-      def self.install_application
+      def self.install_application(app_id, channel_id)
       end
 
       # request update of application
       #
       # periodically reports progress until completion
-      def self.update_application
+      def self.update_application(app_id, channel_id)
       end
 
       # request repair of application
       #
       # periodically reports progress until completion
-      def self.repair_application
+      def self.repair_application(app_id, channel_id)
       end
 
       # request relocation of application
       #
       # periodically reports progress until completion
-      def self.move_application
+      def self.move_application(app_id, channel_id)
       end
 
       # request removal of application
       #
       # periodically reports progress until completion
-      def self.uninstall_application
+      def self.uninstall_application(app_id, channel_id)
       end
     end
   end

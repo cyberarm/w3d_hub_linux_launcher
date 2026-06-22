@@ -28,24 +28,12 @@ module W3DHubLauncher
         query = Ractor.receive
         pp query
 
-        case query.type
-        when Request::FETCH_URL
-        when Request::DOWNLOAD_URL
-        when Request::W3DHUB_API_CALL
+        if respond_to?(query.type)
           Async do
-            result = @w3dhub_api.send(query.data[:call], *(query.data[:arguments] || []))
-            response = Response.new(result.okay? ? Request::STATUS_COMPLETE : Request::STATUS_ERROR, query.request_id, result)
-            Ractor.main.send(response)
+            send(query.type, query)
           end
-        when Request::LAUNCHER_UPDATE_SETTINGS
-          result = CyberarmEngine::Result.new
-          FileUtils.mkdir_p(W3DHubLauncher::CONFIG_PATH) # FAILABLE!
-          File.write("#{W3DHubLauncher::CONFIG_PATH}/settings.json", query.data) # FAILABLE!
-          result.data = query.data
-          response = Response.new(result.okay? ? Request::STATUS_COMPLETE : Request::STATUS_ERROR, query.request_id, result)
-          Ractor.main.send(response)
         else
-          raise "UNKNOWN REQUEST"
+          raise "UNKNOWN REQUEST: #{query}"
         end
       end
     end
@@ -54,6 +42,48 @@ module W3DHubLauncher
     end
 
     def backend_websocket
+    end
+
+    #
+    # ------------ query / request handlers ------------
+    #
+    def fetch_url(query)
+    end
+
+    def download_url(query)
+    end
+
+    def w3dhub_api_call(query)
+      result = @w3dhub_api.send(query.data[:call], *(query.data[:arguments] || []))
+      response = Response.new(result.okay? ? Request::STATUS_COMPLETE : Request::STATUS_ERROR, query.request_id, result)
+
+      Ractor.main.send(response)
+    end
+
+    def update_settings(query)
+      result = CyberarmEngine::Result.new
+
+      FileUtils.mkdir_p(W3DHubLauncher::CONFIG_PATH) # FIXME: FAILABLE!
+      File.write("#{W3DHubLauncher::CONFIG_PATH}/settings.json", query.data) # FIXME: FAILABLE!
+      result.data = query.data
+      response = Response.new(result.okay? ? Request::STATUS_COMPLETE : Request::STATUS_ERROR, query.request_id, result)
+
+      Ractor.main.send(response)
+    end
+
+    def install_application(query)
+    end
+
+    def update_application(query)
+    end
+
+    def repair_application(query)
+    end
+
+    def move_application(query)
+    end
+
+    def uninstall_application(query)
     end
   end
 end
