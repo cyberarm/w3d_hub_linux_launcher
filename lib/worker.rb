@@ -55,6 +55,7 @@ module W3DHubLauncher
 
     def w3dhub_api_call(query)
       result = @w3dhub_api.send(query.data[:call], *(query.data[:arguments] || []))
+      pp result
       response = Response.new(result.okay? ? Request::STATUS_COMPLETE : Request::STATUS_ERROR, query.request_id, result)
 
       Ractor.main.send(response)

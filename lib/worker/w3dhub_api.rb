@@ -32,20 +32,20 @@ module W3DHubLauncher
 
       Sync do |task|
         task.with_timeout(API_TIMEOUT) do
-          endpoint = Async::HTTP::Endpoint.parse(url)
-          client = @http_clients[endpoint.hostname.downcase] ||= Async::HTTP::Client.new(endpoint)
-
-          pp endpoint, endpoint.authority, client
-          response = client.get(endpoint.path)
-          pp response
-        #   client.send(method, endpoint.path, headers, body) do |response|
-        #     result.data = response.read
-        #   rescue StandardError => e
-        #     result.error = e
-        #   end
-        # rescue Async::TimeoutError
-        #   result.error = e
+          Async::HTTP::Internet.send(method, url, headers, body) do |response|
+            if response.success?
+              result.data = response.read
+            else
+              result.error = true
+            end
+          end
+        rescue StandardError => e
+          result.error = e
+        rescue Async::TimeoutError => e
+          result.error = e
         end
+
+        result
       end
 
       result
@@ -103,6 +103,9 @@ module W3DHubLauncher
       alternate_result = fetch("#{ALTERNATIVE_W3DHUB_API_ENDPOINT}/apis/launcher/1/get-applications")
 
       pp [primary_result, alternate_result]
+
+      # FIXME: Merge primary and alternate results
+      result
     end
 
     def fetch_news()

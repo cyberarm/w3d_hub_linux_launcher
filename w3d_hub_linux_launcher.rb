@@ -65,9 +65,9 @@ Thread.new do
 end
 
 # 10.times do
-#   W3DHubLauncher::Worker::Request.new(W3DHubLauncher::Worker::Request::W3DHUB_API_CALL, { call: :fetch_applications }) do |result|
-#     pp result
-#   end
+  W3DHubLauncher::Worker::Request.new(:w3dhub_api_call, { call: :fetch_applications }) do |result|
+    pp result
+  end
 # end
 
 window = W3DHubLauncher::Window.new(width: 1280, height: 800, resizable: true)
