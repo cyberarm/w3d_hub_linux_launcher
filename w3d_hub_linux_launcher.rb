@@ -4,6 +4,7 @@ rescue LoadError
   require "cyberarm_engine"
 end
 
+require "socket"
 require "rexml"
 require "base64"
 require "logger"
@@ -44,30 +45,20 @@ require_relative "lib/worker/tasks/repair_application"
 require_relative "lib/worker/tasks/update_application"
 
 module W3DHubLauncher
-  WORKER = Ractor.new(name: "Parallel Worker") { W3DHubLauncher::Worker.new }
-end
-
-# Hello, I exist because there presently exists no way to ask if there are pending
-# messages in our ractors mailbox without making a blocking call which is a big no no
-# for a GUI application. :|
-#
-# Keep an eye on: https://bugs.ruby-lang.org/issues/21930: "Add Ractor#empty? method to check for pending messages without blocking"
-#
-# NOTE: May need to mangle Window#update to do ruby-land sleep so thread gets time to process :(
-Thread.new do
-  loop do
-    response = Ractor.receive
-    pp response
-
-    request = W3DHubLauncher::Worker::Request.requests.find { |r| r.request_id == response.request_id }
-    request&.handle_event(response.status, response.data)
+  # UNIXServer
+  Thread.new do
+    W3DHubLauncher::Worker.new.listen
   end
+
+  # UNIXSocket / client
+  WORKER = W3DHubLauncher::Worker.new
+  WORKER.connect
 end
 
 # 10.times do
-  W3DHubLauncher::Worker::Request.new(:w3dhub_api_call, { call: :fetch_applications }) do |result|
-    pp result
-  end
+  # W3DHubLauncher::Worker::Request.new(:w3dhub_api_call, { call: :fetch_applications }) do |result|
+  #   pp [:CALLBACK, result]
+  # end
 # end
 
 window = W3DHubLauncher::Window.new(width: 1280, height: 800, resizable: true)

@@ -26,7 +26,7 @@ module W3DHubLauncher
           # game info container
           stack(width: 340, height: 1.0) do
             # logo
-            image safe_get_image("/run/media/cyberarm/Storage/W3DHub/Launcher/package-cache/games/apb/logo.png.package"), width: 1.0, max_height: 124
+            image safe_get_image("#{ROOT_PATH}/media/default.png"), width: 1.0, max_height: 124
 
             # web links
             stack(width: 1.0, fill: true, padding: 0, padding_top: LARGE_PADDING) do

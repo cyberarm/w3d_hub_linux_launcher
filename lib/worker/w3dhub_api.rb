@@ -21,7 +21,7 @@ module W3DHubLauncher
       array << ["content-type", "application/x-www-form-urlencoded"] if form_encoded
       array << ["authorization", "Bearer #{@access_token}"] if @access_token
 
-      pp array
+      # pp array
 
       array
     end
@@ -36,6 +36,7 @@ module W3DHubLauncher
             if response.success?
               result.data = response.read
             else
+              pp response
               result.error = true
             end
           end
@@ -99,9 +100,24 @@ module W3DHubLauncher
 
     def fetch_applications
       result = CyberarmEngine::Result.new
-      primary_result = fetch("#{PRIMARY_W3DHUB_API_ENDPOINT}/apis/launcher/1/get-applications")
+      # If we're not signed in, then the primary backend will try to redirect us to the alternate backend. So skip it if we're not signed in.
+      primary_result = @access_token ? fetch("#{PRIMARY_W3DHUB_API_ENDPOINT}/apis/launcher/1/get-applications") : CyberarmEngine::Result.new(error: true)
       alternate_result = fetch("#{ALTERNATIVE_W3DHUB_API_ENDPOINT}/apis/launcher/1/get-applications")
 
+      # We've failed to retrieve data
+      if primary_result.error? && alternate_result.error?
+        return result
+      # We've only gotten data back from the primary backend
+      elsif primary_result.okay? && alternate_result.error?
+        result.data = primary_result.data
+        return result
+      # We've only gotten data back from the alternate backend
+      elsif primary_result.error? && alternate_result.okay?
+        result.data = alternate_result.data
+        return result
+      end
+
+      # We've gotten data back from both backends, merge them.
       pp [primary_result, alternate_result]
 
       # FIXME: Merge primary and alternate results

@@ -4,6 +4,8 @@ module W3DHubLauncher
       self.show_cursor = true
       self.caption = format("%s | v%s (%s)", NAME, VERSION, VERSION_NAME) # "Cyberarm's W3D Hub Linux Launcher | v2.0.0 alpha"
 
+      @main_thread_queue = []
+
       push_state(States::Boot)
       # push_state(States::Interface)
     end
@@ -13,9 +15,19 @@ module W3DHubLauncher
     end
 
     def update
+      while(block = @main_thread_queue.shift)
+        block.call
+      end
+
+      WORKER.service
+
       super
 
       sleep 0.001
+    end
+
+    def add_to_queue(block)
+      @main_thread_queue << block
     end
   end
 end

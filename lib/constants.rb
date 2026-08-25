@@ -7,5 +7,6 @@ module W3DHubLauncher
   DEFAULT_PACKAGE_CACHE_PATH = "#{CACHE_PATH}/packages".freeze
   DEFAULT_APPLICATIONS_PATH = "#{Dir.home}/.local/share/#{DIRECTORY_NAME}/applications".freeze
 
+  IPC_PATH = "/tmp/w3dhub_linux_launcher.sock"
   USER_AGENT = "#{NAME} v#{VERSION}".freeze
 end

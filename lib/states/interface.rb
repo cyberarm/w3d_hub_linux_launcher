@@ -5,7 +5,7 @@ module W3DHubLauncher
         super
 
         # root container - background image
-        stack(width: 1.0, height: 1.0, background_image: safe_get_image("/run/media/cyberarm/Storage/W3DHub/Launcher/package-cache/games/apb/background.png.package"), background_image_mode: :fill) do
+        stack(width: 1.0, height: 1.0, background_image: safe_get_image("#{ROOT_PATH}/media/background.png"), background_image_mode: :fill) do
           # root container - background image tint
           stack(width: 1.0, height: 1.0, background: ALPHA_BLACK) do
             # content container

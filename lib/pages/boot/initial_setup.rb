@@ -51,7 +51,7 @@ module W3DHubLauncher
 
                 Worker::Api.update_settings({}) do |result|
                   if result.okay?
-                    page(Page::Boot::StartUp)
+                     on_main_thread(proc { page(Page::Boot::StartUp) })
                   else
                     btn.enabled = true
                   end

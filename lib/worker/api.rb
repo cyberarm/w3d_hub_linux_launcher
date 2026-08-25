@@ -1,4 +1,4 @@
-# Helper for launcher frontend to safely communicate with ractor (prevent deadlocks and concurrent access errors)
+# Helper for launcher frontend to safely communicate with launcher backend
 
 module W3DHubLauncher
   class Worker

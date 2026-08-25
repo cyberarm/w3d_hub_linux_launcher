@@ -47,7 +47,7 @@ module W3DHubLauncher
 
       def enqueue(type, id, data)
         Request.requests << self
-        W3DHubLauncher::WORKER.send(Query.new(type, id, data))
+        W3DHubLauncher::WORKER.request(Query.new(type, id, data))
       end
 
       # event from Worker received
