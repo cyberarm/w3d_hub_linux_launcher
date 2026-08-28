@@ -77,6 +77,8 @@ module W3DHubLauncher
       text_shadow: false,
       color: 0xff_ffffff,
       background: 0,#x88_5e5c64,
+      padding_left: HALF_PADDING,
+      padding_right: HALF_PADDING,
       background_nine_slice: NINE_SLICE_ROUNDED,
       background_nine_slice_from_edge: NINE_SLICE_EDGE,
       background_nine_slice_mode: :stretched,

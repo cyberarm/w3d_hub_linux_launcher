@@ -36,6 +36,7 @@ require_relative "lib/window"
 
 require_relative "lib/worker"
 require_relative "lib/worker/api"
+require_relative "lib/worker/api/application"
 require_relative "lib/worker/request"
 require_relative "lib/worker/w3dhub_api"
 require_relative "lib/worker/task"
@@ -45,6 +46,8 @@ require_relative "lib/worker/tasks/repair_application"
 require_relative "lib/worker/tasks/update_application"
 
 module W3DHubLauncher
+  MemCache = {}
+
   # UNIXServer
   Thread.new do
     W3DHubLauncher::Worker.new.listen
@@ -54,12 +57,6 @@ module W3DHubLauncher
   WORKER = W3DHubLauncher::Worker.new
   WORKER.connect
 end
-
-# 10.times do
-  # W3DHubLauncher::Worker::Request.new(:w3dhub_api_call, { call: :fetch_applications }) do |result|
-  #   pp [:CALLBACK, result]
-  # end
-# end
 
 window = W3DHubLauncher::Window.new(width: 1280, height: 800, resizable: true)
 # window = W3DHubLauncher::Window.new(width: 1920, height: 1080, resizable: true)

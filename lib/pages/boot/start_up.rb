@@ -55,6 +55,17 @@ module W3DHubLauncher
                 caption "Fatal: Failed to retrieve applications list and no local cache exists. Cannot continue.", height: 1.0, text_v_align: :center, color: 0xff_ff0000
               end
               after(3000) do
+                puts "HELLO"
+                W3DHubLauncher::Worker::Request.new(:w3dhub_api_call, { call: :fetch_applications }) do |result|
+                  pp [:CALLBACK, result]
+                  File.write("applications.json", result.data)
+                  hash = JSON.parse(result.data)
+                  pp applications = hash["applications"]&.map { |app| W3DHubLauncher::Worker::Api::Application.new(app) } || []
+                  pp applications.to_json
+
+                  MemCache[:applications] = applications
+                end
+
                 f.show
                 @progress_bar.type = :linear
                 @progress_bar.value = 0.0

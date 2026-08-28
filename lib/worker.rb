@@ -36,17 +36,18 @@ module W3DHubLauncher
         UNIXServer.open(IPC_PATH) do |server|
           while(socket = server.accept)
             task.async do
-              data = socket.gets
-              json = JSON.parse(data)
-              query = Request::Query.new(type: json["type"].to_sym, request_id: json["request_id"], data: json["data"])
+              while(data =socket.gets)
+                json = JSON.parse(data)
+                query = Request::Query.new(type: json["type"].to_sym, request_id: json["request_id"], data: json["data"])
 
-              pp [:server_incoming, data, query]
+                pp [:server_incoming, data, query]
 
-              if respond_to?(query.type)
-                response = send(query.type, query)
-                pp [:server_to_client, response]
-                payload = { status: response.status, request_id: response.request_id, data: response.data.data }.to_json
-                socket.puts(payload)
+                if respond_to?(query.type)
+                  response = send(query.type, query)
+                  pp [:server_to_client, response]
+                  payload = { status: response.status, request_id: response.request_id, data: response.data.data }.to_json
+                  socket.puts(payload)
+                end
               end
             end
           end
