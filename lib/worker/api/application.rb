@@ -5,7 +5,7 @@ module W3DHubLauncher
         attr_reader :id, :category, :name, :type, :channels, :extended_data, :web_links
 
         def initialize(data)
-          pp data
+          # pp data
 
           @id = data["id"]
           @category = data["category"]

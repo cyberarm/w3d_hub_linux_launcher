@@ -39,6 +39,13 @@ module W3DHubLauncher
           end
         end
 
+        populate_game
+      end
+
+      def populate_game(game = @current_app, channel = @current_channel)
+        @current_app = game
+        @current_channel = game&.channels&.first
+
         populate_games_list
         populate_game_info
         populate_game_event
@@ -49,24 +56,12 @@ module W3DHubLauncher
         @games_list_container.clear do
           @games.each_with_index do |game, i|
             if i.zero?
-              image(safe_get_image("#{ROOT_PATH}/data/cache/#{game.id}.png"), height: 1.0, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0x88_5e5c64, border_thickness_bottom: 3, border_color_bottom: 0xff_3584e4, tip: game.name)do
-                @current_app = game
-                @current_channel = game&.channels&.first
-
-                populate_games_list
-                populate_game_info
-                populate_game_event
-                populate_game_news
+              image(safe_get_image("#{ROOT_PATH}/data/cache/#{game.id}.png"), tag: :"image_icon_#{game.id}", height: 1.0, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0x88_5e5c64, border_thickness_bottom: 3, border_color_bottom: 0xff_3584e4, tip: game.name)do
+                populate_game(game, game&.channels&.first)
               end
             else
-              image(safe_get_image("#{ROOT_PATH}/data/cache/#{game.id}.png"), height: 1.0, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0, tip: game.name)do
-                @current_app = game
-                @current_channel = game&.channels&.first
-
-                populate_games_list
-                populate_game_info
-                populate_game_event
-                populate_game_news
+              image(safe_get_image("#{ROOT_PATH}/data/cache/#{game.id}.png"), tag: :"image_icon_#{game.id}", height: 1.0, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0, tip: game.name)do
+                populate_game(game, game&.channels&.first)
               end
             end
           end
@@ -76,7 +71,10 @@ module W3DHubLauncher
       def populate_game_info
         @game_info_container.clear do
           # logo
-          image safe_get_image("#{ROOT_PATH}/media/#{@current_app.id}.png"), width: 1.0, max_height: 124
+          img = image safe_get_image("#{ROOT_PATH}/data/cache/logo_#{@current_app.id}.png"), tag: :"image_logo_#{@current_app.id}", width: 1.0, max_height: 124
+          remote_image("#{ROOT_PATH}/data/cache/logo_#{@current_app.id}.png", url: "https://s3.w3d.cyberarm.dev/games/#{@current_app.id}/logo.png", element: img) do |e, path|
+            e&.value = safe_get_image(path)
+          end
 
           # web links
           stack(width: 1.0, fill: true, padding: 0, padding_top: LARGE_PADDING) do

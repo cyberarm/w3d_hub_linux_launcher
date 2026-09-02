@@ -57,11 +57,11 @@ module W3DHubLauncher
               after(3000) do
                 puts "HELLO"
                 W3DHubLauncher::Worker::Request.new(:w3dhub_api_call, { call: :fetch_applications }) do |result|
-                  pp [:CALLBACK, result]
+                  # pp [:CALLBACK, result]
                   File.write("applications.json", result.data)
                   hash = JSON.parse(result.data)
-                  pp applications = hash["applications"]&.map { |app| W3DHubLauncher::Worker::Api::Application.new(app) } || []
-                  pp applications.to_json
+                  applications = hash["applications"]&.map { |app| W3DHubLauncher::Worker::Api::Application.new(app) } || []
+                  # pp applications.to_json
 
                   MemCache[:applications] = applications
                 end

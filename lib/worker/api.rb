@@ -8,7 +8,8 @@ module W3DHubLauncher
       end
 
       # downloads requested resource, periodically reporting progress until completion, returning path for file on disk
-      def self.download_url
+      def self.download_url(url, path, method = :get, headers = nil, body = nil, &block)
+        Worker::Request.new(:download_url, { url: url, path: path, method: method, headers: headers, body: body }, &block)
       end
 
       # returns user account data

@@ -1,5 +1,10 @@
 module W3DHubLauncher
   class Worker
+    DEFAULT_HEADERS = [
+      ["user-agent", W3DHubLauncher::USER_AGENT]
+    ].freeze
+    DEFAULT_NETWORK_TIMEOUT = 30
+
     Response = Data.define(:status, :request_id, :data)
 
     def initialize
@@ -109,6 +114,49 @@ module W3DHubLauncher
     end
 
     def download_url(query)
+      result = CyberarmEngine::Result.new
+
+
+      method = query.data["method"]
+      url = query.data["url"]
+      path = query.data["path"]
+      headers = query.data["headers"] || DEFAULT_HEADERS
+      body = query.data["body"]
+
+      Sync do |task|
+        task.with_timeout(DEFAULT_NETWORK_TIMEOUT) do
+          Async::HTTP::Internet.send(method, url, headers, body) do |response|
+            if response.success?
+              content_length = response.headers["content-length"] || 0
+
+              total_downloaded_bytes = 0
+              File.open(path, "wb") do |file|
+                response.each do |chunk|
+                  file.write(chunk)
+                  downloaded_bytes = chunk.length
+                  total_downloaded_bytes += downloaded_bytes
+
+                  progress_result = CyberarmEngine::Result.new(data: {
+                    downloaded_bytes: downloaded_bytes,
+                    total_downloaded_bytes: total_downloaded_bytes,
+                    content_length: content_length
+                  })
+                  # FIXME: Send intermediate response to requester
+                  # send(query, Response.new(Request::STATUS_IN_PROGRESS, query.request_id progress_result))
+                end
+              end
+
+              result.data = true
+            end
+        #   rescue StandardError => e
+        #     result.error = e
+          end
+        # rescue Async::TimeoutError
+        #   result.error = e
+        end
+      end
+
+      deliver_response(result, query)
     end
 
     def w3dhub_api_call(query)

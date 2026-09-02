@@ -53,7 +53,10 @@ module W3DHubLauncher
                 # self account container
                 flow(width: 300, height: 80, margin_left: LARGE_PADDING) do
                   # self avatar container
-                  stack(width: 80, height: 1.0, background_image: rounded_avatar(safe_get_image("#{ROOT_PATH}/media/default.png"))) do
+                  stack(width: 80, height: 1.0, background_image: rounded_avatar(safe_get_image("#{ROOT_PATH}/media/default.png"))) do |i|
+                    i.subscribe(:clicked_left_mouse_button) do
+                      dialog(Dialog::Account)
+                    end
                     # self online state container
                     stack(width: 20, height: 20, v_align: :bottom, h_align: :right, background_image: safe_get_image("#{ROOT_PATH}/media/ui/circle_small.png"), background_image_color: 0xff_26a269)
                   end

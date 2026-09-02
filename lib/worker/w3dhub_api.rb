@@ -118,7 +118,7 @@ module W3DHubLauncher
       end
 
       # We've gotten data back from both backends, merge them.
-      pp [primary_result, alternate_result]
+      # pp [primary_result, alternate_result]
 
       # FIXME: Merge primary and alternate results
       result
