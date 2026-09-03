@@ -26,7 +26,7 @@ module W3DHubLauncher
                 window.close
               end
 
-              button "Accept" do
+              button "Accept", **CTA_BUTTON_THEME do
                 page(Page::Boot::InitialSetup)
               end
             end
