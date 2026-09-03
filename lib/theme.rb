@@ -93,6 +93,9 @@ module W3DHubLauncher
         color: 0x88_ffffff,
         background: 0,
         background_nine_slice_color: 0xaa_5e5c64
+      },
+      disabled: {
+        background: 0
       }
     },
     EditLine: {
