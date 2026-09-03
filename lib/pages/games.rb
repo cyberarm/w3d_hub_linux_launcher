@@ -46,6 +46,22 @@ module W3DHubLauncher
         @current_app = game
         @current_channel = game&.channels&.first
 
+        # This shouldn't be possible, but you never know...
+        unless @current_app
+          @games_list_container.clear
+          @game_info_container.clear
+
+          @event_container.clear
+          @event_container.hide
+
+          @news_container.clear do
+            title "Something has gone wrong somewhere."
+            tagline "No games to display... ¯\\_(-|-)_/¯"
+          end
+
+          return
+        end
+
         populate_games_list
         populate_game_info
         populate_game_event
@@ -69,6 +85,10 @@ module W3DHubLauncher
       end
 
       def populate_game_info
+        # FIXME: We should be able to query an api to figure out the installation state, instead of explictly writing it out like this...
+        application = MemCache[:settings].applications.find { |app| app.id == @current_app.id }
+        pp application
+
         @game_info_container.clear do
           # logo
           img = image safe_get_image("#{ROOT_PATH}/data/cache/logo_#{@current_app.id}.png"), tag: :"image_logo_#{@current_app.id}", width: 1.0, max_height: 124
@@ -92,12 +112,20 @@ module W3DHubLauncher
             end
           end
           flow(width: 1.0, height: 60) do
-            button "JOIN", tip: "Join most populated or lowest ping server", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME
-            button safe_get_image("#{ROOT_PATH}/media/icons/singleplayer.png"), tip: "Single player", image_height: 1.0, background_nine_slice: NINE_SLICE_SQUARE, **CTA_BUTTON_THEME
-            button safe_get_image("#{ROOT_PATH}/media/icons/gear.png"), tip: "Options", image_height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME
+            if application
+              button "JOIN", tip: "Join most populated or lowest ping server", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME
+              button safe_get_image("#{ROOT_PATH}/media/icons/singleplayer.png"), tip: "Single player", image_height: 1.0, background_nine_slice: NINE_SLICE_SQUARE, **CTA_BUTTON_THEME
+              button safe_get_image("#{ROOT_PATH}/media/icons/gear.png"), tip: "Options", image_height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME
+            elsif @current_app.servicable?
+              pp @current_app
+              button "Import", tip: "Import existing application installation", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME
+              button "Download", tip: "Download and install application", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME
+            else
+              button "Import", tip: "Import existing application installation", fill: true, height: 1.0, **CTA_BUTTON_THEME
+            end
           end
           # FIXME: the reported version should be the _installed_ version, not the current channel version
-          inscription "Version: #{@current_channel.version}", margin_top: PADDING, tip: "Installed version"
+          inscription "Version: #{@current_channel.version}", margin_top: PADDING, tip: "Installed version" if application
         end
       end
 
