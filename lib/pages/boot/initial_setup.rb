@@ -17,37 +17,44 @@ module W3DHubLauncher
 
               flow(width: 1.0, height: 40, margin_top: PADDING) do
               tagline "Nickname", height: 1.0, text_v_align: :center
-              edit_line Etc.getlogin, fill: true
+              @nickname = edit_line Etc.getlogin, fill: true
               end
               inscription "Nickname to use when joining servers.", margin_left: PADDING
 
               flow(width: 1.0, height: 40, margin_top: HALF_PADDING) do
               tagline "Launcher package cache directory", height: 1.0, text_v_align: :center
-              edit_line DEFAULT_PACKAGE_CACHE_PATH, fill: true
+              @launcher_package_cache_directory = edit_line DEFAULT_PACKAGE_CACHE_PATH, fill: true
               button "Browse..."
               end
               inscription "Location where the launcher will download application packages.", margin_left: PADDING
 
               flow(width: 1.0, height: 40, margin_top: HALF_PADDING) do
                 tagline "Application installation directory", height: 1.0, text_v_align: :center
-                edit_line DEFAULT_APPLICATIONS_PATH, fill: true
+                @application_installation_directory = edit_line DEFAULT_APPLICATIONS_PATH, fill: true
                 button "Browse..."
               end
               inscription "Location where the launcher will install new applications.", margin_left: PADDING
 
               flow(width: 1.0, height: 40, margin_top: HALF_PADDING) do
-                tagline "Wine context", height: 1.0, text_v_align: :center
-                edit_line "", fill: true
+                tagline "Wine prefix path", height: 1.0, text_v_align: :center
+                @wine_prefix_path = edit_line "", fill: true
                 button "Browse..."
               end
-              inscription "Location of wine context to use. Leave blank to use default.", margin_left: PADDING
+              inscription "Location of wine prefix to use. Leave blank to use default.", margin_left: PADDING
 
               flow(width: 1.0, height: 40, margin_top: HALF_PADDING) do
                 tagline "Wine command", height: 1.0, text_v_align: :center
-                edit_line "wine", fill: true
+                @wine_command = edit_line "wine", fill: true
                 button "Browse..."
               end
               inscription "Path to wine executable. Use <c=f80>wine</c> for system installed wine.", margin_left: PADDING
+
+              flow(width: 1.0, height: 40, margin_top: HALF_PADDING) do
+                tagline "Winetricks command", height: 1.0, text_v_align: :center
+                @winetricks_command = edit_line "winetricks", fill: true
+                button "Browse..."
+              end
+              inscription "Path to winetricks executable. Use <c=f80>winetricks</c> for system installed winetricks.", margin_left: PADDING
             end
 
             flow(width: 1.0, padding_top: PADDING) do
@@ -55,14 +62,27 @@ module W3DHubLauncher
               button "Accept", **CTA_BUTTON_THEME do |btn|
                 btn.enabled = false
 
-                Worker::Api.update_settings({}) do |result|
+                # initialize default settings
+                settings = Worker::Api::Settings.new({})
+
+                # update user preferences
+                settings.preferences.nickname = @nickname.value.strip
+                settings.preferences.launcher_package_cache_directory = @launcher_package_cache_directory.value.strip
+                settings.preferences.application_installation_directory = @application_installation_directory.value.strip
+                settings.preferences.wine_prefix_path = @wine_prefix_path.value.strip
+                settings.preferences.wine_command = @wine_command.value.strip
+                settings.preferences.winetricks_command = @winetricks_command.value.strip
+
+                Worker::Api.update_settings(settings) do |result|
                   if result.okay?
-                     on_main_thread(proc { page(Page::Boot::StartUp) })
+                     on_main_thread(proc {
+                       MemCache[:settings] = settings
+                       page(Page::Boot::StartUp)
+                     })
                   else
+                    # FIXME: Somehow something went wrong... show an error message.
                     btn.enabled = true
                   end
-
-                  puts "NOW!"
                 end
               end
             end

@@ -28,7 +28,18 @@ module W3DHubLauncher
           end
         end
 
-        page(Page::Boot::Terms)
+        Worker::Api.load_settings do |result|
+          if result.okay?
+            on_main_thread( proc {
+              MemCache[:settings] = Worker::Api::Settings.new(JSON.parse(result.data))
+              page(Page::Boot::StartUp)
+            })
+          else
+            on_main_thread( proc {
+              page(Page::Boot::Terms)
+            })
+          end
+        end
       end
     end
   end

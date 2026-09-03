@@ -165,12 +165,37 @@ module W3DHubLauncher
       deliver_response(result, query)
     end
 
+    def load_settings(query)
+      result = CyberarmEngine::Result.new
+
+      path = "#{W3DHubLauncher::CONFIG_PATH}/settings.json"
+      begin
+        if File.exist?(path) && File.size(path).positive?
+          json = File.read(path)
+          result.data = json
+        else
+          result.error = RuntimeError.new("Launcher settings file does not exist or is empty.")
+        end
+      rescue => e
+        result.error = e
+      end
+
+      deliver_response(result, query)
+    end
+
     def update_settings(query)
       result = CyberarmEngine::Result.new
 
-      FileUtils.mkdir_p(W3DHubLauncher::CONFIG_PATH) # FIXME: FAILABLE!
-      File.write("#{W3DHubLauncher::CONFIG_PATH}/settings.json", query.data) # FIXME: FAILABLE!
-      result.data = query.data
+      begin
+        @settings = Api::Settings.new(JSON.parse(query.data))
+        FileUtils.mkdir_p(W3DHubLauncher::CONFIG_PATH)
+        File.write("#{W3DHubLauncher::CONFIG_PATH}/settings.json", query.data)
+
+        result.data = query.data
+      rescue => e
+        result.error = e
+      end
+
       deliver_response(result, query)
     end
 

@@ -11,6 +11,8 @@ module W3DHubLauncher
         def initialize(data)
           @schema = data["schema"] || SCHEMA
 
+          raise "Data is not a hash!" unless data.is_a?(Hash)
+
           @last_selected_app = data["last_selected_app"] || "ren"
           @last_selected_app_channel = data["last_selected_app_channel"] || "release"
           @last_selected_server_app = data["last_selected_server_app"] || ""
@@ -20,7 +22,7 @@ module W3DHubLauncher
           @account = Account.new(data["account"])
         end
 
-        def to_json(context = nil)
+        def to_json(options = {})
           {
             schema: @schema,
             last_selected_app: @last_selected_app,
@@ -29,7 +31,7 @@ module W3DHubLauncher
             preferences: @preferences,
             applications: @applications,
             account: @account
-          }.to_json(context)
+          }.to_json(options)
         end
 
         # User explictly set options
@@ -53,7 +55,7 @@ module W3DHubLauncher
             @winetricks_command = data["winetricks_command"] || "winetricks"
           end
 
-          def to_json(context = nil)
+          def to_json(options = {})
             {
               schema: @schema,
               language: @language,
@@ -63,7 +65,7 @@ module W3DHubLauncher
               wine_prefix_path: @wine_prefix_path,
               wine_command: @wine_command,
               winetricks_command: @winetricks_command
-            }.to_json(context)
+            }.to_json(options)
           end
         end
 
@@ -99,7 +101,7 @@ module W3DHubLauncher
             @launch_command = data["launch_command"]
           end
 
-          def to_json(context = nil)
+          def to_json(options = {})
             {
               schema: @schema,
               id: @id,
@@ -108,7 +110,7 @@ module W3DHubLauncher
               installation_path: @installation_path,
               wine_prefix_path: @wine_prefix_path,
               launch_command: @launch_command
-            }.to_json(context)
+            }.to_json(options)
           end
         end
 
@@ -152,7 +154,7 @@ module W3DHubLauncher
             @user_id.positive?
           end
 
-          def to_json(context = nil)
+          def to_json(options = {})
             {
               schema: @schema,
               user_id: @user_id,
@@ -162,7 +164,7 @@ module W3DHubLauncher
               access_token: @access_token,
               refresh_token: @refresh_token,
               access_token_expiration_time: @access_token_expiration_time.to_i
-            }.to_json(context)
+            }.to_json(options)
           end
         end
       end

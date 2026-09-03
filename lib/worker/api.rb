@@ -22,6 +22,11 @@ module W3DHubLauncher
       def self.settings
       end
 
+      # returns raw json of launcher settings
+      def self.load_settings(&block)
+        Worker::Request.new(:load_settings, "", &block)
+      end
+
       # write updated launcher settings
       def self.update_settings(settings, &block)
         Worker::Request.new(:update_settings, settings.to_json, &block)
