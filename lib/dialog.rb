@@ -3,7 +3,7 @@ module W3DHubLauncher
     def setup
       theme(THEME)
 
-      background 0xee_222222
+      background TRANSLUCENT_GRAY
     end
   end
 end

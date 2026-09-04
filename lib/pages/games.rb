@@ -118,10 +118,10 @@ module W3DHubLauncher
               button safe_get_image("#{ROOT_PATH}/media/icons/gear.png"), tip: "Options", image_height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME
             elsif @current_app.servicable?
               pp @current_app
-              button "Import", tip: "Import existing application installation", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME
+              button "Import", enabled: false, tip: "Import existing application installation", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME
               button "Download", tip: "Download and install application", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME
             else
-              button "Import", tip: "Import existing application installation", fill: true, height: 1.0, **CTA_BUTTON_THEME
+              button "Import", enabled: false, tip: "Import existing application installation", fill: true, height: 1.0, **CTA_BUTTON_THEME
             end
           end
           # FIXME: the reported version should be the _installed_ version, not the current channel version

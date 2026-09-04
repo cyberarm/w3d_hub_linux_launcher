@@ -2,8 +2,10 @@ module W3DHubLauncher
   LARGE_PADDING = 40
   PADDING = 20
   HALF_PADDING = 10
+
   ALPHA_BLACK = 0x88_000000
   ALPHA_GRAY = 0x88_5e5c64
+  TRANSLUCENT_GRAY = 0xaa_3d3846
 
   FONT_LIGHT = "#{ROOT_PATH}/media/fonts/NotoSans-Light.ttf"
   FONT_REGULAR = "#{ROOT_PATH}/media/fonts/NotoSans-Regular.ttf"
@@ -95,7 +97,9 @@ module W3DHubLauncher
         background_nine_slice_color: 0xaa_5e5c64
       },
       disabled: {
-        background: 0
+        color: 0x88_c0bfbc,
+        background: 0,
+        background_nine_slice_color: 0xaa_77767b
       }
     },
     EditLine: {
