@@ -3,7 +3,10 @@ module W3DHubLauncher
     class Api
       # Designed to work with cyberarm's Game Server Hub service data, may work with W3D Hub's service with degraded metadata.
       class GameServer
-        attr_reader :id, :game, :channel, :address, :port, :region, :version
+        attr_reader :id, :game, :channel, :address, :port, :region,
+                    :name, :password, :current_map, :player_count, :max_players,
+                    :match_start_time, :estimated_end_time, :match_remaining_time,
+                    :teams, :next_map, :version
 
         def initialize(data)
           # main data
@@ -42,6 +45,15 @@ module W3DHubLauncher
           # Cyberarm GSH extras
           @version = data["version"] || "838"
           @next_map = data["status"]["nextmap"] || ""
+        end
+
+        # TODO: implement :)
+        def time_elapsed
+          "00:00"
+        end
+
+        def password?
+          @password
         end
       end
 

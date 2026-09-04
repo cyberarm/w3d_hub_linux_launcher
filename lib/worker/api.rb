@@ -44,7 +44,8 @@ module W3DHubLauncher
       end
 
       # returns current list of servers as reported from GSH / cache
-      def self.servers
+      def self.servers(&block)
+        Worker::Request.new(:servers, "", &block)
       end
 
       # returns news for application

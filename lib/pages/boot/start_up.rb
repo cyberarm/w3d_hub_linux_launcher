@@ -151,11 +151,20 @@ module W3DHubLauncher
         def step_server_list
           @initialization_container.append do
             tagline "Requesting server listing..."
-            caption "Found 21 servers <c=0f0>OK</c>", margin_left: LARGE_PADDING
           end
 
-          after(1000) do
-            next_step
+          Worker::Api.servers do |result|
+            @initialization_container.append do
+              if result.okay?
+                MemCache[:servers] = JSON.parse(result.data).map { |s| Worker::Api::GameServer.new(s) }
+
+                caption "Received #{MemCache[:servers].size} servers <c=0f0>OK</c>", margin_left: LARGE_PADDING
+              else
+                caption "Failed to retrieve server listing.", color: 0xff_ff8800, margin_left: LARGE_PADDING
+              end
+
+              next_step
+            end
           end
         end
 

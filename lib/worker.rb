@@ -110,11 +110,32 @@ module W3DHubLauncher
     # ------------ query / request handlers ------------
     #
     def fetch_url(query)
+      result = CyberarmEngine::Result.new
+
+      method = query.data["method"]
+      url = query.data["url"]
+      headers = query.data["headers"] || DEFAULT_HEADERS
+      body = query.data["body"]
+
+      Sync do |task|
+        task.with_timeout(DEFAULT_NETWORK_TIMEOUT) do
+          Async::HTTP::Internet.send(method, url, headers, body) do |response|
+            if response.success?
+              result.data = response.read
+            end
+        #   rescue StandardError => e
+        #     result.error = e
+          end
+        # rescue Async::TimeoutError
+        #   result.error = e
+        end
+      end
+
+      deliver_response(result, query)
     end
 
     def download_url(query)
       result = CyberarmEngine::Result.new
-
 
       method = query.data["method"]
       url = query.data["url"]
@@ -216,6 +237,22 @@ module W3DHubLauncher
       end
 
       deliver_response(result, query)
+    end
+
+    def servers(query)
+      hash = {
+        "method" => "get",
+        "url" => "https://gsh.w3d.cyberarm.dev/listings/getAll/v2?statusLevel=2",
+        "headers" => DEFAULT_HEADERS,
+        "body" => query.data["body"]
+      }
+
+      # inject data into query
+      query = Request::Query.new(query.type, query.request_id, hash)
+
+      response = fetch_url(query)
+
+      deliver_response(response.result, query)
     end
 
     def install_application(query)

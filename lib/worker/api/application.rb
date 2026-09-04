@@ -32,6 +32,10 @@ module W3DHubLauncher
           "ff_#{extended_data("colour","#000000").sub("#", "")}".to_i(16)
         end
 
+        def game?
+          @type.include?("game")
+        end
+
         def servicable?
           @servicable
         end
