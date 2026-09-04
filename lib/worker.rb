@@ -5,7 +5,7 @@ module W3DHubLauncher
     ].freeze
     DEFAULT_NETWORK_TIMEOUT = 30
 
-    Response = Data.define(:status, :request_id, :data)
+    Response = Data.define(:status, :request_id, :result)
 
     def initialize
     end
@@ -41,7 +41,7 @@ module W3DHubLauncher
         UNIXServer.open(IPC_PATH) do |server|
           while(socket = server.accept)
             task.async do
-              while(data =socket.gets)
+              while(data = socket.gets)
                 json = JSON.parse(data)
                 query = Request::Query.new(type: json["type"].to_sym, request_id: json["request_id"], data: json["data"])
 
@@ -50,7 +50,7 @@ module W3DHubLauncher
                 if respond_to?(query.type)
                   response = send(query.type, query)
                   pp [:server_to_client, response]
-                  payload = { status: response.status, request_id: response.request_id, data: response.data.data }.to_json
+                  payload = { status: response.status, request_id: response.request_id, data: response.result.data, error: response.result.error }.to_json
                   socket.puts(payload)
                 end
               end
@@ -84,16 +84,15 @@ module W3DHubLauncher
       data = @socket.read_nonblock(1_048_576) # 1 MB
       pp [:CLIENT, data]
       json = JSON.parse(data)
-      response = Response.new(status: json["status"], request_id: json["request_id"], data: json["data"])
-      request = W3DHubLauncher::Worker::Request.requests.find { |r| r.request_id == response.request_id }
+      request = W3DHubLauncher::Worker::Request.requests.find { |r| r.request_id == json["request_id"] }
 
-      pp [json, response, request]
+      pp [json, request]
       return unless request
 
       CyberarmEngine::Window.instance&.add_to_queue(proc {
         request.handle_event(
-          response.status,
-          CyberarmEngine::Result.new(data: response.data, error: response.status.negative? ? true : nil)
+          json["status"],
+          CyberarmEngine::Result.new(data: json["data"], error: json["error"])
         )
       })
 
@@ -155,6 +154,26 @@ module W3DHubLauncher
         #   result.error = e
         end
       end
+
+      deliver_response(result, query)
+    end
+
+    def dns_resolution(query)
+      result = CyberarmEngine::Result.new
+
+      domains = [
+        "w3dhub-api.w3d.cyberarm.dev",
+        "s3.w3d.cyberarm.dev",
+        "secure.w3dhub.com"
+      ]
+
+      domains.each do |domain|
+        Resolv.getaddress(domain)
+      rescue StandardError => e
+        result.error = "Failed to resolve: #{domain}"
+      end
+
+      result.data = true if result.error.nil?
 
       deliver_response(result, query)
     end

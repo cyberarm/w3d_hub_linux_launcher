@@ -12,6 +12,10 @@ module W3DHubLauncher
         Worker::Request.new(:download_url, { url: url, path: path, method: method, headers: headers, body: body }, &block)
       end
 
+      def self.dns_resolution(&block)
+        Worker::Request.new(:dns_resolution, "", &block)
+      end
+
       # returns user account data
       #
       # automatically handles signing in / refreshing token (DOES NOT remove account data if failed to refresh token due to network timeout)
@@ -35,7 +39,8 @@ module W3DHubLauncher
       # returns list of available applications
       #
       # if updated list is requested, return cached version immediately and then the updated list later.
-      def self.applications
+      def self.applications(&block)
+        W3DHubLauncher::Worker::Request.new(:w3dhub_api_call, { call: :fetch_applications }, &block)
       end
 
       # returns current list of servers as reported from GSH / cache
