@@ -269,14 +269,14 @@ class W3DHub
 
     def read_i32(f) = f.read(4).unpack1("l")
     def read_u32(f) = f.read(4).unpack1("L")
-    def read_u8(f) = f.read(1).unpack1("c")
+    def read_u8(f) = f.read(1).unpack1("C")
     def read_string(f)
       f.read(read_u8(f)).strip
     end
 
     def write_i32(f, value) = f.write([value].pack("l"))
     def write_u32(f, value) = f.write([value].pack("L"))
-    def write_u8(f, value) = f.write([value].pack("c"))
+    def write_u8(f, value) = f.write([value].pack("C"))
     def write_string(f, string)
       length = string.size + 1 # include null byte
       write_u8(f, length)
