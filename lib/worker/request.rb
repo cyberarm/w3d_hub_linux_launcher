@@ -52,7 +52,7 @@ module W3DHubLauncher
 
       # event from Worker received
       def handle_event(event, data)
-        pp [event, data]
+        # pp [event, data]
 
         case event
         when STATUS_ERROR, STATUS_COMPLETE

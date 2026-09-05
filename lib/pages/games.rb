@@ -87,7 +87,7 @@ module W3DHubLauncher
       def populate_game_info
         # FIXME: We should be able to query an api to figure out the installation state, instead of explictly writing it out like this...
         application = MemCache[:settings].applications.find { |app| app.id == @current_app.id }
-        pp application
+        # pp application
 
         @game_info_container.clear do
           # logo
@@ -117,7 +117,7 @@ module W3DHubLauncher
               button safe_get_image("#{ROOT_PATH}/media/icons/singleplayer.png"), tip: "Single player", image_height: 1.0, background_nine_slice: NINE_SLICE_SQUARE, **CTA_BUTTON_THEME
               button safe_get_image("#{ROOT_PATH}/media/icons/gear.png"), tip: "Options", image_height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME
             elsif @current_app.servicable?
-              pp @current_app
+              # pp @current_app
               button "Import", enabled: false, tip: "Import existing application installation", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME
               button "Download", tip: "Download and install application", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME
             else

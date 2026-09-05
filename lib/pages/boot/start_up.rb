@@ -105,9 +105,9 @@ module W3DHubLauncher
           step = @steps.shift
           step&.call
 
-          pp (1.0 - (@steps.size / @step_count.to_f)), @steps.size, @step_count
+          # pp (1.0 - (@steps.size / @step_count.to_f)), @steps.size, @step_count
           @progress_bar.value = (1.0 - (@steps.size / @step_count.to_f))
-          puts
+
 
           if step.nil? && @initialization_acceptable
             after(100) do

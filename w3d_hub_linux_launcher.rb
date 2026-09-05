@@ -8,6 +8,7 @@ require "socket"
 require "rexml"
 require "base64"
 require "logger"
+require "digest"
 
 require "async"
 require "async/http/internet/instance"

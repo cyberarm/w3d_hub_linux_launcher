@@ -36,7 +36,7 @@ module W3DHubLauncher
             if response.success?
               result.data = response.read
             else
-              pp response
+              # pp response
               result.error = true
             end
           end
