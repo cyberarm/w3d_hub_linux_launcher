@@ -8,7 +8,7 @@ module W3DHubLauncher
 
         # game bar container
         flow(width: 1.0, height: 60) do
-          widget(width: 220, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY, hover: { background_nine_slice_color: ALPHA_BLACK }, active: { background_nine_slice_color: ALPHA_GRAY }) do |w|
+          widget(width: 220, height: 1.0, style_class: [:all_button]) do |w|
             flow(width: 1.0, height: 40, margin_left: PADDING, v_align: :center, h_align: :center) do
               image safe_get_image("#{ROOT_PATH}/media/icons/menuGrid.png"), height: 40, color: 0xff_bbbbbb
               link "ALL SERVERS", text_size: 24, font: FONT_BLACK, height: 1.0, text_v_align: :center
@@ -24,7 +24,7 @@ module W3DHubLauncher
             MemCache[:applications].each do |app|
               next unless app.game?
 
-              image(safe_get_image("#{ROOT_PATH}/data/cache/#{app.id}.png"), height: 1.0, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0x88_5e5c64, border_thickness_bottom: 3, border_color_bottom: 0xff_3584e4, tip: app.name) do |btn|
+              button(safe_get_image("#{ROOT_PATH}/data/cache/#{app.id}.png"), style_class: [:app_icon_button], tip: app.name) do |btn|
                 if shift_down?
                   @games_filter << app.id
                   @games_filter.uniq!
@@ -33,11 +33,10 @@ module W3DHubLauncher
                   @games_filter << app.id
                 end
 
+                btn.enabled = false
+
                 populate_server_list
               end
-              # image safe_get_image("#{ROOT_PATH}/data/cache/ren.png"), height: 1.0, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0, tip: "Command & Conquer: Renegade"
-              # image safe_get_image("#{ROOT_PATH}/data/cache/tsr.png"), height: 1.0, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0, tip: "Tiberian Sun: Reborn"
-              # image safe_get_image("#{ROOT_PATH}/data/cache/woa.png"), height: 1.0, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0, tip: "Battle for Dune: War of Assassins"
             end
           end
         end

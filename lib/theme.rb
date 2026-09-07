@@ -81,6 +81,7 @@ module W3DHubLauncher
       background: 0,#x88_5e5c64,
       padding_left: HALF_PADDING,
       padding_right: HALF_PADDING,
+      border_color: 0,
       background_nine_slice: NINE_SLICE_ROUNDED,
       background_nine_slice_from_edge: NINE_SLICE_EDGE,
       background_nine_slice_mode: :stretched,
@@ -156,6 +157,31 @@ module W3DHubLauncher
       background_nine_slice_mode: :stretched,
       background_nine_slice_color: 0xcc_000000,
       border_thickness: 0
+    },
+    all_button: {
+      background_nine_slice: NINE_SLICE_ROUNDED,
+      background_nine_slice_from_edge: NINE_SLICE_EDGE,
+      background_nine_slice_color: ALPHA_GRAY,
+      hover: {
+        background_nine_slice_color: ALPHA_BLACK
+      },
+      active: {
+        background_nine_slice_color: ALPHA_GRAY
+      }
+    },
+    app_icon_button: {
+      height: 1.0,
+      image_height: 1.0,
+      padding: HALF_PADDING,
+      border_thickness_bottom: 3,
+      background_nine_slice: NINE_SLICE_ROUNDED_TOP,
+      background_nine_slice_from_edge: NINE_SLICE_EDGE,
+      background_nine_slice_color: 0,
+      disabled: { # fake disabled: styling the "selected" app uses
+        color: 0xff_ffffff,
+        background_nine_slice_color: 0x88_5e5c64,
+        border_color_bottom: 0xff_3584e4
+      }
     }
   }
 end

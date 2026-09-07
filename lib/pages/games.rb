@@ -11,7 +11,7 @@ module W3DHubLauncher
 
         # game bar container
         flow(width: 1.0, height: 60) do
-          widget(width: 220, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY, hover: { background_nine_slice_color: ALPHA_BLACK }, active: { background_nine_slice_color: ALPHA_GRAY }) do
+          widget(width: 220, height: 1.0, style_class: [:all_button]) do
             flow(width: 1.0, height: 40, margin_left: PADDING, v_align: :center, h_align: :center) do
               image safe_get_image("#{ROOT_PATH}/media/icons/menuGrid.png"), height: 40, color: 0xff_bbbbbb
               link "ALL GAMES", text_size: 24, font: FONT_BLACK, height: 1.0, text_v_align: :center
@@ -71,16 +71,12 @@ module W3DHubLauncher
       def populate_games_list
         @games_list_container.clear do
           @games.each_with_index do |game, i|
-            if i.zero?
-              image(safe_get_image("#{ROOT_PATH}/data/cache/#{game.id}.png"), tag: :"image_icon_#{game.id}", height: 1.0, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0x88_5e5c64, border_thickness_bottom: 3, border_color_bottom: 0xff_3584e4, tip: game.name)do
-                populate_game(game, game&.channels&.first)
-              end
-            else
-              image(safe_get_image("#{ROOT_PATH}/data/cache/#{game.id}.png"), tag: :"image_icon_#{game.id}", height: 1.0, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0, tip: game.name)do
-                populate_game(game, game&.channels&.first)
-              end
+            button(safe_get_image("#{ROOT_PATH}/data/cache/#{game.id}.png"), tag: :"image_icon_#{game.id}", style_class: [:app_icon_button], enabled: @current_app.id != game.id, tip: game.name) do |btn|
+              populate_game(game, game&.channels&.first)
             end
           end
+
+          puts
         end
       end
 
