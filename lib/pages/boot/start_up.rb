@@ -194,8 +194,7 @@ module W3DHubLauncher
               MemCache[:applications] = applications
 
               @initialization_container.append do
-                caption "Refresh session <c=0f0>OK</c>", margin_left: LARGE_PADDING
-                caption "Profile data <c=0f0>OK</c>", margin_left: LARGE_PADDING
+                caption "Received #{MemCache[:applications].select(&:game?).size} applications <c=0f0>OK</c>", margin_left: LARGE_PADDING
               end
 
               next_step
@@ -210,11 +209,12 @@ module W3DHubLauncher
         def step_battlefield_control_established
           @initialization_acceptable = true
 
-          after(200) do
-            parent.page_host.clear do
-              banner "Battlefield control established".upcase, width: 1.0, height: 1.0, text_v_align: :center, text_align: :center
-            end
+          @initialization_container.append do
+            stack(fill: true)
+            caption "All required systems operational", color: 0xff_00ff00, width: 1.0, text_v_align: :center, text_align: :center
+            banner "Battlefield control established".upcase, width: 1.0, text_v_align: :center, text_align: :center
           end
+          @progress_bar.hide
 
           after(800) do
             next_step
