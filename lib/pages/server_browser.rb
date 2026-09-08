@@ -24,7 +24,7 @@ module W3DHubLauncher
             MemCache[:applications].each do |app|
               next unless app.game?
 
-              button(safe_get_image("#{ROOT_PATH}/data/cache/#{app.id}.png"), style_class: [:app_icon_button], tip: app.name) do |btn|
+              button(safe_get_image("#{CACHE_PATH}/icon_#{app.id}.png"), style_class: [:app_icon_button], tip: app.name) do |btn|
                 if shift_down?
                   @games_filter << app.id
                   @games_filter.uniq!
@@ -56,7 +56,7 @@ module W3DHubLauncher
 
             widget(width: 1.0, height: 48, padding_top: HALF_PADDING, padding_bottom: HALF_PADDING, margin_bottom: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: server.channel == "release" ? ALPHA_GRAY : 0xaa_c64600, hover: { background_nine_slice_color: 0xff_5e5c64 } , active: { background_nine_slice_color: 0xaa_5e5c64 }) do
               # app icon container
-              image(safe_get_image("#{ROOT_PATH}/data/cache/#{app.id}.png"), tip: app.name, width: 48, height: 1.0, margin_left: HALF_PADDING)
+              image(safe_get_image("#{CACHE_PATH}/icon_#{app.id}.png"), tip: app.name, width: 48, height: 1.0, margin_left: HALF_PADDING)
 
               # server name, region, and times container
               stack(fill: true, height: 1.0, margin_left: HALF_PADDING) do

@@ -147,6 +147,9 @@ module W3DHubLauncher
         )
       })
 
+    rescue JSON::ParserError => e
+      puts "This should never happen!?!?!"
+
     rescue Errno::EWOULDBLOCK
     end
 
@@ -155,6 +158,14 @@ module W3DHubLauncher
       # pp response
 
       response
+    end
+
+    def create_directory(path)
+      pathname = Pathname.new(path)
+
+      unless Dir.exist?(pathname.dirname)
+        FileUtils.mkdir_p(pathname.dirname)
+      end
     end
 
     #
@@ -194,6 +205,8 @@ module W3DHubLauncher
       headers = query.data["headers"] || DEFAULT_HEADERS
       body = query.data["body"]
 
+      create_directory(path)
+
       Sync do |task|
         task.with_timeout(DEFAULT_NETWORK_TIMEOUT) do
           Async::HTTP::Internet.send(method, url, headers, body) do |response|
@@ -225,6 +238,20 @@ module W3DHubLauncher
         # rescue Async::TimeoutError
         #   result.error = e
         end
+      end
+
+      deliver_response(result, query)
+    end
+
+    def ico_to_png(query)
+      result = CyberarmEngine::Result.new
+
+      begin
+        ico = ICO.new(file: query.data["ico_path"])
+        ico.save(ico.images.max_by(&:width), query.data["png_path"])
+        result.data = { path: query.data["png_path"] }
+      rescue => e
+        result.error = e
       end
 
       deliver_response(result, query)

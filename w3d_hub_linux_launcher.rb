@@ -9,6 +9,8 @@ require "rexml"
 require "base64"
 require "logger"
 require "digest"
+require "pathname"
+require "fileutils"
 
 require "async"
 require "async/http/internet/instance"
@@ -36,6 +38,9 @@ require_relative "lib/dialogs/account"
 require_relative "lib/states/boot"
 require_relative "lib/states/interface"
 require_relative "lib/window"
+
+require_relative "lib/ico"
+require_relative "lib/ww_mix"
 
 require_relative "lib/worker"
 require_relative "lib/worker/api"

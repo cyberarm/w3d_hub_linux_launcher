@@ -12,6 +12,10 @@ module W3DHubLauncher
         Worker::Request.new(:download_url, { url: url, path: path, method: method, headers: headers, body: body }, &block)
       end
 
+      def self.ico_to_png(ico_path:, png_path:, &block)
+        Worker::Request.new(:ico_to_png, { ico_path: ico_path, png_path: png_path }, &block)
+      end
+
       def self.dns_resolution(&block)
         Worker::Request.new(:dns_resolution, "", &block)
       end
