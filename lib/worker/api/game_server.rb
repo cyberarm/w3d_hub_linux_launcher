@@ -3,6 +3,8 @@ module W3DHubLauncher
     class Api
       # Designed to work with cyberarm's Game Server Hub service data, may work with W3D Hub's service with degraded metadata.
       class GameServer
+        BAD_OR_UNKNOWN_PING = 1_000_000
+
         attr_reader :id, :game, :channel, :address, :port, :region,
                     :name, :password, :current_map, :player_count, :max_players,
                     :match_start_time, :estimated_end_time, :match_remaining_time,
@@ -54,6 +56,35 @@ module W3DHubLauncher
 
         def password?
           @password
+        end
+
+        def ping
+          MemCache.dig(:game_server_pings, @address) || BAD_OR_UNKNOWN_PING
+        end
+
+        def ping_score_ratio
+          # under 50 is best, over 200 is worst
+          case ping
+          when 0..49
+            return 1.0
+          when 50..200
+            1.0 - (ping / 200.0) + 0.1
+          else
+            return 0.1
+          end
+        end
+
+        def ping_score_color
+          case ping
+          when 0..49 # gentle green
+            0xff_26a269
+          when 50..149 # rich orange
+            0xff_e5a50a
+          when 150..200 # dark red
+            0xff_a51d2d
+          else # dark gray
+            0xff_3d3846
+          end
         end
       end
 

@@ -30,6 +30,8 @@ module W3DHubLauncher
       @threads = []
       @requests = []
 
+      @client = nil
+
       @settings = 0# Settings.new
       @game_servers = []
       @host_pings = {}
@@ -46,6 +48,8 @@ module W3DHubLauncher
       Async do |task|
         UNIXServer.open(IPC_PATH) do |server|
           while(socket = server.accept)
+            @client = socket
+
             task.async do
               while(data = socket.gets)
                 json = JSON.parse(data)
@@ -115,12 +119,22 @@ module W3DHubLauncher
             # puts "Timed out waiting for: #{echo_requests.values.select { |v| v[:replied] == false }.map { |v| v[:address] }.join(', ')}"
           end
 
+          broadcast(:game_server_pings, data: @host_pings)
+
           sleep 5
         end
       end
 
     ensure
       socket&.close
+    end
+
+    def broadcast(type, data:)
+      payload = { type: :eventbus, request_id: -1, data: { type: type, data: data } }.to_json
+
+      @client&.write(payload)
+      @client&.write(RESPONSE_SEPARATOR)
+      @client&.flush
     end
 
     # Send request to server
@@ -150,14 +164,18 @@ module W3DHubLauncher
         request = W3DHubLauncher::Worker::Request.requests.find { |r| r.request_id == json["request_id"] }
 
         # pp [json, request]
-        return unless request
-
-        CyberarmEngine::Window.instance&.add_to_queue(proc {
-          request.handle_event(
-            json["status"],
-            CyberarmEngine::Result.new(data: json["data"], error: json["error"])
-          )
-        })
+        if request.nil? && json["request_id"] && json["type"] == "eventbus"
+          CyberarmEngine::Window.instance&.add_to_queue(proc {
+            CyberarmEngine::EventBus.publish(json["data"]["type"], json["data"]["data"])
+          })
+        else
+          CyberarmEngine::Window.instance&.add_to_queue(proc {
+            request.handle_event(
+              json["status"],
+              CyberarmEngine::Result.new(data: json["data"], error: json["error"])
+            )
+          })
+        end
 
       rescue JSON::ParserError => e
         puts "This should never happen!?!?!"

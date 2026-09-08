@@ -6,6 +6,10 @@ module W3DHubLauncher
 
       @main_thread_queue = []
 
+      CyberarmEngine::EventBus.subscribe("game_server_pings", self) do |payload|
+        MemCache[:game_server_pings] = payload
+      end
+
       push_state(States::Boot)
       # push_state(States::Interface)
     end
