@@ -8,7 +8,7 @@ gem "json"
 
 # "game" library gem
 gem "cyberarm_engine"
-gem "sdl2-bindings"
+gem "sdl3-bindings"
 
 # networking libs
 gem "async"
@@ -19,3 +19,4 @@ gem "async-websocket"
 gem "digest-crc"
 gem "ircparser"
 gem "rubyzip"
+gem "chunky_png"

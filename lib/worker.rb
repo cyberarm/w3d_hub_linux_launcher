@@ -4,6 +4,7 @@ module W3DHubLauncher
       ["user-agent", W3DHubLauncher::USER_AGENT]
     ].freeze
     DEFAULT_NETWORK_TIMEOUT = 30
+    RESPONSE_SEPARATOR = "\04".freeze
 
     Response = Data.define(:status, :request_id, :result)
 
@@ -13,6 +14,7 @@ module W3DHubLauncher
     def connect
       puts :connect
 
+      @buffer = StringIO.new
       @socket = UNIXSocket.new(IPC_PATH)
     end
 
@@ -55,7 +57,9 @@ module W3DHubLauncher
                   response = send(query.type, query)
                   # pp [:server_to_client, response]
                   payload = { status: response.status, request_id: response.request_id, data: response.result.data, error: response.result.error }.to_json
-                  socket.puts(payload)
+                  socket.write(payload)
+                  socket.write(RESPONSE_SEPARATOR)
+                  socket.flush
                 end
               end
             end
@@ -133,22 +137,32 @@ module W3DHubLauncher
 
     def service
       data = @socket.read_nonblock(1_048_576) # 1 MB
-      # pp [:CLIENT, data]
-      json = JSON.parse(data)
-      request = W3DHubLauncher::Worker::Request.requests.find { |r| r.request_id == json["request_id"] }
+      @buffer << data
 
-      # pp [json, request]
-      return unless request
+      @buffer.rewind
+      payloads = @buffer.readlines(RESPONSE_SEPARATOR, chomp: true)
+      @buffer.reopen(@buffer.string[@buffer.pos..@buffer.length])
+      @buffer.pos = @buffer.length
 
-      CyberarmEngine::Window.instance&.add_to_queue(proc {
-        request.handle_event(
-          json["status"],
-          CyberarmEngine::Result.new(data: json["data"], error: json["error"])
-        )
-      })
+      payloads.each do |payload|
+        # pp [:CLIENT, data]
+        json = JSON.parse(payload)
+        request = W3DHubLauncher::Worker::Request.requests.find { |r| r.request_id == json["request_id"] }
 
-    rescue JSON::ParserError => e
-      puts "This should never happen!?!?!"
+        # pp [json, request]
+        return unless request
+
+        CyberarmEngine::Window.instance&.add_to_queue(proc {
+          request.handle_event(
+            json["status"],
+            CyberarmEngine::Result.new(data: json["data"], error: json["error"])
+          )
+        })
+
+      rescue JSON::ParserError => e
+        puts "This should never happen!?!?!"
+        pp data, payload
+      end
 
     rescue Errno::EWOULDBLOCK
     end

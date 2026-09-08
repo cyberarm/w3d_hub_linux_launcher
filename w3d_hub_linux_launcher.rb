@@ -18,6 +18,7 @@ require "async/websocket"
 require "digest/crc"
 require "ircparser"
 require "zip"
+require "chunky_png"
 
 require_relative "lib/version"
 require_relative "lib/constants"

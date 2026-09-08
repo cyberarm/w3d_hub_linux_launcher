@@ -122,7 +122,8 @@ module W3DHubLauncher
         end
       end
 
-      Gosu::Image.from_blob(image.width, image.height, blob)
+      # Gosu::Image.from_blob(image.width, image.height, blob)
+      ChunkyPNG::Canvas.from_rgba_stream(image.width, image.height, blob)
     end
 
     def image_data(image)
