@@ -19,6 +19,9 @@ require "digest/crc"
 require "ircparser"
 require "zip"
 require "chunky_png"
+require "sdl3"
+
+require_relative "lib/gosu_ext"
 
 require_relative "lib/version"
 require_relative "lib/constants"
@@ -69,6 +72,13 @@ module W3DHubLauncher
   WORKER.connect
 end
 
+SDL.load_lib("SDL3")
+
 window = W3DHubLauncher::Window.new(width: 1280, height: 800, resizable: true)
 # window = W3DHubLauncher::Window.new(width: 1920, height: 1080, resizable: true)
+
+# Gosu.choose_file do |files|
+#   pp files
+# end
+
 window.show

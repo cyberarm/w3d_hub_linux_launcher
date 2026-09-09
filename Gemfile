@@ -9,6 +9,7 @@ gem "json"
 # "game" library gem
 gem "cyberarm_engine"
 gem "sdl3-bindings"
+gem "gosu", '1.5.0' # temporary, manually built, stand-in for SDL3 supporting gosu
 
 # networking libs
 gem "async"
