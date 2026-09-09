@@ -13,7 +13,7 @@ module W3DHubLauncher
             title NAME
             tagline format("v%s (%s)", VERSION, VERSION_NAME), margin_left: PADDING
             para "© 2021 - #{Time.now.year} cyberarm", margin_left: PADDING
-            link "MIT licence", margin_left: PADDING
+            link "MIT license", margin_left: PADDING
 
             title "Special Thanks", margin_top: LARGE_PADDING
             W3DHubLauncher::Attribution::SPECIAL_THANKS.each do |item|
