@@ -11,7 +11,7 @@ module W3DHubLauncher
         # game bar container
         flow(width: 1.0, height: 60) do
           widget(width: 220, height: 1.0, style_class: [:all_button]) do |w|
-            flow(width: 1.0, height: 40, margin_left: PADDING, v_align: :center, h_align: :center) do
+            flow(width: 1.0, height: 40, margin_left: PADDING, v_align: :center) do
               image safe_get_image("#{ROOT_PATH}/media/icons/menuGrid.png"), height: 40, color: 0xff_bbbbbb
               link "ALL SERVERS", text_size: 24, font: FONT_BLACK, height: 1.0, text_v_align: :center
             end

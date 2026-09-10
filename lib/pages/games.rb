@@ -9,12 +9,17 @@ module W3DHubLauncher
         @current_app = @games.first
         @current_channel = @current_app&.channels&.first
 
+        @display_mode = :all_games
+
         # game bar container
         flow(width: 1.0, height: 60) do
-          widget(width: 220, height: 1.0, style_class: [:all_button]) do
-            flow(width: 1.0, height: 40, margin_left: PADDING, v_align: :center, h_align: :center) do
+          widget(width: 220, height: 1.0, style_class: [:all_button]) do |w|
+            flow(width: 1.0, height: 40, margin_left: PADDING, v_align: :center) do
               image safe_get_image("#{ROOT_PATH}/media/icons/menuGrid.png"), height: 40, color: 0xff_bbbbbb
               link "ALL GAMES", text_size: 24, font: FONT_BLACK, height: 1.0, text_v_align: :center
+            end
+            w.subscribe(:clicked_left_mouse_button) do
+              populate_all_games
             end
           end
 
@@ -23,7 +28,14 @@ module W3DHubLauncher
         end
 
         # game content container
-        flow(width: 1.0, fill: true, margin_top: LARGE_PADDING) do
+        @game_content_container = flow(width: 1.0, fill: true, margin_top: LARGE_PADDING) do
+        end
+
+        populate_game
+      end
+
+      def populate_game_content_container
+        @game_content_container.clear do
           # game info container
           @game_info_container = stack(width: 340, height: 1.0) do
           end
@@ -45,11 +57,33 @@ module W3DHubLauncher
             end
           end
         end
+      end
 
-        populate_game
+      def populate_all_games
+        @display_mode = :all_games
+
+        @game_content_container.clear do
+          flow(fill: true, height: 1.0, scroll: true, tag: :hi_mom) do |e|
+            @games.each do |app|
+              image safe_get_image("#{ROOT_PATH}/media/co1oqw.png"), aspect_ratio: 3 / 4.0, width: 1.0 / game_cover_width_ratio(e), margin_left: HALF_PADDING, margin_right: HALF_PADDING, margin_bottom: PADDING, tip: app.name
+            end
+
+            e.subscribe(:size_changed) do |e|
+              e.children.each do |child|
+                child.style.width = 1.0 / game_cover_width_ratio(e)
+              end
+            end
+          end
+        end
       end
 
       def populate_game(game = @current_app, channel = @current_channel)
+        if @display_mode == :all_games
+          @display_mode = :game
+
+          populate_game_content_container
+        end
+
         @current_app = game
         @current_channel = game&.channels&.first
 
@@ -100,7 +134,7 @@ module W3DHubLauncher
 
       def populate_games_list
         @games_list_container.clear do
-          @games.each_with_index do |game, i|
+          @games.each do |game|
             btn = button(safe_get_image("#{CACHE_PATH}/icon_#{game.id}.png"), tag: :"image_icon_#{game.id}", style_class: [:app_icon_button], enabled: @current_app.id != game.id, tip: game.name) do |btn|
               populate_game(game, game&.channels&.first)
             end
@@ -198,6 +232,10 @@ module W3DHubLauncher
             end
           end
         end
+      end
+
+      def game_cover_width_ratio(e)
+        (e.width / 300.0).round.clamp(1..10)
       end
 
       def news_item_width_ratio
