@@ -97,7 +97,7 @@ module W3DHubLauncher
               # server ping
               flow(width: 96, height: 1.0, margin_left: HALF_PADDING, margin_right: HALF_PADDING) do
                 stack(fill: true, height: 1.0, v_align: :center) do
-                  caption server.ping == Worker::Api::GameServer::BAD_OR_UNKNOWN_PING ? "?" : server.ping, width: 1.0, text_align: :center, tip: server.ping == Worker::Api::GameServer::BAD_OR_UNKNOWN_PING ? "Server has not replied yet or did not reply to ICMP Echo Request.\nPing unknown." : ""
+                  caption server.ping == Worker::Api::GameServer::BAD_OR_UNKNOWN_PING ? "?" : format("%ims", server.ping), width: 1.0, text_align: :center, tip: server.ping == Worker::Api::GameServer::BAD_OR_UNKNOWN_PING ? "Server has not replied yet or did not reply to ICMP Echo Request.\nPing unknown." : ""
                   inscription "ping", text_wrap: :none, width: 1.0, text_align: :center, margin_top: -HALF_PADDING
                 end
                 stack(width: 8, height: server.ping_score_ratio, v_align: :center, min_height: 8, background_nine_slice: NINE_SLICE_ROUNDED_SMALL, background_nine_slice_from_edge: NINE_SLICE_EDGE_SMALL, background_nine_slice_color: server.ping_score_color)

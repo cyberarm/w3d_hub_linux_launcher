@@ -33,10 +33,10 @@ module W3DHubLauncher
       Sync do |task|
         task.with_timeout(API_TIMEOUT) do
           Async::HTTP::Internet.send(method, url, headers, body) do |response|
+            # pp [method, url, headers, body]
             if response.success?
               result.data = response.read
             else
-              # pp response
               result.error = true
             end
           end
@@ -124,12 +124,16 @@ module W3DHubLauncher
       result
     end
 
-    def fetch_news()
-      result = CyberarmEngine::Result.new
+    def fetch_news(category)
+      fetch("#{PRIMARY_W3DHUB_API_ENDPOINT}/apis/w3dhub/1/get-news", method: :post, body: "data={\"category\":\"#{category}\"}", headers: headers(form_encoded: true))
     end
 
-    def fetch_events()
-      result = CyberarmEngine::Result.new
+    def fetch_events(category)
+      fetch("#{PRIMARY_W3DHUB_API_ENDPOINT}/apis/w3dhub/1/get-server-events", method: :post, body: "data={\"serverPath\":\"#{category}\"}", headers: headers(form_encoded: true))
+    end
+
+    def fetch_test_events(category)
+      fetch("#{PRIMARY_W3DHUB_API_ENDPOINT}/apis/w3dhub/1/get-testing-times")
     end
 
     def fetch_manifest()

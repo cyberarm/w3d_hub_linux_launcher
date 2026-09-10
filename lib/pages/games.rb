@@ -30,11 +30,18 @@ module W3DHubLauncher
 
           # game events and news container
           stack(fill: true, height: 1.0, margin_left: LARGE_PADDING, scroll: true) do
-            @event_container = flow(width: 1.0, height: 1.0, max_height: 380, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
+            @event_container = stack(width: 1.0, padding: PADDING, margin_left: HALF_PADDING, margin_right: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0x88_26a269) do
             end
 
             # news container
             @news_container = flow(width: 1.0, margin_top: PADDING) do
+            end
+
+            # "dynamically" adjust news item widths
+            @news_container.subscribe(:size_changed) do |event|
+              @news_container.children.each do |box|
+                box.style.width = 1.0 / news_item_width_ratio
+              end
             end
           end
         end
@@ -62,6 +69,29 @@ module W3DHubLauncher
           return
         end
 
+        app_id = @current_app.id
+        unless MemCache[:"events_#{app_id}"]
+          Worker::Api.events(app_id) do |result|
+            if result.okay?
+              File.write("events_#{app_id}.json", result.data)
+              MemCache[:"events_#{app_id}"] = JSON.parse(result.data)&.map { |item| Worker::Api::ServerEvent.new(item) } || []
+
+              populate_game_event if app_id == @current_app.id
+            end
+          end
+        end
+
+        unless MemCache[:"news_#{app_id}"]
+          Worker::Api.news(app_id) do |result|
+            if result.okay?
+              File.write("news_#{app_id}.json", result.data)
+              MemCache[:"news_#{app_id}"] = JSON.parse(result.data)["news"]&.map { |item| Worker::Api::NewsItem.new(item) } || []
+
+              populate_game_news if app_id == @current_app.id
+            end
+          end
+        end
+
         populate_games_list
         populate_game_info
         populate_game_event
@@ -80,8 +110,6 @@ module W3DHubLauncher
               end
             end
           end
-
-          puts
         end
       end
 
@@ -100,7 +128,9 @@ module W3DHubLauncher
           # web links
           stack(width: 1.0, fill: true, padding: 0, padding_top: LARGE_PADDING) do
             @current_app.web_links.each do |link|
-              link link.name, text_size: 24, tip: link.uri
+              link link.name, text_size: 24, tip: link.uri do
+                SDL.OpenURL(link.uri)
+              end
             end
           end
 
@@ -131,37 +161,47 @@ module W3DHubLauncher
       end
 
       def populate_game_event
-        # TODO: Hide event container if there is no event
-        @event_container.show if false
-        @event_container.hide if true
+        app_events = MemCache[:"events_#{@current_app.id}"] || []
+        if app_events.empty?
+          @event_container.hide
+        else
+          @event_container.show
 
-        @event_container.clear do
-          image safe_get_image("#{ROOT_PATH}/media/background.png"), fill: true, aspect_ratio: 16.0 / 9.0
+          event = app_events.sort(&:start_time).last
 
-          stack(fill: true, height: 1.0, margin_left: PADDING) do
-            caption "Upcoming Event".upcase, color: 0xff_22aa11
-            title "Red Alert: A Path Beyond Game Night"
-            tagline "July 11, 2028"
-
-            flow(fill: true)
-
-            button "Read More", margin_left: PADDING, margin_right: LARGE_PADDING, margin_bottom: PADDING, width: 1.0
+          @event_container.clear do
+            caption "Upcoming Event".upcase, color: 0xaa_ffffff
+            tagline event.title # "Red Alert: A Path Beyond Game Night"
+            caption event.start_time.strftime("%B %e, %Y • %T") # "July 11, 2028"
           end
         end
       end
 
       def populate_game_news
+        app_news = MemCache[:"news_#{@current_app.id}"] || []
+
         @news_container.clear do
-          9.times do
-            stack(width: 1.0 / 3, min_width: 345, height: 345, aspect_ratio: 1, margin_left: HALF_PADDING, margin_right: HALF_PADDING, margin_bottom: PADDING) do
-              stack(width: 1.0, fill: true, background_image: safe_get_image("#{ROOT_PATH}/media/background.png"), background_image_mode: :fill)
-              stack(width: 1.0, height: 1.0 / 3, padding: PADDING, v_align: :bottom, background_nine_slice: NINE_SLICE_ROUNDED_BOTTOM, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY, border_thickness_top: 1, border_color_top: Gosu::Color::BLACK) do
-                caption "NEWS", color: 0x88_ffffff
-                tagline "A News Item Post A News Item Post"
+          app_news.each do |item|
+            stack(width: 1.0 / news_item_width_ratio, height: 345, aspect_ratio: 1, margin_left: HALF_PADDING, margin_right: HALF_PADDING, margin_bottom: PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
+              stack(width: 1.0, height: 1.0 / 3, padding: PADDING, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
+                para item.timestamp.strftime("%B %e, %Y") #"September 29, 2026"
+                tagline item.title
+              end
+
+              stack(width: 1.0, fill: true, padding: PADDING, padding_bottom: 0, scroll: false) do
+                para item.blurb
+              end
+
+              button "Read More", margin: PADDING, width: 1.0, tip: item.uri do
+                SDL.OpenURL(item.uri)
               end
             end
           end
         end
+      end
+
+      def news_item_width_ratio
+        (@news_container.width / 400.0).round.clamp(1..10)
       end
     end
   end

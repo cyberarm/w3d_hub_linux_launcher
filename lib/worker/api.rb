@@ -54,12 +54,12 @@ module W3DHubLauncher
 
       # returns news for application
       def self.news(category = "launcher-home", &block)
-        Worker::Request.new(:news, category, &block)
+        W3DHubLauncher::Worker::Request.new(:w3dhub_api_call, { call: :fetch_news, arguments: [category] }, &block)
       end
 
       # returns news for application
-      def self.events(app_id, &block)
-        Worker::Request.new(:events, app_id, &block)
+      def self.events(category, &block)
+        W3DHubLauncher::Worker::Request.new(:w3dhub_api_call, { call: :fetch_events, arguments: [category] }, &block)
       end
 
       # request installation of application
