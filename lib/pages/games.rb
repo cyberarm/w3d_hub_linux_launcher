@@ -65,7 +65,7 @@ module W3DHubLauncher
         @game_content_container.clear do
           flow(fill: true, height: 1.0, scroll: true, tag: :hi_mom) do |e|
             @games.each do |app|
-              image safe_get_image("#{ROOT_PATH}/media/co1oqw.png"), aspect_ratio: 3 / 4.0, width: 1.0 / game_cover_width_ratio(e), margin_left: HALF_PADDING, margin_right: HALF_PADDING, margin_bottom: PADDING, tip: app.name
+              image safe_get_image("#{ROOT_PATH}/media/default_game_cover.png"), aspect_ratio: 3 / 4.0, width: 1.0 / game_cover_width_ratio(e), margin_left: HALF_PADDING, margin_right: HALF_PADDING, margin_bottom: PADDING, tip: app.name
             end
 
             e.subscribe(:size_changed) do |e|
@@ -184,7 +184,9 @@ module W3DHubLauncher
             elsif @current_app.servicable?
               # pp @current_app
               button "Import", enabled: false, tip: "Import existing application installation", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME
-              button "Download", tip: "Download and install application", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME
+              button "Download", tip: "Download and install application", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME do
+                Worker::Api.install_application(@current_app.id, @current_channel.id)
+              end
             else
               button "Import", enabled: false, tip: "Import existing application installation", fill: true, height: 1.0, **CTA_BUTTON_THEME
             end

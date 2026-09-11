@@ -8,6 +8,8 @@ module W3DHubLauncher
 
     Response = Data.define(:status, :request_id, :result)
 
+    attr_reader :w3dhub_api
+
     def initialize
     end
 
@@ -29,6 +31,7 @@ module W3DHubLauncher
     def init_server
       @threads = []
       @requests = []
+      @tasks = []
 
       @client = nil
 
@@ -369,19 +372,32 @@ module W3DHubLauncher
       deliver_response(response.result, query)
     end
 
-    def install_application(query)
+    def task_install_application(query)
+      application = @w3dhub_api.applications.find { |app| app.id == query.data["app_id"] }
+      channel = application.channels.find { |chan| chan.id == query.data["channel_id"] }
+
+      @tasks << Task::InstallApplication.new(
+        request_id: query.request_id,
+        application: application,
+        channel: channel,
+        installed_version: nil,
+        target_version: channel.version
+      )
+      @tasks.last.start(self)
+
+      Response.new(Request::STATUS_PENDING, query.request_id, CyberarmEngine::Result.new(data: true))
     end
 
-    def update_application(query)
+    def task_update_application(query)
     end
 
-    def repair_application(query)
+    def task_repair_application(query)
     end
 
-    def move_application(query)
+    def task_move_application(query)
     end
 
-    def uninstall_application(query)
+    def task_uninstall_application(query)
     end
   end
 end

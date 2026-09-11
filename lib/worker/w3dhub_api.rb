@@ -6,8 +6,12 @@ module W3DHubLauncher
     PRIMARY_W3DHUB_API_ENDPOINT = "https://secure.w3dhub.com".freeze
     ALTERNATIVE_W3DHUB_API_ENDPOINT = "https://backend.w3d.cyberarm.dev".freeze
 
+    attr_reader :applications
+
     def initialize
       @access_token = nil
+
+      @applications = []
 
       @http_clients = {}
     end
@@ -33,7 +37,7 @@ module W3DHubLauncher
       Sync do |task|
         task.with_timeout(API_TIMEOUT) do
           Async::HTTP::Internet.send(method, url, headers, body) do |response|
-            # pp [method, url, headers, body]
+            pp [method, url, headers, body, response]
             if response.success?
               result.data = response.read
             else
@@ -104,23 +108,31 @@ module W3DHubLauncher
       primary_result = @access_token ? fetch("#{PRIMARY_W3DHUB_API_ENDPOINT}/apis/launcher/1/get-applications") : CyberarmEngine::Result.new(error: true)
       alternate_result = fetch("#{ALTERNATIVE_W3DHUB_API_ENDPOINT}/apis/launcher/1/get-applications")
 
+      single_source = false
+
       # We've failed to retrieve data
       if primary_result.error? && alternate_result.error?
         return result
       # We've only gotten data back from the primary backend
       elsif primary_result.okay? && alternate_result.error?
         result.data = primary_result.data
-        return result
+        single_source = true
       # We've only gotten data back from the alternate backend
       elsif primary_result.error? && alternate_result.okay?
         result.data = alternate_result.data
-        return result
+        single_source = true
       end
 
-      # We've gotten data back from both backends, merge them.
-      # pp [primary_result, alternate_result]
+      unless single_source
+        puts "FIXME: merge applications source"
+        # We've gotten data back from both backends, merge them.
+        # pp [primary_result, alternate_result]
 
-      # FIXME: Merge primary and alternate results
+        # FIXME: Merge primary and alternate results
+      end
+
+      @applications = JSON.parse(result.data)["applications"]&.map { |app| W3DHubLauncher::Worker::Api::Application.new(app) } || []
+
       result
     end
 
@@ -140,15 +152,12 @@ module W3DHubLauncher
       result = CyberarmEngine::Result.new
     end
 
-    def fetch_manifests()
-      result = CyberarmEngine::Result.new
+    def fetch_package_details(packages)
+      body = URI.encode_www_form("data": JSON.dump({ packages: packages }))
+      fetch("#{@access_token ? PRIMARY_W3DHUB_API_ENDPOINT : ALTERNATIVE_W3DHUB_API_ENDPOINT}/apis/launcher/1/get-package-details", method: :post, body: body, headers: headers(form_encoded: true))
     end
 
-    def fetch_package_details()
-      result = CyberarmEngine::Result.new
-    end
-
-    def fetch_package()
+    def download_package()
       download()
     end
   end

@@ -65,31 +65,36 @@ module W3DHubLauncher
       # request installation of application
       #
       # periodically reports progress until completion
-      def self.install_application(app_id, channel_id)
+      def self.install_application(app_id, channel_id, &block)
+        Worker::Request.new(:task_install_application, { app_id: app_id, channel_id: channel_id }, &block)
       end
 
       # request update of application
       #
       # periodically reports progress until completion
-      def self.update_application(app_id, channel_id)
+      def self.update_application(app_id, channel_id, &block)
+        Worker::Request.new(:task_update_application, { app_id: app_id, channel_id: channel_id }, &block)
       end
 
       # request repair of application
       #
       # periodically reports progress until completion
-      def self.repair_application(app_id, channel_id)
+      def self.repair_application(app_id, channel_id, &block)
+        Worker::Request.new(:task_repair_application, { app_id: app_id, channel_id: channel_id }, &block)
       end
 
       # request relocation of application
       #
       # periodically reports progress until completion
-      def self.move_application(app_id, channel_id)
+      def self.move_application(app_id, channel_id, target_directory, &block)
+        Worker::Request.new(:task_move_application, { app_id: app_id, channel_id: channel_id, target_directory: target_directory }, &block)
       end
 
       # request removal of application
       #
       # periodically reports progress until completion
-      def self.uninstall_application(app_id, channel_id)
+      def self.uninstall_application(app_id, channel_id, &block)
+        Worker::Request.new(:task_uninstall_application, { app_id: app_id, channel_id: channel_id }, &block)
       end
     end
   end
