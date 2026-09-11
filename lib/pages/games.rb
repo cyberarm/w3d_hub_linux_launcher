@@ -227,7 +227,7 @@ module W3DHubLauncher
         @news_container.clear do
           app_news.each do |item|
             stack(width: 1.0 / news_item_width_ratio, height: 345, aspect_ratio: 1, margin_left: HALF_PADDING, margin_right: HALF_PADDING, margin_bottom: PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
-              stack(width: 1.0, height: 1.0 / 3, padding: PADDING, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
+              stack(width: 1.0, height: 1.0 / 2.5, padding: PADDING, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
                 para item.timestamp.strftime("%B %e, %Y") #"September 29, 2026"
                 tagline item.title
               end
