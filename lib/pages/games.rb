@@ -34,6 +34,14 @@ module W3DHubLauncher
         populate_game
       end
 
+      def focus
+        @parent.show_battleview_panel
+      end
+
+      def blur
+        @parent.hide_battleview_panel
+      end
+
       def populate_game_content_container
         @game_content_container.clear do
           # game info container

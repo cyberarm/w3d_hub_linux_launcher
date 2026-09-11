@@ -6,8 +6,6 @@ module W3DHubLauncher
       def setup
         @games_filter = []
 
-        CyberarmEngine::EventBus.subscribe("game_server_pings", self, :handle_game_server_pings)
-
         # game bar container
         flow(width: 1.0, height: 60) do
           widget(width: 220, height: 1.0, style_class: [:all_button]) do |w|
@@ -51,8 +49,16 @@ module W3DHubLauncher
         populate_server_list
       end
 
+      def focus
+        CyberarmEngine::EventBus.subscribe("game_server_pings", self, :handle_game_server_pings)
+
+        @parent.show_server_details_panel
+      end
+
       def blur
         CyberarmEngine::EventBus.unsubscribe("game_server_pings", self)
+
+        @parent.hide_server_details_panel
       end
 
       def handle_game_server_pings(payload)
@@ -64,13 +70,13 @@ module W3DHubLauncher
           (MemCache[:servers] || []).select { |s| @games_filter.empty? ? true : @games_filter.include?(s.game) }.sort_by { |s| [s.player_count, -s.ping] }.reverse.each do |server|
             app = MemCache[:applications].find { |a| a.id == server.game }
 
-            widget(width: 1.0, height: 48, padding_top: HALF_PADDING, padding_bottom: HALF_PADDING, margin_bottom: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: server.channel == "release" ? ALPHA_GRAY : 0xaa_c64600, hover: { background_nine_slice_color: 0xff_5e5c64 } , active: { background_nine_slice_color: 0xaa_5e5c64 }) do
+            widget(width: 1.0, height: 56 + PADDING, padding_top: HALF_PADDING, padding_bottom: HALF_PADDING, margin_bottom: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: server.channel == "release" ? ALPHA_GRAY : 0xaa_c64600, hover: { background_nine_slice_color: 0xff_5e5c64 } , active: { background_nine_slice_color: 0xaa_5e5c64 }) do
               # app icon container
-              image(safe_get_image("#{CACHE_PATH}/icon_#{app.id}.png"), tip: app.name, width: 48, height: 1.0, margin_left: HALF_PADDING)
+              image(safe_get_image("#{CACHE_PATH}/icon_#{app.id}.png"), tip: app.name, width: 56, height: 1.0, margin_left: HALF_PADDING)
 
               # server name, region, and times container
               stack(fill: true, height: 1.0, margin_left: HALF_PADDING) do
-                stack(v_align: :center) do
+                stack(width: 1.0, v_align: :center) do
                   # server name
                   caption server.name, text_wrap: :none, tip: server.name
                   # server info
