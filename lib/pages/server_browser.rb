@@ -70,7 +70,7 @@ module W3DHubLauncher
           (MemCache[:servers] || []).select { |s| @games_filter.empty? ? true : @games_filter.include?(s.game) }.sort_by { |s| [s.player_count, -s.ping] }.reverse.each do |server|
             app = MemCache[:applications].find { |a| a.id == server.game }
 
-            widget(width: 1.0, height: 56 + PADDING, padding_top: HALF_PADDING, padding_bottom: HALF_PADDING, margin_bottom: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: server.channel == "release" ? ALPHA_GRAY : 0xaa_c64600, hover: { background_nine_slice_color: 0xff_5e5c64 } , active: { background_nine_slice_color: 0xaa_5e5c64 }) do
+            widget(width: 1.0, height: 56 + PADDING, padding_top: HALF_PADDING, padding_bottom: HALF_PADDING, margin_bottom: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: server.channel == "release" ? ALPHA_GRAY : 0xaa_c64600, hover: { background_nine_slice_color: 0xff_5e5c64 } , active: { background_nine_slice_color: 0xaa_5e5c64 }) do |w|
               # app icon container
               image(safe_get_image("#{CACHE_PATH}/icon_#{app.id}.png"), tip: app.name, width: 56, height: 1.0, margin_left: HALF_PADDING)
 
@@ -107,6 +107,10 @@ module W3DHubLauncher
                   inscription "ping", text_wrap: :none, width: 1.0, text_align: :center, margin_top: -HALF_PADDING
                 end
                 stack(width: 8, height: server.ping_score_ratio, v_align: :center, min_height: 8, background_nine_slice: NINE_SLICE_ROUNDED_SMALL, background_nine_slice_from_edge: NINE_SLICE_EDGE_SMALL, background_nine_slice_color: server.ping_score_color)
+              end
+
+              w.subscribe(:clicked_left_mouse_button) do
+                @parent.populate_server_information(server)
               end
             end
           end

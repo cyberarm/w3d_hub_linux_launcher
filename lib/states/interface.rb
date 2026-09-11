@@ -88,136 +88,6 @@ module W3DHubLauncher
 
                 # server details container
                 @server_details_container = stack(width: 400, height: 1.0, margin_left: LARGE_PADDING, padding: PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
-                  tagline "SERVER NAME HERE SERVER NAME HERE SERVER NAME HERE", text_wrap: :none
-                  image safe_get_image("#{ROOT_PATH}/media/default_map_preview.png"), width: 1.0, tip: "MAP NAME APPEARS HERE", margin_bottom: PADDING
-
-                  flow(width: 1.0) do
-                    stack(fill: true)
-                    button "JOIN SERVER", **CTA_BUTTON_THEME, width: 1.0
-                    stack(fill: true)
-                  end
-
-                  stack(width: 1.0, fill: true, scroll: true, margin_top: PADDING) do
-                    # misc. server details
-                    stack(width: 1.0, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
-                      flow(width: 1.0) do
-                        stack(width: 1.0 / 3) do
-                          caption "Map", text_wrap: :none
-                          inscription "TheBacon.mix", text_wrap: :none
-                        end
-                        stack(width: 1.0 / 3, margin_left: HALF_PADDING) do
-                          caption "Ping", text_wrap: :none
-                          inscription "9945ms", text_wrap: :none
-                        end
-                        stack(width: 1.0 / 3, margin_left: HALF_PADDING) do
-                          caption "Players", text_wrap: :none
-                          inscription "127/127", text_wrap: :none
-                        end
-                      end
-
-                      flow(width: 1.0) do
-                        stack(width: 1.0 / 3) do
-                          caption "Next Map", text_wrap: :none
-                          inscription "Bacon.mix", text_wrap: :none
-                        end
-                        stack(width: 1.0 / 3, margin_left: HALF_PADDING) do
-                          caption "Time", text_wrap: :none
-                          inscription "00:00:00", text_wrap: :none
-                        end
-                        stack(width: 1.0 / 3, margin_left: HALF_PADDING) do
-                          caption "Time Left", text_wrap: :none
-                          inscription "00:00:00", text_wrap: :none
-                        end
-                      end
-
-                      flow(width: 1.0) do
-                        stack(width: 1.0 / 3) do
-                          caption "Region", text_wrap: :none
-                          inscription "North America", text_wrap: :none
-                        end
-                        stack(width: 1.0 / 3, margin_left: HALF_PADDING) do
-                          caption "Channel", text_wrap: :none
-                          inscription "Release", text_wrap: :none
-                        end
-                        stack(width: 1.0 / 3, margin_left: HALF_PADDING) do
-                          caption "Version", text_wrap: :none
-                          inscription "3.8.1.0", text_wrap: :none
-                        end
-                      end
-                    end
-
-                    # team data
-                    2.times do |i|
-                      stack(width: 1.0, margin_top: PADDING, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
-                        tagline "TEAM #{i}", text_wrap: :none
-
-                        flow(width: 1.0) do
-                          stack(width: 1 / 4.0) do
-                            caption "Score", text_wrap: :none
-                            inscription "450,000", text_wrap: :none
-                          end
-                          stack(width: 1 / 4.0) do
-                            caption "Kills", text_wrap: :none
-                            inscription "4,500", text_wrap: :none
-                          end
-                          stack(width: 1 / 4.0) do
-                            caption "Deaths", text_wrap: :none
-                            inscription "450", text_wrap: :none
-                          end
-                          stack(width: 1 / 4.0) do
-                            caption "Players", text_wrap: :none
-                            inscription "45/127", text_wrap: :none
-                          end
-                        end
-
-                        flow(width: 1.0, height: 2, background: 0xaa_000000)
-
-                        flow(width: 1.0) do
-                          stack(fill: true) do
-                            caption "Name", text_wrap: :none
-                          end
-                          stack(width: 1 / 7.0) do
-                            caption "Score", text_wrap: :none
-                          end
-                          stack(width: 1 / 8.0) do
-                            caption "Kills", text_wrap: :none
-                          end
-                          stack(width: 1 / 6.0) do
-                            caption "Deaths", text_wrap: :none
-                          end
-                          stack(width: 1 / 8.0) do
-                            caption "Ping", text_wrap: :none
-                          end
-                          stack(width: 1 / 6.0) do
-                            caption "Time", text_wrap: :none
-                          end
-                        end
-
-                        24.times do |i|
-                          flow(width: 1.0, background: i.odd? ? 0 : 0xaa_000000) do
-                            stack(fill: true, margin_right: HALF_PADDING) do
-                              inscription ["[Dragon]rufeng", "PXD2000", "SteelGhost", "Winter_Spyder", "ChopBam", "cyberarm", "ChAoS", "Silverlight", "moonsense715test", "Name Goes Here Yall"].sample, text_wrap: :none
-                            end
-                            stack(width: 1 / 7.0) do
-                              inscription "5,232", text_wrap: :none
-                            end
-                            stack(width: 1 / 8.0) do
-                              inscription "341", text_wrap: :none
-                            end
-                            stack(width: 1 / 6.0) do
-                              inscription "123", text_wrap: :none
-                            end
-                            stack(width: 1 / 8.0) do
-                              inscription "431", text_wrap: :none
-                            end
-                            stack(width: 1 / 6.0) do
-                              inscription "00:00:00", text_wrap: :none
-                            end
-                          end
-                        end
-                      end
-                    end
-                  end
                 end
 
                 # battleview/friends container
@@ -282,6 +152,149 @@ module W3DHubLauncher
 
       def show_server_details_panel
         @server_details_container.show
+      end
+
+      def populate_server_information(server)
+        return unless @server_details_container.visible?
+
+        @server_details_container.clear do
+          tagline server.name, width: 1.0, text_wrap: :none, tip: server.name
+          image safe_get_image("#{ROOT_PATH}/media/default_map_preview.png"), width: 1.0, tip: server.current_map, margin_bottom: PADDING
+
+          flow(width: 1.0) do
+            stack(fill: true)
+            button "JOIN SERVER", **CTA_BUTTON_THEME, width: 1.0, enabled: false, tip: "Game not installed I guess..."
+            stack(fill: true)
+          end
+
+          stack(width: 1.0, fill: true, scroll: true, margin_top: PADDING) do
+            # misc. server details
+            stack(width: 1.0, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
+              flow(width: 1.0) do
+                stack(width: 1.0 / 3) do
+                  caption "Map", text_wrap: :none, tip: "Map", width: 1.0
+                  inscription server.current_map, text_wrap: :none, width: 1.0, tip: server.current_map
+                end
+                stack(width: 1.0 / 3, margin_left: HALF_PADDING) do
+                  display_ping = server.ping == Worker::Api::GameServer::BAD_OR_UNKNOWN_PING ? "?" : format("%dms", server.ping)
+                  caption "Ping", text_wrap: :none, tip: "Ping", width: 1.0
+                  inscription display_ping, text_wrap: :none, width: 1.0, tip: display_ping
+                end
+                stack(width: 1.0 / 3, margin_left: HALF_PADDING) do
+                  caption "Players", text_wrap: :none, tip: "Players", width: 1.0
+                  inscription format("%d/%d", server.player_count, server.max_players), text_wrap: :none, width: 1.0, tip: format("%d/%d", server.player_count, server.max_players)
+                end
+              end
+
+              flow(width: 1.0) do
+                stack(width: 1.0 / 3) do
+                  caption "Next Map", text_wrap: :none, tip: "Next Map", width: 1.0
+                  inscription server.next_map, text_wrap: :none, width: 1.0, tip: server.next_map
+                end
+                stack(width: 1.0 / 3, margin_left: HALF_PADDING) do
+                  caption "Time", text_wrap: :none, tip: "Time", width: 1.0
+                  inscription "00:00:00", text_wrap: :none, width: 1.0, tip: "00:00:00"
+                end
+                stack(width: 1.0 / 3, margin_left: HALF_PADDING) do
+                  caption "Time Left", text_wrap: :none, tip: "Time Left", width: 1.0
+                  inscription server.match_remaining_time, text_wrap: :none, width: 1.0, tip: server.match_remaining_time
+                end
+              end
+
+              flow(width: 1.0) do
+                stack(width: 1.0 / 3) do
+                  caption "Region", text_wrap: :none, tip: "Region", width: 1.0
+                  inscription server.region, text_wrap: :none, width: 1.0, tip: server.region
+                end
+                stack(width: 1.0 / 3, margin_left: HALF_PADDING) do
+                  caption "Channel", text_wrap: :none, tip: "Channel", width: 1.0
+                  inscription server.channel, text_wrap: :none, width: 1.0, tip: server.channel
+                end
+                stack(width: 1.0 / 3, margin_left: HALF_PADDING) do
+                  caption "Version", text_wrap: :none, tip: "Version", width: 1.0
+                  inscription server.version, text_wrap: :none, width: 1.0, tip: server.version
+                end
+              end
+            end
+
+            # team data
+            server.teams.each do |team|
+              # ignore empty, non-standard teams
+              next if !team.id.between?(0, 1) && team.players.empty?
+
+              stack(width: 1.0, margin_top: PADDING, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
+                tagline team.name, text_wrap: :none, tip: team.name
+
+                flow(width: 1.0) do
+                  stack(width: 1 / 4.0) do
+                    caption "Score", text_wrap: :none, tip: "Score"
+                    inscription team.score, text_wrap: :none, tip: team.score
+                  end
+                  stack(width: 1 / 4.0, margin_left: HALF_PADDING) do
+                    caption "Kills", text_wrap: :none, tip: "Kills"
+                    inscription team.kills, text_wrap: :none, tip: team.kills
+                  end
+                  stack(width: 1 / 4.0, margin_left: HALF_PADDING) do
+                    caption "Deaths", text_wrap: :none, tip: "Deaths"
+                    inscription team.deaths, text_wrap: :none, tip: team.deaths
+                  end
+                  stack(width: 1 / 4.0, margin_left: HALF_PADDING) do
+                    caption "Players", text_wrap: :none, tip: "Players"
+                    inscription format("%d/%d", team.players.size, server.max_players), text_wrap: :none, tip: format("%d/%d", team.players.size, server.max_players)
+                  end
+                end
+
+                next if team.players.empty?
+
+                flow(width: 1.0, height: 2, background: 0xaa_000000)
+
+                flow(width: 1.0) do
+                  stack(fill: true, margin_right: HALF_PADDING) do
+                    inscription "Name", width: 1.0, text_wrap: :none, font: FONT_BOLD, tip: "Name"
+                  end
+                  stack(width: 1 / 5.0, margin_right: HALF_PADDING) do
+                    inscription "Score", width: 1.0, text_wrap: :none, font: FONT_BOLD, tip: "Score"
+                  end
+                  stack(width: 1 / 5.0, margin_right: HALF_PADDING) do
+                    inscription "Kills", width: 1.0, text_wrap: :none, font: FONT_BOLD, tip: "Kills"
+                  end
+                  stack(width: 1 / 5.0, margin_right: HALF_PADDING) do
+                    inscription "Deaths", width: 1.0, text_wrap: :none, font: FONT_BOLD, tip: "Deaths"
+                  end
+                  # stack(width: 1 / 8.0, margin_right: HALF_PADDING) do
+                  #   inscription "Ping", width: 1.0, text_wrap: :none, font: FONT_BOLD, tip: "Ping"
+                  # end
+                  # stack(width: 1 / 6.0) do
+                  #   inscription "Time", width: 1.0, text_wrap: :none, font: FONT_BOLD, tip: "Time"
+                  # end
+                end
+
+                team.players.sort_by(&:score).reverse.each_with_index do |player, i|
+                  flow(width: 1.0, background: i.odd? ? 0 : 0xaa_000000) do
+                    stack(fill: true, margin_right: HALF_PADDING) do
+                      inscription player.name, font: FONT_MONO, width: 1.0, text_wrap: :none, tip: player.name
+                    end
+                    stack(width: 1 / 5.0, margin_right: HALF_PADDING) do
+                      inscription player.score, font: FONT_MONO, width: 1.0, text_wrap: :none, tip: player.score
+                    end
+                    stack(width: 1 / 5.0, margin_right: HALF_PADDING) do
+                      inscription player.kills, font: FONT_MONO, width: 1.0, text_wrap: :none, tip: player.kills
+                    end
+                    stack(width: 1 / 5.0, margin_right: HALF_PADDING) do
+                      inscription player.deaths, font: FONT_MONO, width: 1.0, text_wrap: :none, tip: player.deaths
+                    end
+                    # stack(width: 1 / 8.0, margin_right: HALF_PADDING) do
+                    #   inscription player.ping, font: FONT_MONO, width: 1.0, text_wrap: :none, tip: player.ping
+                    # end
+                    # stack(width: 1 / 5.0) do
+                    #   inscription player.time, font: FONT_MONO, width: 1.0, text_wrap: :none, tip: player.time
+                    # end
+                  end
+                end
+              end
+            end
+          end
+        end
       end
 
       def button_up(id)

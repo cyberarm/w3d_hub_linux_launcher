@@ -38,7 +38,7 @@ module W3DHubLauncher
 
           # status player data
           data["status"]["players"].each do |player_data|
-            team = @teams.find { |t| t.id == player_data["id"] }
+            team = @teams.find { |t| t.id == player_data["team"] }
             next unless team
 
             team.players << Player.new(player_data)
