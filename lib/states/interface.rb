@@ -87,7 +87,7 @@ module W3DHubLauncher
                 end
 
                 # server details container
-                @server_details_container = stack(width: 400, height: 1.0, margin_left: HALF_PADDING, padding: PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
+                @server_details_container = stack(width: 300, height: 1.0, margin_left: HALF_PADDING, padding: PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
                   tagline "SERVER NAME HERE SERVER NAME HERE SERVER NAME HERE", text_wrap: :none
                   image safe_get_image("#{ROOT_PATH}/media/default_map_preview.png"), width: 1.0, tip: "MAP NAME APPEARS HERE", margin_bottom: PADDING
 
@@ -102,46 +102,46 @@ module W3DHubLauncher
                     stack(width: 1.0, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
                       flow(width: 1.0) do
                         stack(width: 1.0 / 3) do
-                          caption "Map"
-                          para "TheBacon.mix"
+                          caption "Map", text_wrap: :none
+                          para "TheBacon.mix", text_wrap: :none
                         end
                         stack(width: 1.0 / 3) do
-                          caption "Ping"
-                          para "9945ms"
+                          caption "Ping", text_wrap: :none
+                          para "9945ms", text_wrap: :none
                         end
                         stack(width: 1.0 / 3) do
-                          caption "Players"
-                          para "127/127"
-                        end
-                      end
-
-                      flow(width: 1.0) do
-                        stack(width: 1.0 / 3) do
-                          caption "Next Map"
-                          para "Bacon.mix"
-                        end
-                        stack(width: 1.0 / 3) do
-                          caption "Time"
-                          para "00:00:00"
-                        end
-                        stack(width: 1.0 / 3) do
-                          caption "Time Left"
-                          para "00:00:00"
+                          caption "Players", text_wrap: :none
+                          para "127/127", text_wrap: :none
                         end
                       end
 
                       flow(width: 1.0) do
                         stack(width: 1.0 / 3) do
-                          caption "Region"
-                          para "North America"
+                          caption "Next Map", text_wrap: :none
+                          para "Bacon.mix", text_wrap: :none
                         end
                         stack(width: 1.0 / 3) do
-                          caption "Channel"
-                          para "Release"
+                          caption "Time", text_wrap: :none
+                          para "00:00:00", text_wrap: :none
                         end
                         stack(width: 1.0 / 3) do
-                          caption "Version"
-                          para "3.8.1.0"
+                          caption "Time Left", text_wrap: :none
+                          para "00:00:00", text_wrap: :none
+                        end
+                      end
+
+                      flow(width: 1.0) do
+                        stack(width: 1.0 / 3) do
+                          caption "Region", text_wrap: :none
+                          para "North America", text_wrap: :none
+                        end
+                        stack(width: 1.0 / 3) do
+                          caption "Channel", text_wrap: :none
+                          para "Release", text_wrap: :none
+                        end
+                        stack(width: 1.0 / 3) do
+                          caption "Version", text_wrap: :none
+                          para "3.8.1.0", text_wrap: :none
                         end
                       end
                     end
@@ -149,24 +149,24 @@ module W3DHubLauncher
                     # team data
                     2.times do |i|
                       stack(width: 1.0, margin_top: PADDING, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
-                        tagline "TEAM #{i}"
+                        tagline "TEAM #{i}", text_wrap: :none
 
                         flow(width: 1.0) do
                           stack(width: 1 / 4.0) do
-                            caption "Score"
-                            para "450,000"
+                            caption "Score", text_wrap: :none
+                            para "450,000", text_wrap: :none
                           end
                           stack(width: 1 / 4.0) do
-                            caption "Kills"
-                            para "4,500"
+                            caption "Kills", text_wrap: :none
+                            para "4,500", text_wrap: :none
                           end
                           stack(width: 1 / 4.0) do
-                            caption "Deaths"
-                            para "450"
+                            caption "Deaths", text_wrap: :none
+                            para "450", text_wrap: :none
                           end
                           stack(width: 1 / 4.0) do
-                            caption "Players"
-                            para "45/127"
+                            caption "Players", text_wrap: :none
+                            para "45/127", text_wrap: :none
                           end
                         end
 
@@ -174,23 +174,23 @@ module W3DHubLauncher
 
                         flow(width: 1.0) do
                           stack(fill: true) do
-                            caption "Name"
+                            caption "Name", text_wrap: :none
+                          end
+                          stack(width: 1 / 5.0) do
+                            caption "Score", text_wrap: :none
                           end
                           stack(width: 1 / 6.0) do
-                            caption "Score"
+                            caption "Kills", text_wrap: :none
                           end
-                          stack(width: 1 / 8.0) do
-                            caption "Kills"
+                          stack(width: 1 / 4.0) do
+                            caption "Deaths", text_wrap: :none
                           end
-                          stack(width: 1 / 6.0) do
-                            caption "Deaths"
-                          end
-                          stack(width: 1 / 8.0) do
-                            caption "Ping"
-                          end
-                          stack(width: 1 / 6.0) do
-                            caption "Time"
-                          end
+                          # stack(width: 1 / 7.0) do
+                          #   caption "Ping", text_wrap: :none
+                          # end
+                          # stack(width: 1 / 7.0) do
+                          #   caption "Time", text_wrap: :none
+                          # end
                         end
 
                         24.times do |i|
@@ -198,21 +198,21 @@ module W3DHubLauncher
                             stack(fill: true, margin_right: HALF_PADDING) do
                               inscription ["[Dragon]rufeng", "PXD2000", "SteelGhost", "Winter_Spyder", "ChopBam", "cyberarm", "ChAoS", "Silverlight", "moonsense715test", "Name Goes Here Yall"].sample, text_wrap: :none
                             end
-                            stack(width: 1 / 6.0) do
+                            stack(width: 1 / 5.0) do
                               inscription "5,232", text_wrap: :none
                             end
-                            stack(width: 1 / 8.0) do
+                            stack(width: 1 / 6.0) do
                               inscription "341", text_wrap: :none
                             end
-                            stack(width: 1 / 6.0) do
+                            stack(width: 1 / 4.0) do
                               inscription "123", text_wrap: :none
                             end
-                            stack(width: 1 / 8.0) do
-                              inscription "431", text_wrap: :none
-                            end
-                            stack(width: 1 / 6.0) do
-                              inscription "00:00:00", text_wrap: :none
-                            end
+                            # stack(width: 1 / 7.0) do
+                            #   inscription "431", text_wrap: :none
+                            # end
+                            # stack(width: 1 / 7.0) do
+                            #   inscription "00:00:00", text_wrap: :none
+                            # end
                           end
                         end
                       end
