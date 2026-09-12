@@ -1,12 +1,12 @@
 require "json"
 require "digest/sha2"
 
-module W3DHubBackend
+module W3DHubLauncher
   class Worker
     class Api
       class LegacyManifestPackage
         attr_reader :category, :subcategory, :version, :name, :error, :file_size,
-                    :checksum_chunk_size, :sha256_checksum, :checksum_chunks
+                    :checksum_chunk_size, :sha256_checksum, :checksum_chunks, :download_url
 
         def initialize(hash)
           @category = hash["category"]
@@ -18,6 +18,7 @@ module W3DHubBackend
           @checksum_chunk_size = Integer(hash["checksum-size"] || 0)
           @sha256_checksum = hash["checksum"]
           @checksum_chunks = hash["checksum-chunks"]
+          @download_url = hash["download_url"]
         end
 
         def error?
