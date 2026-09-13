@@ -25,25 +25,91 @@ module W3DHubLauncher
       execute
     end
 
+    def abort_task!(reason = "")
+      puts reason
+
+      raise reason
+    end
+
+    # high level methods
+
     def fetch_manifests(version = @target_version)
       while (manifest = fetch_manifest(version))
         @manifests[version] = manifest
 
         version = manifest.base_version
+        break unless version
+        break if manifest.full?
       end
     end
 
-    def fetch_manifest(version)
-      result = @worker.w3dhub_api.fetch_package_details([{category: "games", subcategory: @application.id, name: "manifest.xml", version: version }])
+    def build_package_list
+      channel_manifests = []
+      version = @target_version
 
-      return false unless result.okay?
+      while(manifest = @manifests[version])
+        channel_manifests << manifest
+
+        break if manifest.full?
+
+        version = manifest.base_version
+      end
+
+      files = []
+      deleted_files = []
+      channel_manifests.reverse.each do |manifest|
+        manifest.files.each do |file|
+          if file.removed?
+            files.delete_if { |f| f.name.casecmp?(file.name) }
+            deleted_files << file
+
+            next
+          end
+
+          # remove files that are total replacements, not patches
+          files.delete_if { |f| f.name.casecmp?(file.name) } unless file.patch?
+
+          # add file to file list
+          files << file
+        end
+      end
+
+      pp [:files, files.map(&:name), :deleted_files, deleted_files.map(&:name)]
+    end
+
+    def remove_deleted_files
+    end
+
+    def verify_files
+    end
+
+    def fetch_packages
+    end
+
+    def install_packages
+    end
+
+    # helper functions
+
+    def fetch_manifest(version)
+      result = @worker.w3dhub_api.fetch_package_details([
+        {
+          category: "games",
+          subcategory: @application.id,
+          name: "manifest.xml",
+          version: version
+        }
+      ])
+
+      return result unless result.okay?
 
       response = JSON.parse(result.data)
-      pp response
-      pp package_details = response["packages"]&.map { |item| Worker::Api::LegacyManifestPackage.new(item) }&.first
+      package_details = response["packages"]&.map { |item| Worker::Api::LegacyManifestPackage.new(item) }&.first
 
-      return false unless package_details
-      return false if package_details.error?
+      if package_details.nil? || package_details.error?
+        pp package_details
+        abort_task!("Failed to fetch package details for manifest #{version}")
+      end
 
       # FIXME: check if locally downloaded manifest is still valid, if present.
       result = if package_details.download_url
@@ -53,11 +119,11 @@ module W3DHubLauncher
         @worker.w3dhub_api.fetch_package("TODO")
       end
 
-      pp result
-
-      return Worker::Api::LegacyManifest.new("manifest-#{version}.xml") if result.okay?
-
-      false
+      if result.okay?
+        return Worker::Api::LegacyManifest.new("manifest-#{version}.xml")
+      else
+        abort_task!("Failed to fetch manifest #{version}")
+      end
     end
   end
 end

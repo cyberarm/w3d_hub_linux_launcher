@@ -11,15 +11,18 @@ module W3DHubLauncher
         # fetch manifests for currently installed version
         # AND the target version so we can detect files that need to be removed
         # between versions
-        manifests_result = fetch_manifests
-        abort_task!(manifests_result) unless manifests_result.okay?
+        fetch_manifests
 
-        package_list_result = build_package_list(manifests_result)
-        abort_task!(package_list_result) unless package_list_result.okay?
-
-        # remove_deleted_files
+        # build list of packages we'll need to download
+        build_package_list
 
         verify_files
+
+        fetch_packages
+
+        install_packages
+
+        remove_deleted_files
       end
     end
   end

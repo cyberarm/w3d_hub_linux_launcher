@@ -10,8 +10,8 @@ module W3DHubLauncher
 
           @game = root["game"]
           @type = root["type"]
-          @version = root["version"]
-          @base_version = root["baseVersion"]
+          @version = root["version"] ? Gem::Version.new(root["version"]) : nil
+          @base_version = root["baseVersion"] ? Gem::Version.new(root["baseVersion"]) : nil
 
           @files = []
           @dependencies = []
@@ -49,7 +49,7 @@ module W3DHubLauncher
             @name = @data["name"]
             @checksum = @data["checksum"]
             @package = @data["package"]
-            @removed_since = @data["removedsince"]
+            @removed_since = @data["removedsince"] ? Gem::Version.new(@data["removedsince"]) : nil
 
             xml.elements.each("Patch") do |patch|
               @patch = true
@@ -63,7 +63,7 @@ module W3DHubLauncher
               end
             end
 
-            @version = version
+            @version = version ? Gem::Version.new(version) : nil
           end
 
           def removed?
