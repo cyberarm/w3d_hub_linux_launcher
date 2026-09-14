@@ -1,5 +1,8 @@
 module W3DHubLauncher
   class Task
+    # ignore *.meta and paths.ini files
+    IGNORED_FILES = [/\A.+\.meta\z/i, /\A.+\/paths\.ini\z/i].freeze
+
     IndexedFile = Data.define(:type, :path)
 
     attr_reader :request_id, :application, :channel, :installed_version, :target_version
@@ -52,9 +55,7 @@ module W3DHubLauncher
       return unless File.directory?(@installation_directory)
 
       Dir.glob("#{@installation_directory}/**/**").each do |path|
-        path.gsub!("\\", "/")
-
-        @file_index[path.downcase] = IndexedFile.new(File.directory?(path) ? :directory : :file, path)
+        add_to_file_index(path)
       end
     end
 
@@ -93,6 +94,9 @@ module W3DHubLauncher
 
           # remove files that are total replacements, not patches
           files.delete_if { |f| f.name.casecmp?(file.name) } unless file.patch?
+
+          # exclude ignored files from consideration
+          files.delete_if { |f| ignored_file?(f.name) }
 
           # add file to file list
           files << file
@@ -163,11 +167,13 @@ module W3DHubLauncher
         abort_task!("Failed to retrieve packages details for: #{failed_packages.map { |pkg| "#{pkg.name}:#{pkg.version}: #{pkg.error}"}.join(', ') }")
       end
 
+      @packages = manifest_packages
+
       manifest_packages.each do |pkg|
         file_path = package_cache_path(pkg)
         unless File.directory?(File.dirname(file_path))
           puts "creating directory: #{File.dirname(file_path)}"
-          FileUtils.mkdir_p(File.dirname(file_path))
+          create_directory(File.dirname(file_path))
         end
 
         partially_valid_at = 0
@@ -195,6 +201,44 @@ module W3DHubLauncher
     end
 
     def install_packages
+      create_directory(@installation_directory)
+
+      processed_packages = {}
+      @required_manifest_files.each do |manifest_file|
+        package = @packages.find do |pkg|
+          pkg.name.casecmp?("#{manifest_file.package}.zip") && manifest_file.version == pkg.version
+        end
+        package_path = package_cache_path(package)
+
+        next if processed_packages[package_path]
+
+        if manifest_file.patch?
+        else
+          stream = Zip::InputStream.new(File.open(package_path))
+
+          while(entry = stream.get_next_entry)
+            file_path = normalize_path(entry.name)
+
+            next if ignored_file?(file_path)
+
+            pp file_path
+
+            create_directory(File.dirname(file_path))
+
+            File.open(file_path, "wb") do |f|
+              entry_stream = entry.get_input_stream
+
+              while(chunk = entry_stream.read(4_194_304))
+                f.write(chunk)
+              end
+            end
+
+            add_to_file_index(file_path)
+          end
+        end
+
+        processed_packages[package_path] = manifest_file
+      end
     end
 
     def remove_deleted_files
@@ -229,6 +273,52 @@ module W3DHubLauncher
       else
         format("%s/%s", directory, package.name)
       end
+    end
+
+    def ignored_file?(path)
+      IGNORED_FILES.any? { |regex| path.match?(regex) }
+    end
+
+    def create_directory(path)
+      path.gsub!("\\", "/")
+
+      # directory already exists, SKIP!
+      unless File.exist?(path) && File.directory?(path) && (file_index = @file_index[path.downcase])
+        FileUtils.mkdir_p(path)
+
+        add_directory_to_file_index(path)
+      end
+    end
+
+    # add EXISTING file or directory to index
+    def add_to_file_index(path)
+      path.gsub!("\\", "/")
+
+      @file_index[path.downcase] = IndexedFile.new(File.directory?(path) ? :directory : :file, path)
+    end
+
+    # add EXISTING directory to file index, walking up the directory tree until existing directory entries are found
+    # NOTE: this will **NOT** "scan" the directory for new directories or files
+    def add_directory_to_file_index(path)
+      path.gsub!("\\", "/")
+
+      segments = path.split("/")
+      sub_path = path
+      until (file_index = @file_index[sub_path.downcase])
+        @file_index[sub_path.downcase]
+
+        segments.pop
+
+        break if segments.empty?
+
+        sub_path = segments.join("/")
+      end
+    end
+
+    def remove_from_file_index(path)
+      path.gsub!("\\", "/")
+
+      @file_index.delete(path.downcase)
     end
 
     # And behold, the backslashes were slain and the path deemed sane!

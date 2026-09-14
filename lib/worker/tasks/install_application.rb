@@ -28,7 +28,7 @@ module W3DHubLauncher
         # unpack packages and patch files to reach target version
         install_packages
 
-        # delete files that are no longer part of the application (and whose presence my break the application)
+        # delete files that are no longer part of the application (and whose presence may break the application)
         remove_deleted_files
 
         # tell the application to behive

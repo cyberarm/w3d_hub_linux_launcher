@@ -11,6 +11,7 @@ require "logger"
 require "digest"
 require "pathname"
 require "fileutils"
+require "tempfile"
 
 require "async"
 require "async/http/internet/instance"
