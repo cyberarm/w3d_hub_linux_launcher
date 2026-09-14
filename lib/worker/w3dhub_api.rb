@@ -61,27 +61,25 @@ module W3DHubLauncher
       result = CyberarmEngine::Result.new
 
       Sync do |task|
-        task.with_timeout(API_TIMEOUT) do
-          Async::HTTP::Internet.send(method, url, headers, body) do |response|
-            if response.success?
-              content_length = response.headers["content-length"] || 0
+        Async::HTTP::Internet.send(method, url, headers, body) do |response|
+          if response.success?
+            content_length = response.headers["content-length"] || 0
 
-              total_downloaded_bytes = 0
-              File.open(path, "wb") do |file|
-                response.each do |chunk|
-                  file.write(chunk)
-                  downloaded_bytes = chunk.length
-                  total_downloaded_bytes += downloaded_bytes
+            total_downloaded_bytes = 0
+            File.open(path, "wb") do |file|
+              response.each do |chunk|
+                file.write(chunk)
+                downloaded_bytes = chunk.length
+                total_downloaded_bytes += downloaded_bytes
 
-                  block&.call(downloaded_bytes, total_downloaded_bytes, content_length)
-                end
+                block&.call(downloaded_bytes, total_downloaded_bytes, content_length)
               end
-
-              result.data = true
             end
-          rescue StandardError => e
-            result.error = e
+
+            result.data = true
           end
+        rescue StandardError => e
+          result.error = e
         rescue Async::TimeoutError
           result.error = e
         end

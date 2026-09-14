@@ -15,7 +15,7 @@ module W3DHubLauncher
           @name = hash["name"]
           @error = hash["error"]
           @file_size = Integer(hash["size"] || 0)
-          @checksum_chunk_size = Integer(hash["checksum-size"] || 0)
+          @checksum_chunk_size = Integer(hash["checksum-chunk-size"] || 0)
           @sha256_checksum = hash["checksum"]
           @checksum_chunks = hash["checksum-chunks"]
           @download_url = hash["download_url"]
@@ -23,6 +23,10 @@ module W3DHubLauncher
 
         def error?
           @error
+        end
+
+        def version?
+          @version != Gem::Version.new("0.0.0.0")
         end
 
         # checksum whole file and file chunks until a mismatch occurs or the whole file is verified.

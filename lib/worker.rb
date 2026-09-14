@@ -8,7 +8,7 @@ module W3DHubLauncher
 
     Response = Data.define(:status, :request_id, :result)
 
-    attr_reader :w3dhub_api
+    attr_reader :w3dhub_api, :settings
 
     def initialize
     end
@@ -35,7 +35,7 @@ module W3DHubLauncher
 
       @client = nil
 
-      @settings = 0# Settings.new
+      @settings = nil
       @game_servers = []
       @host_pings = {}
 
@@ -325,6 +325,7 @@ module W3DHubLauncher
       begin
         if File.exist?(path) && File.size(path).positive?
           json = File.read(path)
+          @settings = Api::Settings.new(JSON.parse(json))
           result.data = json
         else
           result.error = RuntimeError.new("Launcher settings file does not exist or is empty.")

@@ -1,5 +1,7 @@
 module W3DHubLauncher
   class Task
+    IndexedFile = Data.define(:type, :path)
+
     attr_reader :request_id, :application, :channel, :installed_version, :target_version
 
     def initialize(request_id:, application:, channel:, installed_version:, target_version:)
@@ -11,7 +13,18 @@ module W3DHubLauncher
 
       pp self
 
+      # caching mechinism for file path normalization
+      @file_index = {}
+      # manifests!
       @manifests = {}
+      # files that must exist for a valid installation
+      @manifest_files = []
+      # files that should be removed
+      @deleted_manifest_files = []
+      # files needed to make installation valid for target version
+      @required_manifest_files = []
+      # packages to verify and/or download
+      @packages = []
 
       setup
     end
@@ -20,7 +33,9 @@ module W3DHubLauncher
     end
 
     def start(worker)
-      @worker =  worker
+      @worker = worker
+
+      @installation_directory ||= application_target_installation_directory
 
       execute
     end
@@ -32,6 +47,16 @@ module W3DHubLauncher
     end
 
     # high level methods
+
+    def index_installation_directory
+      return unless File.directory?(@installation_directory)
+
+      Dir.glob("#{@installation_directory}/**/**").each do |path|
+        path.gsub!("\\", "/")
+
+        @file_index[path.downcase] = IndexedFile.new(File.directory?(path) ? :directory : :file, path)
+      end
+    end
 
     def fetch_manifests(version = @target_version)
       while (manifest = fetch_manifest(version))
@@ -74,22 +99,169 @@ module W3DHubLauncher
         end
       end
 
-      pp [:files, files.map(&:name), :deleted_files, deleted_files.map(&:name)]
-    end
-
-    def remove_deleted_files
+      @manifest_files = files
+      @deleted_manifest_files = deleted_files
     end
 
     def verify_files
+      @required_manifest_files = @manifest_files.clone
+
+      # Process manifest game files in NEWEST to OLDEST order so that we don't erroneously flag
+      #   valid files as invalid due to an OLDER version of the file being checked FIRST.
+      @manifest_files.reverse.each do |file|
+        break unless File.directory?(@installation_directory)
+
+        # skip irrelevant older versions of files
+        next unless @required_manifest_files.include?(file)
+
+        file_path = normalize_path(file.name)
+
+        next unless File.exist?(file_path) # && !File.directory?(file_path)
+
+        puts "verifying #{file_path}..."
+        checksum = Digest::SHA256.file(file_path).hexdigest.upcase
+
+        if checksum == file.checksum
+          @required_manifest_files.delete(file)
+
+          # remove irrelevant older versions of the file from consideration
+          @required_manifest_files.delete_if { |f| f.name.casecmp?(file.name) && f.version < file.version }
+        end
+      end
     end
 
     def fetch_packages
+      required_packages = {}
+      @required_manifest_files.each do |file|
+        required_packages[file.version] ||= []
+
+        next if required_packages[file.version].find { |pkg| pkg.casecmp?(file.package) }
+
+        required_packages[file.version] << file.package
+      end
+
+      packages = required_packages.map do |version, packages|
+        packages.map do |package_name|
+          {
+            category: @application.category,
+            subcategory: @application.id,
+            name: format("%s.zip", package_name),
+            version: version.to_s
+          }
+        end
+      end.flatten
+
+      result = @worker.w3dhub_api.fetch_package_details(packages)
+
+      unless result.okay?
+        abort_task!("Failed to fetch required package details!")
+      end
+
+      response = JSON.parse(result.data)
+      manifest_packages = response["packages"]&.map { |item| Worker::Api::LegacyManifestPackage.new(item) }
+      if (failed_packages = manifest_packages.select(&:error?)) && !failed_packages.empty?
+        abort_task!("Failed to retrieve packages details for: #{failed_packages.map { |pkg| "#{pkg.name}:#{pkg.version}: #{pkg.error}"}.join(', ') }")
+      end
+
+      manifest_packages.each do |pkg|
+        # FIXME: verify local packages to prevent overdownloading!
+        # pkg.verify_file(normalize_path(pkg.name))
+
+        file_path = package_cache_path(pkg)
+        unless File.directory?(File.dirname(file_path))
+          puts "creating directory: #{File.dirname(file_path)}"
+          FileUtils.mkdir_p(File.dirname(file_path))
+        end
+
+        result = if pkg.download_url
+          puts "downloading #{pkg.download_url} to #{file_path}"
+          @worker.w3dhub_api.download(pkg.download_url, path: file_path)
+        else
+          # TODO xD
+          @worker.w3dhub_api.fetch_package("TODO")
+        end
+
+        abort_task!("Failed to download required package: #{pkg.name}:#{pkg.version}") unless result.okay?
+      end
     end
 
     def install_packages
     end
 
+    def remove_deleted_files
+    end
+
+    def write_paths_ini
+    end
+
+    # updated, and moved applications will overwrite existing application data in settings
+    def mark_application_installed
+    end
+
+    def mark_application_uninstalled
+    end
+
     # helper functions
+
+    def application_target_installation_directory
+      target_application = @worker.settings.applications.find { |app| app.id == @application.id && app.channel == @channel.id }
+      if target_application
+        target_application.installation_path
+      else
+        format("%s/%s/%s", @worker.settings.preferences.application_installation_directory, @application.id, @channel.id)
+      end
+    end
+
+    def package_cache_path(package)
+      directory = @worker.settings.preferences.launcher_package_cache_directory
+
+      if package.version?
+        format("%s/%s/%s", directory, package.version.to_s, package.name)
+      else
+        format("%s/%s", directory, package.name)
+      end
+    end
+
+    # And behold, the backslashes were slain and the path deemed sane!
+    def normalize_path(base_path)
+      base_path = base_path.gsub("\\", "/")
+      path = "#{@installation_directory}/#{base_path}".gsub("\\", "/")
+
+      # try to find exact, existing match
+      index_file = @file_index[path.downcase]
+      return index_file.path if index_file
+
+      # try to find directory structure
+      if (index_directory = @file_index[File.dirname(path).downcase])
+        return format("%s/%s", index_directory.path, File.basename(path))
+      end
+
+      # walk directories to see if we have a partial path match
+      sub_paths = base_path.split("/")
+      sub_paths.pop # drop file name from sub path reconstruction
+      unless sub_paths.empty?
+        partial_index_directory = nil
+        sub_path = format("%s/%s", @installation_directory, sub_paths.shift).downcase
+        while (partial_index_directory = @file_index[sub_path.downcase])
+          sub_path = format("%s/%s", sub_path, sub_paths.shift)
+        end
+
+        if partial_index_directory
+          if sub_paths.empty? # we've found the path!
+            return format("%s/%s", partial_index_directory.path, File.basename(base_path))
+          else # we has a directory or two that don't exist, downcase them, and then head out to the pub!
+            return format("%s/%s/%s", partial_index_directory.path, sub_paths.map(&:downcase).join("/"), File.basename(base_path))
+          end
+        end
+      end
+
+      # path doesn't exist, convert directories to lower-case, and use provided file case
+      if File.basename(path) == base_path # base_path doesn't have a sub directory
+        format("%s/%s", File.dirname(path), File.basename(path))
+      else # base_path has sub directory/directories
+        format("%s/%s/%s", @installation_directory, File.dirname(base_path).downcase, File.basename(path))
+      end
+    end
 
     def fetch_manifest(version)
       result = @worker.w3dhub_api.fetch_package_details([

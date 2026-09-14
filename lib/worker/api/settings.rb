@@ -76,15 +76,16 @@ module W3DHubLauncher
           attr_reader :id, :channel
           attr_accessor :version, :installation_path, :wine_prefix_path, :launch_command
 
-          def self.create(id:, channel:, version:, installation_path:, wine_prefix_path:, launch_command:)
+          def self.create(id:, channel:, version:, installation_path:, wine_prefix_path:, launch_command:, timestamp:)
             hash = {
               "schema" => SCHEMA,
               "id" => id,
               "channel" => channel,
-              "version" => Gem::Version.new(version),
+              "version" => version,
               "installation_path" => installation_path,
               "wine_prefix_path" => wine_prefix_path,
               "launch_command" => launch_command,
+              "timestamp" => timestamp
             }
 
             self.new(hash)
@@ -99,6 +100,7 @@ module W3DHubLauncher
             @installation_path = data["installation_path"]
             @wine_prefix_path = data["wine_prefix_path"]
             @launch_command = data["launch_command"]
+            @timestamp = Time.at(data["timestamp"])
           end
 
           def to_json(options = {})
@@ -109,7 +111,8 @@ module W3DHubLauncher
               version: @version.to_s,
               installation_path: @installation_path,
               wine_prefix_path: @wine_prefix_path,
-              launch_command: @launch_command
+              launch_command: @launch_command,
+              timestamp: @timestamp.to_i
             }.to_json(options)
           end
         end
