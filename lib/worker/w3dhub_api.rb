@@ -67,9 +67,9 @@ module W3DHubLauncher
             content_length = response.headers["content-length"] || 0
 
             total_downloaded_bytes = 0
-            range = headers.find { |key, value| key == "range" }&.last&.split("=")&.last&.split("-")&.first
-            File.open(path, range ? "r+b" : "wb") do |file|
-              file.pos = Integer(range) if range
+            range = Integer(headers.find { |key, value| key == "range" }&.last&.split("=")&.last&.split("-")&.first || 0)
+            File.open(path, range.positive? ? "r+b" : "wb") do |file|
+              file.pos = range if range.positive?
 
               response.each do |chunk|
                 file.write(chunk)

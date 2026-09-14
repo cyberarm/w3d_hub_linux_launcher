@@ -155,6 +155,8 @@ module W3DHubLauncher
         end
       end.flatten
 
+      return if packages.empty?
+
       result = @worker.w3dhub_api.fetch_package_details(packages)
 
       unless result.okay?
@@ -242,13 +244,35 @@ module W3DHubLauncher
     end
 
     def remove_deleted_files
+      @deleted_manifest_files.each do |manifest_file|
+        file_path = normalize_path(manifest_file.name)
+
+        if File.exist?(file_path) && !File.directory?(file_path)
+          puts "Removing file: #{file_path}"
+          File.delete(file_path)
+
+          remove_from_file_index(file_path)
+        end
+      end
     end
 
     def write_paths_ini
+      File.open(normalize_path("data/paths.ini"), "w") do |file|
+        file.puts("[paths]")
+        file.puts("RegBase=W3D Hub")
+        file.puts("RegClient=#{@application.category}\\#{@application.id}-#{@channel.id}")
+        file.puts("RegFDS=#{@application.category}\\#{@application.id}-#{@channel.id}-server")
+        file.puts("FileBase=W3D Hub");
+        file.puts("FileClient=#{@application.category}\\#{@application.id}-#{@channel.id}")
+        file.puts("FileFDS=#{@application.category}\\#{@application.id}-#{@channel.id}-server")
+
+        file.puts("UseRenFolder=#{@channel.extended_data("usesRenFolder", false)}")
+      end
     end
 
     # updated, and moved applications will overwrite existing application data in settings
     def mark_application_installed
+      puts "APPLICATION: #{@application.name} #{@application.id}:#{@channel.id}:#{@target_version} installed."
     end
 
     def mark_application_uninstalled
@@ -269,9 +293,9 @@ module W3DHubLauncher
       directory = @worker.settings.preferences.launcher_package_cache_directory
 
       if package.version?
-        format("%s/%s/%s", directory, package.version.to_s, package.name)
+        format("%s/%s/%s/%s", directory, @application.id, package.version.to_s, package.name)
       else
-        format("%s/%s", directory, package.name)
+        format("%s/%s/%s", directory, @application.id, package.name)
       end
     end
 
@@ -282,8 +306,8 @@ module W3DHubLauncher
     def create_directory(path)
       path.gsub!("\\", "/")
 
-      # directory already exists, SKIP!
-      unless File.exist?(path) && File.directory?(path) && (file_index = @file_index[path.downcase])
+      # directory doesn't exists, create it!
+      unless File.directory?(path)
         FileUtils.mkdir_p(path)
 
         add_directory_to_file_index(path)
@@ -375,24 +399,29 @@ module W3DHubLauncher
       return result unless result.okay?
 
       response = JSON.parse(result.data)
-      package_details = response["packages"]&.map { |item| Worker::Api::LegacyManifestPackage.new(item) }&.first
+      manifest_package = response["packages"]&.map { |item| Worker::Api::LegacyManifestPackage.new(item) }&.first
 
-      if package_details.nil? || package_details.error?
-        pp package_details
+      if manifest_package.nil? || manifest_package.error?
+        pp manifest_package
         abort_task!("Failed to fetch package details for manifest #{version}")
       end
 
       # FIXME: check if locally downloaded manifest is still valid, if present.
-      result = if package_details.download_url
-        @worker.w3dhub_api.download(package_details.download_url, path: "manifest-#{version}.xml")
+      file_path = package_cache_path(manifest_package)
+
+      create_directory(File.dirname(file_path))
+
+      result = if manifest_package.download_url
+        @worker.w3dhub_api.download(manifest_package.download_url, path: file_path)
       else
         # TODO xD
         @worker.w3dhub_api.fetch_package("TODO")
       end
 
       if result.okay?
-        return Worker::Api::LegacyManifest.new("manifest-#{version}.xml")
+        return Worker::Api::LegacyManifest.new(package_cache_path(manifest_package))
       else
+        pp result
         abort_task!("Failed to fetch manifest #{version}")
       end
     end

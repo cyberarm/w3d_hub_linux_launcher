@@ -68,7 +68,7 @@ module W3DHubLauncher
           def extended_data(key, default)
             v = @extended_data&.find { |d| d.name == key }&.value
             if v.nil?
-              v = @_app.extended_data(key, value)
+              v = @_app.extended_data(key, default)
 
               return default if v.nil?
             end
