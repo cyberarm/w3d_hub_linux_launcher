@@ -16,7 +16,7 @@ module W3DHubLauncher
       @http_clients = {}
     end
 
-    def headers(form_encoded: false)
+    def headers(form_encoded: false, range: nil)
       array = [
         ["user-agent", W3DHubLauncher::USER_AGENT],
         ["accept", "application/json"],
@@ -24,6 +24,7 @@ module W3DHubLauncher
 
       array << ["content-type", "application/x-www-form-urlencoded"] if form_encoded
       array << ["authorization", "Bearer #{@access_token}"] if @access_token
+      array << ["range", "bytes=#{range}-"] if range
 
       # pp array
 
@@ -66,7 +67,10 @@ module W3DHubLauncher
             content_length = response.headers["content-length"] || 0
 
             total_downloaded_bytes = 0
-            File.open(path, "wb") do |file|
+            range = headers.find { |key, value| key == "range" }&.last&.split("=")&.last&.split("-")&.first
+            File.open(path, range ? "r+b" : "wb") do |file|
+              file.pos = Integer(range) if range
+
               response.each do |chunk|
                 file.write(chunk)
                 downloaded_bytes = chunk.length

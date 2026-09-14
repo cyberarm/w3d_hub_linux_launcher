@@ -31,32 +31,32 @@ module W3DHubLauncher
 
         # checksum whole file and file chunks until a mismatch occurs or the whole file is verified.
         def verify_file(filename)
+          return false unless File.exist?(filename) && !File.directory?(filename)
+
           file_size = File.size(filename)
 
-          checksum_chunks = {}
-          overall_checksum = ""
           overall_digest = Digest::SHA256.new
           chunk_digest = Digest::SHA256.new
 
           File.open(filename, "rb") do |f|
             f.pos = 0
             offset = 0
+            last_valid_offset = 0
 
             while (chunk = f.read(@checksum_chunk_size))
-
               overall_digest << chunk
 
-              checksum_chunks[offset] = chunk_digest.update(chunk).hexdigest.upcase
+              # return last valid chunk on invalid chunk
+              return last_valid_offset unless @checksum_chunks[offset.to_s] == chunk_digest.update(chunk).hexdigest.upcase
 
+              last_valid_offset = offset
               offset += @checksum_chunk_size
               chunk_digest.reset
             end
           end
 
-          overall_checksum = overall_digest.hexdigest.upcase
-
-          # FIXME: Make this a nice Data struct object
-          [overall_checksum, checksum_chunks, file_size]
+          # return boolean after completely digesting file
+          @sha256_checksum == overall_digest.hexdigest.upcase
         end
       end
     end

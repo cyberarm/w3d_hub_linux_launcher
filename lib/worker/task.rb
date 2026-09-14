@@ -164,24 +164,33 @@ module W3DHubLauncher
       end
 
       manifest_packages.each do |pkg|
-        # FIXME: verify local packages to prevent overdownloading!
-        # pkg.verify_file(normalize_path(pkg.name))
-
         file_path = package_cache_path(pkg)
         unless File.directory?(File.dirname(file_path))
           puts "creating directory: #{File.dirname(file_path)}"
           FileUtils.mkdir_p(File.dirname(file_path))
         end
 
+        partially_valid_at = 0
+        state = pkg.verify_file(file_path)
+        if state.is_a?(Integer)
+          puts "partially valid at: #{state} bytes (#{file_path})" # 20971520
+          partially_valid_at = state
+        else
+          if state == true # completely verified, skip download!
+            puts "skipping #{file_path}"
+            next
+          end
+        end
+
         result = if pkg.download_url
           puts "downloading #{pkg.download_url} to #{file_path}"
-          @worker.w3dhub_api.download(pkg.download_url, path: file_path)
+          @worker.w3dhub_api.download(pkg.download_url, path: file_path, headers: @worker.w3dhub_api.headers(range: partially_valid_at))
         else
           # TODO xD
           @worker.w3dhub_api.fetch_package("TODO")
         end
 
-        abort_task!("Failed to download required package: #{pkg.name}:#{pkg.version}") unless result.okay?
+        abort_task!("Failed to download required package: #{pkg.name}:#{pkg.version} (#{result.error})") unless result.okay?
       end
     end
 
