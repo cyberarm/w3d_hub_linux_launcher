@@ -215,28 +215,9 @@ module W3DHubLauncher
         next if processed_packages[package_path]
 
         if manifest_file.patch?
+          apply_patch(manifest_file, package)
         else
-          stream = Zip::InputStream.new(File.open(package_path))
-
-          while(entry = stream.get_next_entry)
-            file_path = normalize_path(entry.name)
-
-            next if ignored_file?(file_path)
-
-            pp file_path
-
-            create_directory(File.dirname(file_path))
-
-            File.open(file_path, "wb") do |f|
-              entry_stream = entry.get_input_stream
-
-              while(chunk = entry_stream.read(4_194_304))
-                f.write(chunk)
-              end
-            end
-
-            add_to_file_index(file_path)
-          end
+          unzip(package_path)
         end
 
         processed_packages[package_path] = manifest_file
@@ -423,6 +404,75 @@ module W3DHubLauncher
       else
         pp result
         abort_task!("Failed to fetch manifest #{version}")
+      end
+    end
+
+    def apply_patch(manifest_file, package)
+      Tempfile.create do |f|
+        package_path = package_cache_path(package)
+
+        puts "unpacking patch..."
+        unzip(package_path, f.path)
+
+        puts "reading patch data.."
+        patch_mix = W3DHubLauncher::WWMix.new(path: f.path)
+        raise patch_mix.error_reason unless patch_mix.load
+
+        patch_entry = patch_mix.entries.find { |e| e.name.casecmp?(".w3dhub.patch") || e.name.casecmp?(".bhppatch") }
+        patch_entry.read
+        # "remove" patch meta file from patch before copying patch data
+        patch_mix.entries.delete(patch_entry)
+
+        patch_info = JSON.parse(patch_entry.blob)
+
+        puts "loading target mix metadata... (#{normalize_path(manifest_file.name)})"
+        target_mix = W3DHubLauncher::WWMix.new(path: normalize_path(manifest_file.name))
+        raise target_mix.error_reason unless target_mix.load
+
+        patch_info["removedFiles"].each do |file|
+          puts "removing file from target: #{file}"
+          target_mix.entries.delete_if  { |e| e.name.casecmp?(file) }
+        end
+
+        patch_info["updatedFiles"].each do |file|
+          puts "adding/updating file from target: #{file}"
+          patch_mix.entries.each do |entry|
+            target_mix.add_entry(entry: entry, replace: true)
+          end
+        end
+
+        Tempfile.create do |temp|
+          temp_mix = W3DHubLauncher::WWMix.new(path: temp.path, encrypted: target_mix.encrypted?)
+          target_mix.entries.each { |e| temp_mix.add_entry(entry: e, replace: true) }
+          raise temp_mix.error_reason unless temp_mix.save
+
+          puts "copying file..."
+          FileUtils.cp(temp.path, normalize_path(manifest_file.name))
+        end
+      end
+    end
+
+    def unzip(zip_path, output_path = nil)
+      stream = Zip::InputStream.new(File.open(zip_path))
+
+      while(entry = stream.get_next_entry)
+        file_path = output_path || normalize_path(entry.name)
+
+        next if ignored_file?(file_path)
+
+        pp file_path
+
+        create_directory(File.dirname(file_path)) unless output_path
+
+        File.open(file_path, "wb") do |f|
+          entry_stream = entry.get_input_stream
+
+          while(chunk = entry_stream.read(4_194_304))
+            f.write(chunk)
+          end
+        end
+
+        add_to_file_index(file_path)
       end
     end
   end
