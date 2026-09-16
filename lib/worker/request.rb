@@ -3,12 +3,6 @@ module W3DHubLauncher
     class Request
       Query = Data.define(:type, :request_id, :data)
 
-      FETCH_URL = 0
-      DOWNLOAD_URL = 1
-      W3DHUB_API_CALL = 10
-      LAUNCHER_SETTINGS = 1000
-      LAUNCHER_UPDATE_SETTINGS = 1001
-
       STATUS_ERROR = -1 # request has failed
       STATUS_PENDING = 0 # request has not yet started
       STATUS_OK = 1 # request completed successfully
@@ -54,9 +48,10 @@ module W3DHubLauncher
       def handle_event(event, data)
         # pp [event, data]
 
+        @callback&.call(data, event)
+
         case event
         when STATUS_ERROR, STATUS_COMPLETE
-          @callback&.call(data)
           Request.requests.delete(self)
         end
       end

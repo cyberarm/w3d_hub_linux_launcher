@@ -140,6 +140,15 @@ module W3DHubLauncher
       @client&.flush
     end
 
+    def message_requester(request_id:, status:, data:, error: nil)
+      payload = { status: status, request_id: request_id, data: data, error: error }.to_json
+
+      @client&.write(payload)
+      @client&.write(RESPONSE_SEPARATOR)
+      @client&.flush
+    end
+
+
     # Send request to server
     def request(query)
       # pp [:client_request, query]

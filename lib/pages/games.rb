@@ -157,7 +157,7 @@ module W3DHubLauncher
 
       def populate_game_info
         # FIXME: We should be able to query an api to figure out the installation state, instead of explictly writing it out like this...
-        application = MemCache[:settings].applications.find { |app| app.id == @current_app.id }
+        application = MemCache[:settings].applications.find { |app| app.id == @current_app.id && app.channel == @current_channel&.id }
         # pp application
 
         @game_info_container.clear do
@@ -188,19 +188,33 @@ module W3DHubLauncher
             if application
               button "JOIN", tip: "Join most populated or lowest ping server", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME
               button safe_get_image("#{ROOT_PATH}/media/icons/singleplayer.png"), tip: "Single player", image_height: 1.0, background_nine_slice: NINE_SLICE_SQUARE, **CTA_BUTTON_THEME
-              button safe_get_image("#{ROOT_PATH}/media/icons/gear.png"), tip: "Options", image_height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME
+              button safe_get_image("#{ROOT_PATH}/media/icons/gear.png"), tip: "Options", image_height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME do |btn|
+                menu(parent: btn) do
+                  menu_item("Game Settings")
+                  menu_item("Show in Explorer")
+                  menu_item("Repair Installation")
+                  menu_item("Check for Updates")
+                  stack(width: 1.0, height: 4, background: 0xff_bbbbbb)
+                  menu_item("Move Installation")
+                  menu_item("Uninstall")
+                end.show
+              end
             elsif @current_app.servicable?
               # pp @current_app
               button "Import", enabled: false, tip: "Import existing application installation", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME
-              button "Download", tip: "Download and install application", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME do
-                Worker::Api.install_application(@current_app.id, @current_channel.id)
+              button "Download", tip: "Download and install application", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME do |btn|
+                btn.enabled = false
+
+                Worker::Api.install_application(@current_app.id, @current_channel.id) do |status, result|
+                  handle_task_update(status, result)
+                end
               end
             else
               button "Import", enabled: false, tip: "Import existing application installation", fill: true, height: 1.0, **CTA_BUTTON_THEME
             end
           end
-          # FIXME: the reported version should be the _installed_ version, not the current channel version
-          inscription "Version: #{@current_channel.version}", margin_top: PADDING, tip: "Installed version" if application
+
+          inscription "Version: #{application.version}", margin_top: PADDING, tip: "Installed version" if application
         end
       end
 
@@ -250,6 +264,39 @@ module W3DHubLauncher
 
       def news_item_width_ratio
         (@news_container.width / 400.0).round.clamp(1..10)
+      end
+
+      def handle_task_update(result, status)
+        pp [result, status]
+
+        status_bar = current_state.application_task_status_bar_container
+        status_bar_title = find_element_by_tag(status_bar, :status_bar_title)
+        status_bar_label = find_element_by_tag(status_bar, :status_bar_label)
+        status_bar_progress = find_element_by_tag(status_bar, :status_bar_progress)
+
+        data = result.data
+
+        case status
+        when Worker::Request::STATUS_COMPLETE
+          status_bar.hide
+
+          MemCache[:settings].applications << Worker::Api::Settings::Application.new(data["application"])
+          Worker::Api.update_settings(MemCache[:settings])
+
+          populate_game_info
+        when Worker::Request::STATUS_IN_PROGRESS
+          status_bar.show
+
+          status_bar_title.value = data["status"]["title"]
+          status_bar_label.value = data["status"]["label"]
+          status_bar_progress.value = data["status"]["fraction"]
+        when Worker::Request::STATUS_ERROR
+          status_bar.hide
+
+          populate_game_info
+
+          # FIXME: Present error to player
+        end
       end
     end
   end

@@ -1,6 +1,8 @@
 module W3DHubLauncher
   class States
     class Interface < W3DHubLauncher::State
+      attr_reader :application_task_status_bar_container
+
       def setup
         super
 
@@ -30,9 +32,9 @@ module W3DHubLauncher
                   # stack(fill: true)
 
                   # navigation container
-                  flow(width: 1.0) do
-                    link("GAMES", text_v_align: :center, font: FONT_BLACK, margin_left: PADDING) { page(Page::Games) }
-                    link("SERVERS", text_v_align: :center, font: FONT_BLACK, margin_left: PADDING) { page(Page::ServerBrowser) }
+                  flow(width: 1.0, fill: true) do
+                    link("GAMES",height: 1.0, text_v_align: :center, font: FONT_BLACK, margin_left: PADDING) { page(Page::Games) }
+                    link("SERVERS",height: 1.0, text_v_align: :center, font: FONT_BLACK, margin_left: PADDING) { page(Page::ServerBrowser) }
                     stack(fill: true)
                     image safe_get_image("#{ROOT_PATH}/media/icons/import.png"), height: 40, color: 0xff_bbbbbb, tip: "Downloads" do |img|
                       dialog(Dialog::Downloads)
@@ -40,31 +42,31 @@ module W3DHubLauncher
                     image safe_get_image("#{ROOT_PATH}/media/icons/information.png"), height: 40, color: 0xff_bbbbbb, tip: "Notifications"
                   end
                   # application task status bar container
-                  stack(width: 1.0, fill: true, margin_left: PADDING) do
+                  @application_task_status_bar_container = stack(width: 1.0, fill: true, margin_left: PADDING, visible: false) do
                     flow(width: 1.0) do
-                      para "Updating Red Alert: A Path Beyond (Release)"
+                      para "Updating Red Alert: A Path Beyond (Release)", tag: :status_bar_title
                       stack(fill: true)
-                      para "Fetching manifests..."
+                      para "Fetching manifests...", tag: :status_bar_label
                     end
-                    progress(width: 1.0, fraction: 0.75)
+                    progress(width: 1.0, fraction: 0.0, tag: :status_bar_progress)
                   end
                 end
 
                 # self account container
-                flow(width: 400, height: 80, margin_left: LARGE_PADDING) do
+                @account_container = flow(width: 400, height: 80, margin_left: LARGE_PADDING) do
                   # self avatar container
-                  stack(width: 80, height: 1.0, background_image: rounded_avatar(safe_get_image("#{ROOT_PATH}/media/default.png"))) do |i|
+                  stack(width: 80, height: 1.0, background_image: rounded_avatar(safe_get_image("#{ROOT_PATH}/media/default.png")), tag: :account_avatar) do |i|
                     i.subscribe(:clicked_left_mouse_button) do
                       dialog(Dialog::Account)
                     end
                     # self online state container
-                    stack(width: 20, height: 20, v_align: :bottom, h_align: :right, background_image: safe_get_image("#{ROOT_PATH}/media/ui/circle_small.png"), background_image_color: 0xff_26a269)
+                    stack(width: 20, height: 20, v_align: :bottom, h_align: :right, background_image: safe_get_image("#{ROOT_PATH}/media/ui/circle_small.png"), background_image_color: 0xff_26a269, tag: :account_online_state)
                   end
 
                   stack(fill: true, height: 1.0, margin_left: HALF_PADDING) do
                     flow(fill: true)
                     # self name
-                    caption "cyberarm", font: FONT_BLACK, text_wrap: :none
+                    caption "cyberarm", font: FONT_BLACK, text_wrap: :none, width: 1.0, tag: :account_name
                     # self set online state
                     link "Online ▼", text_size: 18 do |l|
                       menu(parent: l) do

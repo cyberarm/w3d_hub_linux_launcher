@@ -40,11 +40,15 @@ module W3DHubLauncher
 
       @installation_directory ||= application_target_installation_directory
 
+      update_status(label: "Starting...", fraction: 0.0)
+
       execute
     end
 
     def abort_task!(reason = "")
       puts reason
+
+      message_requester(Worker::Request::STATUS_ERROR, data: nil, error: reason)
 
       raise reason
     end
@@ -60,6 +64,8 @@ module W3DHubLauncher
     end
 
     def fetch_manifests(version = @target_version)
+      update_status(label: "Fetching manifests...", fraction: 0.0)
+
       while (manifest = fetch_manifest(version))
         @manifests[version] = manifest
 
@@ -70,6 +76,8 @@ module W3DHubLauncher
     end
 
     def build_package_list
+      update_status(label: "Building package list...", fraction: 0.0)
+
       channel_manifests = []
       version = @target_version
 
@@ -108,6 +116,8 @@ module W3DHubLauncher
     end
 
     def verify_files
+      update_status(label: "Verifying files...", fraction: 0.0)
+
       @required_manifest_files = @manifest_files.clone
 
       # Process manifest game files in NEWEST to OLDEST order so that we don't erroneously flag
@@ -135,6 +145,8 @@ module W3DHubLauncher
     end
 
     def fetch_packages
+      update_status(label: "Downloading packages...", fraction: 0.0)
+
       required_packages = {}
       @required_manifest_files.each do |file|
         required_packages[file.version] ||= []
@@ -203,6 +215,8 @@ module W3DHubLauncher
     end
 
     def install_packages
+      update_status(label: "Installing...", fraction: 0.0)
+
       create_directory(@installation_directory)
 
       processed_packages = {}
@@ -225,6 +239,8 @@ module W3DHubLauncher
     end
 
     def remove_deleted_files
+      update_status(label: "Removing files...", fraction: 0.0)
+
       @deleted_manifest_files.each do |manifest_file|
         file_path = normalize_path(manifest_file.name)
 
@@ -253,13 +269,34 @@ module W3DHubLauncher
 
     # updated, and moved applications will overwrite existing application data in settings
     def mark_application_installed
+      app = Worker::Api::Settings::Application.create(
+        id: @application.id,
+        channel: @channel.id,
+        version: @target_version.to_s,
+        installation_path: @installation_directory,
+        wine_prefix_path: "",
+        launch_command: "%COMMAND%",
+        timestamp: Time.now.to_i
+      )
+
+      message_requester(Worker::Request::STATUS_COMPLETE, data: { application: app })
+
       puts "APPLICATION: #{@application.name} #{@application.id}:#{@channel.id}:#{@target_version} installed."
     end
 
     def mark_application_uninstalled
+      message_requester(Worker::Request::STATUS_COMPLETE, data: {})
     end
 
     # helper functions
+
+    def message_requester(status = Worker::Request::STATUS_IN_PROGRESS, data:, error: nil)
+      @worker.message_requester(request_id: @request_id, status: status, data: data, error: error)
+    end
+
+    def update_status(label:, fraction:)
+      message_requester(data: { status: { title: "TASK #{@application.name} (#{@channel.name})", label: label, fraction: fraction } } )
+    end
 
     def application_target_installation_directory
       target_application = @worker.settings.applications.find { |app| app.id == @application.id && app.channel == @channel.id }
