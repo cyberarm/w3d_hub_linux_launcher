@@ -49,12 +49,12 @@ module W3DHubLauncher
           end
 
           # game events and news container
-          stack(fill: true, height: 1.0, margin_left: LARGE_PADDING, scroll: true) do
-            @event_container = stack(width: 1.0, padding: PADDING, margin_left: HALF_PADDING, margin_right: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0x88_26a269) do
+          stack(fill: true, height: 1.0, margin_left: PADDING, scroll: true) do
+            @event_container = stack(width: 1.0, padding: PADDING, margin_left: PADDING, margin_bottom: PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0x88_26a269) do
             end
 
             # news container
-            @news_container = flow(width: 1.0, margin_top: PADDING) do
+            @news_container = flow(width: 1.0) do
             end
 
             # "dynamically" adjust news item widths
@@ -240,7 +240,7 @@ module W3DHubLauncher
 
         @news_container.clear do
           app_news.each do |item|
-            stack(width: 1.0 / news_item_width_ratio, height: 345, aspect_ratio: 1, margin_left: HALF_PADDING, margin_right: HALF_PADDING, margin_bottom: PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
+            stack(width: 1.0 / news_item_width_ratio, height: 345, aspect_ratio: 1, margin_left: PADDING, margin_bottom: PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
               stack(width: 1.0, height: 1.0 / 2.5, padding: PADDING, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY) do
                 para item.timestamp.strftime("%B %e, %Y") #"September 29, 2026"
                 tagline item.title
