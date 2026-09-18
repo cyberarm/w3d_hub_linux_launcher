@@ -40,12 +40,16 @@ module W3DHubLauncher
 
       def present_item(item)
         unless item.url.empty?
-          link item.name, tip: item.url, margin_left: PADDING, font: FONT_BOLD
+          link item.name, tip: item.url, margin_left: PADDING, font: FONT_BOLD do
+            SDL.OpenURL(item.url)
+          end
         else
           tagline item.name, margin_left: PADDING
         end
         para item.description, margin_left: LARGE_PADDING
-        link item.license, tip: item.license_url, margin_left: PADDING + LARGE_PADDING unless item.license.empty?
+        link item.license, tip: item.license_url, margin_left: PADDING + LARGE_PADDING unless item.license.empty? do
+          SDL.OpenURL(item.license_url)
+        end
       end
     end
   end

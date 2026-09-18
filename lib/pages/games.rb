@@ -183,6 +183,7 @@ module W3DHubLauncher
               populate_game_info
             end
           end
+
           flow(width: 1.0, height: 60) do
             if application
               button "JOIN", tip: "Join most populated or lowest ping server", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME
@@ -191,18 +192,25 @@ module W3DHubLauncher
               end
               button safe_get_image("#{ROOT_PATH}/media/icons/gear.png"), tip: "Options", image_height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME do |btn|
                 menu(parent: btn) do
-                  menu_item("Game Settings")
-                  menu_item("Show in Explorer")
-                  menu_item("Repair Installation")
-                  menu_item("Check for Updates")
-                  stack(width: 1.0, height: 4, background: 0xff_bbbbbb)
-                  menu_item("Move Installation")
-                  menu_item("Uninstall")
+                  menu_item("v#{application.version}", enabled: false, disabled: { color: 0xdd_ffffff }, tip: "Installed application version")
+                  stack(width: 1.0, height: 2, background: 0xff_bbbbbb)
+                  menu_item("Installation Folder", tip: "Open application installation folder:\n#{application.installation_path}")
+                  menu_item("Screenshots Folder", tip: "Open application installation folder:\n#{Dir.home}/Documents/W3D Hub/#{application.id}-#{application.channel}/Screenshots")
+                  stack(width: 1.0, height: 2, background: 0xff_bbbbbb)
+                  menu_item("Application Settings", tip: "Edit application launch options")
+                  menu_item("Repair Installation", tip: "Attempt to fix and repair installation")
+                  menu_item("Check for Updates", tip: "Manually check for application updates")
+                  stack(width: 1.0, height: 2, background: 0xff_bbbbbb)
+                  menu_item("Move Installation", tip: "Move application installation to a different directory or disk")
+                  menu_item("Unlink Installation", tip: "The application will be removed from the launcher\nbut the application's files will not be touched")
+                  menu_item("Uninstall", tip: "Uninstall application and delete files")
                 end.show
               end
             elsif @current_app.servicable?
               # pp @current_app
-              button "Import", enabled: false, tip: "Import existing application installation", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME
+              button "Import", tip: "Import existing application installation", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME do |btn|
+                dialog(Dialog::ImportApplication, application: @current_app, channel: @current_channel)
+              end
               button "Download", tip: "Download and install application", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME do |btn|
                 btn.enabled = false
 
@@ -214,8 +222,6 @@ module W3DHubLauncher
               button "Import", enabled: false, tip: "Import existing application installation", fill: true, height: 1.0, **CTA_BUTTON_THEME
             end
           end
-
-          inscription "Version: #{application.version}", margin_top: PADDING, tip: "Installed version" if application
         end
       end
 
