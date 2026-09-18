@@ -24,11 +24,23 @@ module W3DHubLauncher
         env,
         "#{wine_command(app)}#{exe_path} -launcher #{args.join(' ')}"
       )
+
       Process.detach(pid)
     end
 
-    def self.join_server(app, server, password: nil, token: nil)
+    def self.join_server(app, server, password: nil, token: nil, multi: false)
+      parameters = []
 
+      parameters << format("+connect %s:%s", server.address, server.port)
+      parameters << format("+netplayername \"%s\"", "cyberarm")
+      parameters << format("+password \"%s\"", password) if password
+      parameters << format("+userkey \"%s\"", token) if token
+      parameters << "+multi" if multi
+
+      run(
+        app,
+        parameters.join(" ")
+      )
     end
   end
 end

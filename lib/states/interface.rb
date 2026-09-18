@@ -159,14 +159,16 @@ module W3DHubLauncher
       def populate_server_information(server)
         return unless @server_details_container.visible?
 
+        application = MemCache[:settings].applications.find { |app| app.id == server.game && app.channel == server.channel }
+
         @server_details_container.clear do
           tagline server.name, width: 1.0, text_wrap: :none, tip: server.name
-          image safe_get_image("#{ROOT_PATH}/media/default_map_preview.png"), width: 1.0, tip: server.current_map, margin_bottom: PADDING
+          image safe_get_image("#{ROOT_PATH}/media/default_map_preview.png"), width: 1.0, aspect_ratio: 16 / 9.0, tip: server.current_map, margin_bottom: PADDING
 
           flow(width: 1.0) do
-            stack(fill: true)
-            button "JOIN SERVER", **CTA_BUTTON_THEME, width: 1.0, enabled: false, tip: "Game not installed I guess..."
-            stack(fill: true)
+            button "JOIN SERVER", **CTA_BUTTON_THEME, width: 1.0, enabled: !application.nil?, tip: application.nil? ? "Application not installed" : "" do
+              ApplicationHelper.join_server(application, server)
+            end
           end
 
           stack(width: 1.0, fill: true, scroll: true, margin_top: PADDING) do

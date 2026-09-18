@@ -16,15 +16,16 @@ module W3DHubLauncher
 
             w.subscribe(:clicked_left_mouse_button) do
               @games_filter.clear
+              @app_filters_container.children.each { |c| c.enabled = true }
               populate_server_list
             end
           end
 
-          flow(fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY, margin_left: PADDING) do
+          @app_filters_container = flow(fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_GRAY, margin_left: PADDING) do
             MemCache[:applications].each do |app|
               next unless app.game?
 
-              button(safe_get_image("#{CACHE_PATH}/icon_#{app.id}.png"), style_class: [:app_icon_button], tip: app.name) do |btn|
+              button(safe_get_image("#{CACHE_PATH}/icon_#{app.id}.png"), style_class: [:app_icon_button], tag: :"app_filter_#{app.id}", tip: app.name) do |btn|
                 if shift_down?
                   @games_filter << app.id
                   @games_filter.uniq!
@@ -32,6 +33,10 @@ module W3DHubLauncher
                   @games_filter.clear
                   @games_filter << app.id
                 end
+
+                buttons = btn.parent.children
+                filters = @games_filter.map { |f| :"app_filter_#{f}" }
+                buttons.each { |e| e.enabled = !filters.include?(e.style.tag) }
 
                 btn.enabled = false
 
