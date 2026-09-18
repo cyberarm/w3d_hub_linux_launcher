@@ -34,6 +34,10 @@ module W3DHubLauncher
           }.to_json(options)
         end
 
+        def application_installed?(application, channel)
+          applications.find { |app| app.id == application&.id && app.channel == channel&.id }
+        end
+
         # User explictly set options
         class Preferences
           SCHEMA = 0

@@ -156,8 +156,7 @@ module W3DHubLauncher
       end
 
       def populate_game_info
-        # FIXME: We should be able to query an api to figure out the installation state, instead of explictly writing it out like this...
-        application = MemCache[:settings].applications.find { |app| app.id == @current_app.id && app.channel == @current_channel&.id }
+        application = MemCache[:settings].application_installed?(@current_app, @current_channel)
         # pp application
 
         @game_info_container.clear do
@@ -187,7 +186,9 @@ module W3DHubLauncher
           flow(width: 1.0, height: 60) do
             if application
               button "JOIN", tip: "Join most populated or lowest ping server", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME
-              button safe_get_image("#{ROOT_PATH}/media/icons/singleplayer.png"), tip: "Single player", image_height: 1.0, background_nine_slice: NINE_SLICE_SQUARE, **CTA_BUTTON_THEME
+              button safe_get_image("#{ROOT_PATH}/media/icons/singleplayer.png"), tip: "Single player", image_height: 1.0, background_nine_slice: NINE_SLICE_SQUARE, **CTA_BUTTON_THEME do
+                ApplicationHelper.run(application)
+              end
               button safe_get_image("#{ROOT_PATH}/media/icons/gear.png"), tip: "Options", image_height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME do |btn|
                 menu(parent: btn) do
                   menu_item("Game Settings")

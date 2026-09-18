@@ -43,6 +43,7 @@ require_relative "lib/dialogs/account"
 require_relative "lib/states/boot"
 require_relative "lib/states/interface"
 require_relative "lib/window"
+require_relative "lib/application_helper"
 
 require_relative "lib/ico"
 require_relative "lib/ww_mix"
