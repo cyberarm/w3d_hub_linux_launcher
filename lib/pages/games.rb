@@ -186,7 +186,15 @@ module W3DHubLauncher
 
           flow(width: 1.0, height: 60) do
             if application
-              button "JOIN", tip: "Join most populated or lowest ping server", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME
+              button "JOIN", tip: "Join most populated or lowest ping server", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME do |btn|
+                server = ApplicationHelper.play_now_server(application)
+
+                if server
+                  ApplicationHelper.join_server(application, server)
+                else
+                  puts "No server available."
+                end
+              end
               button safe_get_image("#{ROOT_PATH}/media/icons/singleplayer.png"), tip: "Single player", image_height: 1.0, background_nine_slice: NINE_SLICE_SQUARE, **CTA_BUTTON_THEME do
                 ApplicationHelper.run(application)
               end

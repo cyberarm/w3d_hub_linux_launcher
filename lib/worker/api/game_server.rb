@@ -4,6 +4,7 @@ module W3DHubLauncher
       # Designed to work with cyberarm's Game Server Hub service data, may work with W3D Hub's service with degraded metadata.
       class GameServer
         BAD_OR_UNKNOWN_PING = 1_000_000
+        NO_OR_DEFAULT_VERSION = "838".freeze
 
         attr_reader :id, :game, :channel, :address, :port, :region,
                     :name, :password, :current_map, :player_count, :max_players,
@@ -45,8 +46,10 @@ module W3DHubLauncher
           end
 
           # Cyberarm GSH extras
-          @version = data["version"] || "838"
+          @version = data["version"] || NO_OR_DEFAULT_VERSION
           @next_map = data["status"]["nextmap"] || ""
+
+          @version = Gem::Version.new(@version) if @version.split(".").size == 4
         end
 
         # TODO: implement :)

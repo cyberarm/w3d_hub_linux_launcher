@@ -159,7 +159,9 @@ module W3DHubLauncher
       def populate_server_information(server)
         return unless @server_details_container.visible?
 
+        # FIXME: check server channel against application channel's `server_channel`
         application = MemCache[:settings].applications.find { |app| app.id == server.game && app.channel == server.channel }
+        # channel = MemCache[:applications].find { |appl| appl.id == application&.id }&.channels&.find { |c| c.id == application&.channel }
 
         @server_details_container.clear do
           tagline server.name, width: 1.0, text_wrap: :none, tip: server.name

@@ -42,5 +42,27 @@ module W3DHubLauncher
         parameters.join(" ")
       )
     end
+
+    # select "best" server to join
+    def self.play_now_server(app)
+      channel = MemCache[:applications].find { |appl| appl.id == app.id }&.channels&.find { |c| c.id == app.channel }
+      return nil unless channel
+
+      server_options = MemCache[:servers].select do |server|
+        server.game == app.id &&
+        server.channel == channel.server_channel &&
+        !server.password? &&
+        server.player_count < server.max_players
+      end.sort_by do |s|
+        [s.player_count, -s.ping]
+      end.reverse
+
+      # try to find server with lowest ping and matching app version
+      found_server = server_options.find { |s| s.version == app.version }
+      # try to find server with lowest ping and undefined version
+      found_server ||= server_options.find { |s| s.version == Worker::Api::GameServer::NO_OR_DEFAULT_VERSION }
+
+      found_server
+    end
   end
 end

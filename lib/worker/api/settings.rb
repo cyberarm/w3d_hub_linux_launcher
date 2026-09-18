@@ -78,7 +78,7 @@ module W3DHubLauncher
           SCHEMA = 0
 
           attr_reader :id, :channel
-          attr_accessor :version, :installation_path, :wine_prefix_path, :launch_command
+          attr_accessor :version, :installation_path, :wine_prefix_path, :launch_command, :timestamp
 
           def self.create(id:, channel:, version:, installation_path:, wine_prefix_path:, launch_command:, timestamp:)
             hash = {
