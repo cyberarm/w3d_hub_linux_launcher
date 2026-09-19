@@ -47,8 +47,10 @@ module W3DHubLauncher
           tagline item.name, margin_left: PADDING
         end
         para item.description, margin_left: LARGE_PADDING
-        link item.license, tip: item.license_url, margin_left: PADDING + LARGE_PADDING unless item.license.empty? do
-          SDL.OpenURL(item.license_url)
+        unless item.license.empty?
+          link format("%s license", item.license), tip: item.license_url, margin_left: PADDING + LARGE_PADDING do
+            SDL.OpenURL(item.license_url)
+          end
         end
       end
     end

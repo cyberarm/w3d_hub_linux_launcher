@@ -301,6 +301,66 @@ module W3DHubLauncher
       deliver_response(result, query)
     end
 
+    def server_map_image(query)
+      result = CyberarmEngine::Result.new
+
+      # TODO: Ideally battleview would host readily accessible map previews
+      server = @game_servers.find { |s| s.address == query.data["server"]["address"] && s.port == query.data["server"]["port"] }
+      return deliver_response(result, query) unless server
+
+      # is application installed to source data from?
+      application = @settings.application_installed?(server.game, server.channel)
+      return deliver_response(result, query) unless application
+
+      save_path = server.map_preview_image_path
+      if File.exist?(save_path)
+        result.data = { image_path: save_path }
+
+        return deliver_response(result, query)
+      end
+
+      map_mix = Dir.glob("#{application.installation_path}/**/#{query.data["server"]["map"]}")&.first
+      return deliver_response(result, query) unless map_mix
+
+      mix = W3DHubLauncher::WWMix.new(path: map_mix)
+      return deliver_response(result, query) unless mix.load
+
+      entry = nil
+      canvas = nil
+
+      entry = mix.entries.find { |e| e.name.match?(/_map_preview\.png/i) }
+      entry ||= mix.entries.find { |e| e.name.match?(/_map_preview\.dds/i) }
+      entry ||= mix.entries.find { |e| e.name.match?(/screenshot\.png/i) }
+      entry ||= mix.entries.find { |e| e.name.match?(/screenshot\.dds/i) }
+      entry ||= mix.entries.find { |e| e.name.match?(/_map\.png/i) }
+      entry ||= mix.entries.find { |e| e.name.match?(/_map\.dds/i) }
+
+      return deliver_response(result, query) unless entry
+      return deliver_response(result, query) unless entry.read
+
+      if entry.name.match?(/\.dds/i)
+        begin
+          dds = W3DHubLauncher::DDS.new(io: StringIO.new(entry.blob))
+          image_data = dds.images.first
+
+          canvas = ChunkyPNG::Canvas.from_rgba_stream(image_data.width, image_data.height, image_data.data)
+          canvas.save(save_path)
+        rescue StandardError => e
+          result.error = e
+
+          return deliver_response(result, query)
+        end
+
+      elsif entry.name.match?(/\.png/i)
+        # canvas = ChunkyPNG::Canvas.from_blob(entry.blob)
+        File.binwrite(save_path, entry.blob)
+      end
+
+      result.data = { image_path: save_path }
+
+      deliver_response(result, query)
+    end
+
     def dns_resolution(query)
       result = CyberarmEngine::Result.new
 

@@ -165,9 +165,33 @@ module W3DHubLauncher
 
         @server_details_container.clear do
           tagline server.name, width: 1.0, text_wrap: :none, tip: server.name
-          image safe_get_image("#{ROOT_PATH}/media/default_map_preview.png"), width: 1.0, aspect_ratio: 16 / 9.0, tip: server.current_map, margin_bottom: PADDING
+          map_image_container = stack(width: 1.0, height: (@server_details_container.content_width / 640.0) * 360, background_image: safe_get_image(server.map_preview_image_path, fallback_path: "#{ROOT_PATH}/media/default_map_preview.png")) do
+            caption(
+              server.current_map,
+              text_border: false,
+              text_border_size: 1,
+              text_border_color: Gosu::Color::RED,
+              text_shadow: false,
+              width: 1.0,
+              height: 1.0,
+              padding_bottom: PADDING,
+              text_align: :center,
+              text_v_align: :bottom,
+              tip: server.current_map
+            )
+          end
+          unless File.exist?(server.map_preview_image_path)
+            Worker::Api.server_map_image(server) do |result, status|
+              # If the requested image is still the needed image?
+              next unless @server_details_container.children.include?(map_image_container)
+              next unless result.okay?
 
-          flow(width: 1.0) do
+              post_process_map_preview_image(result.data["image_path"])
+              map_image_container.background_image = safe_get_image(result.data["image_path"])
+            end
+          end
+
+          flow(width: 1.0, margin_top: PADDING) do
             button "JOIN SERVER", **CTA_BUTTON_THEME, width: 1.0, enabled: !application.nil?, tip: application.nil? ? "Application not installed" : "" do
               ApplicationHelper.join_server(application, server)
             end
@@ -301,6 +325,34 @@ module W3DHubLauncher
             end
           end
         end
+      end
+
+      # Get them rounded corners!
+      def post_process_map_preview_image(path)
+        image = Gosu::Image.new(path)
+
+        target_width = 640
+        target_height= 360
+
+        nine_slice = CyberarmEngine::BackgroundNineSlice.new(
+          image_path: NINE_SLICE_ROUNDED,
+          mode: :stretch,
+          width: target_width,
+          height: target_height,
+          left: NINE_SLICE_EDGE,
+          right: NINE_SLICE_EDGE,
+          top: NINE_SLICE_EDGE,
+          bottom: NINE_SLICE_EDGE,
+          render_mode: :multiply
+        )
+
+        composite = Gosu.render(target_width, target_height) do
+          image_scale = [target_width / image.width.to_f, target_height / image.height.to_f].max
+          image.draw_rot(target_width / 2, target_height / 2, 0, 0, 0.5, 0.5, image_scale, image_scale)
+          nine_slice.draw
+        end
+
+        composite.save(path)
       end
 
       def button_up(id)

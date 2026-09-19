@@ -89,6 +89,10 @@ module W3DHubLauncher
             0xff_3d3846
           end
         end
+
+        def map_preview_image_path
+          format("%s/map_preview_%s.png", W3DHubLauncher::CACHE_PATH, Digest::SHA256.hexdigest("#{@game}_#{@channel}_#{@current_map}"))
+        end
       end
 
       class Team

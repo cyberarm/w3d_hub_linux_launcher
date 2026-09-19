@@ -47,6 +47,7 @@ require_relative "lib/window"
 require_relative "lib/application_helper"
 
 require_relative "lib/ico"
+require_relative "lib/dds"
 require_relative "lib/ww_mix"
 
 require_relative "lib/worker"

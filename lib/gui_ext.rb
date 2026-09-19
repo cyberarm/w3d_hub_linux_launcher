@@ -3,7 +3,7 @@ module W3DHubLauncher
     BLACK_IMAGE = Gosu.render(64, 64, retro: true) { Gosu.draw_rect(0, 0, 32, 32, Gosu::Color::BLACK) }
     WHITE_IMAGE = Gosu.render(64, 64, retro: true) { Gosu.draw_rect(0, 0, 32, 32, Gosu::Color::WHITE) }
 
-    def safe_get_image(path, retro: false)
+    def safe_get_image(path, fallback_path: "#{ROOT_PATH}/media/default.png", retro: false)
       raise RuntimeError, "Images may only be loaded from the main thread!" unless Thread.current == Thread.main
 
       begin
@@ -12,8 +12,11 @@ module W3DHubLauncher
         pp e
       end
 
-      path = "#{ROOT_PATH}/media/default.png"
-      return get_image(path, retro: retro) if File.exist?(path)
+      begin
+        return get_image(fallback_path, retro: retro) if File.exist?(fallback_path)
+      rescue RuntimeError => e
+        pp e
+      end
 
       WHITE_IMAGE
     end

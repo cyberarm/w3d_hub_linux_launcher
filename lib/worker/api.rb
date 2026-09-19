@@ -16,6 +16,10 @@ module W3DHubLauncher
         Worker::Request.new(:ico_to_png, { ico_path: ico_path, png_path: png_path }, &block)
       end
 
+      def self.server_map_image(server, &block)
+        Worker::Request.new(:server_map_image, { server: { address: server.address, port: server.port, map: server.current_map } }, &block)
+      end
+
       def self.dns_resolution(&block)
         Worker::Request.new(:dns_resolution, "", &block)
       end
