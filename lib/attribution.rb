@@ -12,7 +12,7 @@ module W3DHubLauncher
     LIBRARIES = [
       Item.new("Ruby", "Programming language. A Programmer's Best Friend", "https://ruby-lang.org", "BSD 2-Clause", "https://www.ruby-lang.org/en/about/license.txt"),
       Item.new("gosu", "Light-weight game library", "https://libgosu.org", "MIT", "https://github.com/gosu/gosu/blob/master/COPYING"),
-      Item.new("SDL2", "Simple DirectMedia Layer", "https://libsdl.org", "MIT", "https://github.com/libsdl-org/SDL/blob/SDL2/LICENSE.txt"),
+      Item.new("SDL3", "Simple DirectMedia Layer", "https://libsdl.org", "zlib", "https://github.com/libsdl-org/SDL/blob/main/LICENSE.txt"),
       Item.new("MojoAL", "OpenAL sound library implementation in a single C file", "https://icculus.org/mojoAL/", "MIT", "https://github.com/icculus/mojoAL/blob/main/LICENSE.txt"),
 
       Item.new("async", "Asynchronous event-driven reactor for Ruby", "https://github.com/socketry/async", "MIT", "https://github.com/socketry/async/blob/main/license.md"),
