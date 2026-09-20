@@ -18,7 +18,7 @@ module W3DHubLauncher
       unless wine_prefix(app).to_s.empty?
         env["WINEPREFIX"] = wine_prefix(app).to_s
       end
-      env["DXVK_HUD"] = "full"
+      # env["DXVK_HUD"] = "full"
 
       pid = Process.spawn(
         env,

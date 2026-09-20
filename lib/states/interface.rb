@@ -168,9 +168,9 @@ module W3DHubLauncher
           map_image_container = stack(width: 1.0, height: (@server_details_container.content_width / 640.0) * 360, background_image: safe_get_image(server.map_preview_image_path, fallback_path: "#{ROOT_PATH}/media/default_map_preview.png")) do
             caption(
               server.current_map,
-              text_border: false,
+              text_border: true,
               text_border_size: 1,
-              text_border_color: Gosu::Color::RED,
+              text_border_color: 0xaa_000000,
               text_shadow: false,
               width: 1.0,
               height: 1.0,
