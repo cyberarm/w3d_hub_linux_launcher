@@ -174,7 +174,7 @@ module W3DHubLauncher
               text_shadow: false,
               width: 1.0,
               height: 1.0,
-              padding_bottom: PADDING,
+              padding_bottom: HALF_PADDING,
               text_align: :center,
               text_v_align: :bottom,
               tip: server.current_map
