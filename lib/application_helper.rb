@@ -12,7 +12,14 @@ module W3DHubLauncher
     end
 
     def self.run(app, *args)
-      exe_path = app.id == "ecw" ? format("%s/game500.exe", app.installation_path) : format("%s/game.exe", app.installation_path)
+      exe_path = case app.id
+                 when "ecw" # ecw is a little special. each of its numbered exes represents a max render distance.
+                   format("%s/game500.exe", app.installation_path)
+                 when "ren" # little hacky. TT auto patching launcher doesn't work* on linux so bypass it.
+                   format("%s/game2.exe", app.installation_path)
+                 else # the rest of the games are reasonably sane.
+                   format("%s/game.exe", app.installation_path)
+                 end
 
       env = {}
       unless wine_prefix(app).to_s.empty?
@@ -22,7 +29,7 @@ module W3DHubLauncher
 
       pid = Process.spawn(
         env,
-        "#{wine_command(app)}#{exe_path} -launcher #{args.join(' ')}"
+        "#{wine_command(app)}\"#{exe_path}\" -launcher #{args.join(' ')}"
       )
 
       Process.detach(pid)

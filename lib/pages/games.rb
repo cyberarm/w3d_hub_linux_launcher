@@ -227,7 +227,9 @@ module W3DHubLauncher
                 end
               end
             else
-              button "Import", enabled: false, tip: "Import existing application installation", fill: true, height: 1.0, **CTA_BUTTON_THEME
+              button "Import", tip: "Import existing application installation", fill: true, height: 1.0, **CTA_BUTTON_THEME do |btn|
+                dialog(Dialog::ImportApplication, application: @current_app, channel: @current_channel)
+              end
             end
           end
         end
