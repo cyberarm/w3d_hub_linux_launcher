@@ -242,7 +242,7 @@ module W3DHubLauncher
         else
           @event_container.show
 
-          event = app_events.sort(&:start_time).last
+          event = app_events.sort_by(&:start_time).first
 
           @event_container.clear do
             caption "Upcoming Event".upcase, color: 0xaa_ffffff
