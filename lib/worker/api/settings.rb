@@ -41,6 +41,22 @@ module W3DHubLauncher
           applications.find { |app| app.id == app_id && app.channel == channel_id }
         end
 
+        def add_or_update_application(application)
+          index = applications.index { |app| app.id == application.id && app.channel == application.channel }
+
+          if index
+            applications[index] = application
+          else
+            applications << application
+          end
+
+          application
+        end
+
+        def remove_application(application)
+          applications.delete(application)
+        end
+
         # User explictly set options
         class Preferences
           SCHEMA = 0

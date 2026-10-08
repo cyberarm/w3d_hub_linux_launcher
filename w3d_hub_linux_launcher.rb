@@ -77,6 +77,9 @@ module W3DHubLauncher
     W3DHubLauncher::Worker.new.listen
   end
 
+  # Prevent race condition where server IPC isn't ready before the client attempts to connect
+  sleep 0.1
+
   # UNIXSocket / client
   WORKER = W3DHubLauncher::Worker.new
   WORKER.connect

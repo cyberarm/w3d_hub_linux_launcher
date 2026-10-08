@@ -35,11 +35,19 @@ module W3DHubLauncher
       end
 
       def focus
-        @parent.show_battleview_panel
+        # @parent.show_battleview_panel
+
+        CyberarmEngine::EventBus.subscribe("application_changed") do |hash|
+          if @current_app&.id == hash[:application].id && @current_channel&.id == hash[:application].channel
+            populate_game_info
+          end
+        end
       end
 
       def blur
         @parent.hide_battleview_panel
+
+        CyberarmEngine::EventBus.unsubscribe("application_changed")
       end
 
       def populate_game_content_container
@@ -115,7 +123,7 @@ module W3DHubLauncher
         unless MemCache[:"events_#{app_id}"]
           Worker::Api.events(app_id) do |result|
             if result.okay?
-              File.write("events_#{app_id}.json", result.data)
+              File.write("#{CACHE_PATH}/events_#{app_id}.json", result.data)
               MemCache[:"events_#{app_id}"] = JSON.parse(result.data)&.map { |item| Worker::Api::ServerEvent.new(item) } || []
 
               populate_game_event if app_id == @current_app.id
@@ -126,7 +134,7 @@ module W3DHubLauncher
         unless MemCache[:"news_#{app_id}"]
           Worker::Api.news(app_id) do |result|
             if result.okay?
-              File.write("news_#{app_id}.json", result.data)
+              File.write("#{CACHE_PATH}/news_#{app_id}.json", result.data)
               MemCache[:"news_#{app_id}"] = JSON.parse(result.data)["news"]&.map { |item| Worker::Api::NewsItem.new(item) } || []
 
               populate_game_news if app_id == @current_app.id
@@ -186,15 +194,25 @@ module W3DHubLauncher
 
           flow(width: 1.0, height: 60) do
             if application
-              button "JOIN", tip: "Join most populated or lowest ping server", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME do |btn|
-                server = ApplicationHelper.play_now_server(application)
+                if @current_channel.update_available?(application.version)
+                  button "Update", tip: "Update application from v#{application.version} to v#{@current_channel.version}", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **UPDATE_BUTTON_THEME do |btn|
+                    btn.enabled = false
 
-                if server
-                  ApplicationHelper.join_server(application, server)
+                    Worker::Api.update_application(@current_app.id, @current_channel.id) do |result, status|
+                      handle_task_update(result, status)
+                    end
+                  end
                 else
-                  puts "No server available."
+                  button "JOIN", tip: "Join most populated or lowest ping server", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME do |btn|
+                    server = ApplicationHelper.play_now_server(application)
+
+                    if server
+                      ApplicationHelper.join_server(application, server)
+                    else
+                      puts "No server available."
+                    end
+                  end
                 end
-              end
               button safe_get_image("#{ROOT_PATH}/media/icons/singleplayer.png"), tip: "Single player", image_height: 1.0, background_nine_slice: NINE_SLICE_SQUARE, **CTA_BUTTON_THEME do
                 ApplicationHelper.run(application)
               end
@@ -206,25 +224,47 @@ module W3DHubLauncher
                   menu_item("Screenshots Folder", tip: "Open application installation folder:\n#{Dir.home}/Documents/W3D Hub/#{application.id}-#{application.channel}/Screenshots")
                   stack(width: 1.0, height: 2, background: 0xff_bbbbbb)
                   menu_item("Application Settings", tip: "Edit application launch options")
-                  menu_item("Repair Installation", tip: "Attempt to fix and repair installation")
-                  menu_item("Check for Updates", tip: "Manually check for application updates")
+                  if @current_app.servicable?
+                    menu_item("Repair Installation", tip: "Attempt to fix and repair installation") do
+                      Worker::Api.repair_application(@current_app.id, @current_channel.id) do |result, status|
+                        handle_task_update(result, status)
+                      end
+                    end
+                    menu_item("Check for Updates", tip: "Manually check for application updates")
+                  end
                   stack(width: 1.0, height: 2, background: 0xff_bbbbbb)
-                  menu_item("Move Installation", tip: "Move application installation to a different directory or disk")
-                  menu_item("Unlink Installation", tip: "The application will be removed from the launcher\nbut the application's files will not be touched")
-                  menu_item("Uninstall", tip: "Uninstall application and delete files")
+                  if @current_app.servicable?
+                    menu_item("Move Installation", tip: "Move application installation to a different directory or disk") do
+                      # FIXME: Show a prompt dialog for choosing new location
+                      # Worker::Api.move_application(@current_app.id, @current_channel.id) do |result, status|
+                      #   handle_task_update(result, status)
+                      # end
+                    end
+                  end
+                  menu_item("Unlink Installation", tip: "The application will be removed from the launcher\nbut the application's files will not be touched") do
+                    Worker::Api.unlink_application(@current_app.id, @current_channel.id) do |result, status|
+                      if result.okay?
+                        MemCache[:settings] = Worker::Api::Settings.new(JSON.parse(result.data))
+                        populate_game_info
+                      end
+                    end
+                  end
+                  if @current_app.servicable?
+                    menu_item("Uninstall", tip: "Uninstall application and delete files")
+                  end
                 end.show
               end
             elsif @current_app.servicable?
               # pp @current_app
-              button "Import", tip: "Import existing application installation", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME do |btn|
-                dialog(Dialog::ImportApplication, application: @current_app, channel: @current_channel)
-              end
-              button "Download", tip: "Download and install application", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME do |btn|
+              button "Download", tip: "Download and install application", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME do |btn|
                 btn.enabled = false
 
-                Worker::Api.install_application(@current_app.id, @current_channel.id) do |status, result|
-                  handle_task_update(status, result)
+                Worker::Api.install_application(@current_app.id, @current_channel.id) do |result, status|
+                  handle_task_update(result, status)
                 end
+              end
+              button "Import", tip: "Import existing application installation", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME do |btn|
+                dialog(Dialog::ImportApplication, application: @current_app, channel: @current_channel)
               end
             else
               button "Import", tip: "Import existing application installation", fill: true, height: 1.0, **CTA_BUTTON_THEME do |btn|
@@ -297,10 +337,12 @@ module W3DHubLauncher
         when Worker::Request::STATUS_COMPLETE
           status_bar.hide
 
-          MemCache[:settings].applications << Worker::Api::Settings::Application.new(data["application"])
+          # FIXME: Application might NOT be installed
+          application = MemCache[:settings].add_or_update_application(Worker::Api::Settings::Application.new(data["application"]))
           Worker::Api.update_settings(MemCache[:settings])
 
-          populate_game_info
+          # FIXME: Application might NOT be installed
+          ApplicationHelper.announce_application_changed(application, :installed)
         when Worker::Request::STATUS_IN_PROGRESS
           status_bar.show
 

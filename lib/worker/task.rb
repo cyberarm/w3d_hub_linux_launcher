@@ -6,6 +6,7 @@ module W3DHubLauncher
     IndexedFile = Data.define(:type, :path)
 
     attr_reader :request_id, :application, :channel, :installed_version, :target_version
+    attr_reader :status
 
     def initialize(request_id:, application:, channel:, installed_version:, target_version:)
       @request_id = request_id
@@ -15,6 +16,8 @@ module W3DHubLauncher
       @target_version = target_version
 
       pp self
+
+      @status = Worker::Request::STATUS_PENDING
 
       # caching mechinism for file path normalization
       @file_index = {}
@@ -36,19 +39,28 @@ module W3DHubLauncher
     end
 
     def start(worker)
+      return unless status == Worker::Request::STATUS_PENDING
+
       @worker = worker
 
       @installation_directory ||= application_target_installation_directory
 
       update_status(label: "Starting...", fraction: 0.0)
 
-      execute
+
+      @status = Worker::Request::STATUS_BUSY
+
+      v = execute
+
+      @status = Worker::Request::STATUS_COMPLETE
+      v
     end
 
     def abort_task!(reason = "")
       puts reason
 
       message_requester(Worker::Request::STATUS_ERROR, data: nil, error: reason)
+      @status = Worker::Request::STATUS_ERROR
 
       raise reason
     end
@@ -120,6 +132,8 @@ module W3DHubLauncher
 
       @required_manifest_files = @manifest_files.clone
 
+      cached_checksums = {}
+
       # Process manifest game files in NEWEST to OLDEST order so that we don't erroneously flag
       #   valid files as invalid due to an OLDER version of the file being checked FIRST.
       @manifest_files.reverse.each do |file|
@@ -133,13 +147,17 @@ module W3DHubLauncher
         next unless File.exist?(file_path) # && !File.directory?(file_path)
 
         puts "verifying #{file_path}..."
-        checksum = Digest::SHA256.file(file_path).hexdigest.upcase
+        checksum = cached_checksums[file_path] || Digest::SHA256.file(file_path).hexdigest.upcase
+        cached_checksums[file_path] ||= checksum
 
         if checksum == file.checksum
           @required_manifest_files.delete(file)
 
           # remove irrelevant older versions of the file from consideration
           @required_manifest_files.delete_if { |f| f.name.casecmp?(file.name) && f.version < file.version }
+          puts "  verified:#{file.version}"
+        else
+          puts "  failed verification:#{file.version}"
         end
       end
     end
@@ -279,12 +297,14 @@ module W3DHubLauncher
         timestamp: Time.now.to_i
       )
 
+      @status = Worker::Request::STATUS_COMPLETE
       message_requester(Worker::Request::STATUS_COMPLETE, data: { application: app })
 
       puts "APPLICATION: #{@application.name} #{@application.id}:#{@channel.id}:#{@target_version} installed."
     end
 
     def mark_application_uninstalled
+      @status = Worker::Request::STATUS_COMPLETE
       message_requester(Worker::Request::STATUS_COMPLETE, data: {})
     end
 
@@ -295,7 +315,7 @@ module W3DHubLauncher
     end
 
     def update_status(label:, fraction:)
-      message_requester(data: { status: { title: "TASK #{@application.name} (#{@channel.name})", label: label, fraction: fraction } } )
+      message_requester(data: { status: { title: "#{@task_verb} #{@application.name} (#{@channel.name})", label: label, fraction: fraction } } )
     end
 
     def application_target_installation_directory

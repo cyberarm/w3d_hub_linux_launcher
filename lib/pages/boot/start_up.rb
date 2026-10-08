@@ -187,7 +187,7 @@ module W3DHubLauncher
 
           Worker::Api.applications do |result|
             if result.okay?
-              File.write("applications.json", result.data)
+              File.write("#{CACHE_PATH}/applications.json", result.data)
               hash = JSON.parse(result.data)
               applications = hash["applications"]&.map { |app| W3DHubLauncher::Worker::Api::Application.new(app) } || []
 

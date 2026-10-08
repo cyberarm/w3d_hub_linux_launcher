@@ -71,5 +71,9 @@ module W3DHubLauncher
 
       found_server
     end
+
+    def self.announce_application_changed(application, state)
+      CyberarmEngine::EventBus.publish("application_changed", { application: application, state: state })
+    end
   end
 end

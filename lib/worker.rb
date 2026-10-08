@@ -49,24 +49,38 @@ module W3DHubLauncher
       @w3dhub_api = W3DHubLauncher::W3DHubApi.new
 
       Async do |task|
-        UNIXServer.open(IPC_PATH) do |server|
-          while(socket = server.accept)
-            @client = socket
+        task.async do
+          while true
+            @tasks.delete_if { |t| [Request::STATUS_ERROR, Request::STATUS_COMPLETE].include?(t.status) }
 
-            task.async do
-              while(data = socket.gets)
-                json = JSON.parse(data)
-                query = Request::Query.new(type: json["type"].to_sym, request_id: json["request_id"], data: json["data"])
+            if @tasks.first && @tasks.all? { |t| t.status == Request::STATUS_PENDING }
+              @tasks.first.start(self)
+            end
 
-                # pp [:server_incoming, data, query]
+            sleep 0.25
+          end
+        end
 
-                if respond_to?(query.type)
-                  response = send(query.type, query)
-                  # pp [:server_to_client, response]
-                  payload = { status: response.status, request_id: response.request_id, data: response.result.data, error: response.result.error }.to_json
-                  socket.write(payload)
-                  socket.write(RESPONSE_SEPARATOR)
-                  socket.flush
+        task.async do |subtask|
+          UNIXServer.open(IPC_PATH) do |server|
+            while(socket = server.accept)
+              @client = socket
+
+              task.async do
+                while(data = socket.gets)
+                  json = JSON.parse(data)
+                  query = Request::Query.new(type: json["type"].to_sym, request_id: json["request_id"], data: json["data"])
+
+                  # pp [:server_incoming, data, query]
+
+                  if respond_to?(query.type)
+                    response = send(query.type, query)
+                    # pp [:server_to_client, response]
+                    payload = { status: response.status, request_id: response.request_id, data: response.result.data, error: response.result.error }.to_json
+                    socket.write(payload)
+                    socket.write(RESPONSE_SEPARATOR)
+                    socket.flush
+                  end
                 end
               end
             end
@@ -269,8 +283,8 @@ module W3DHubLauncher
                     total_downloaded_bytes: total_downloaded_bytes,
                     content_length: content_length
                   })
-                  # FIXME: Send intermediate response to requester
-                  # send(query, Response.new(Request::STATUS_IN_PROGRESS, query.request_id progress_result))
+
+                  message_requester(query.request_id, Request::STATUS_IN_PROGRESS, progress_result.data, progress_result.error)
                 end
               end
 
@@ -453,21 +467,65 @@ module W3DHubLauncher
         installed_version: nil,
         target_version: channel.version
       )
-      @tasks.last.start(self)
 
       Response.new(Request::STATUS_PENDING, query.request_id, CyberarmEngine::Result.new(data: true))
     end
 
     def task_update_application(query)
+      application = @w3dhub_api.applications.find { |app| app.id == query.data["app_id"] }
+      channel = application.channels.find { |chan| chan.id == query.data["channel_id"] }
+
+      settings_application = @settings.application_installed?(application.id, channel.id)
+
+      @tasks << Task::UpdateApplication.new(
+        request_id: query.request_id,
+        application: application,
+        channel: channel,
+        installed_version: settings_application.version,
+        target_version: channel.version
+      )
+
+      Response.new(Request::STATUS_PENDING, query.request_id, CyberarmEngine::Result.new(data: true))
     end
 
     def task_repair_application(query)
+      application = @w3dhub_api.applications.find { |app| app.id == query.data["app_id"] }
+      channel = application.channels.find { |chan| chan.id == query.data["channel_id"] }
+
+      settings_application = @settings.application_installed?(application.id, channel.id)
+
+      @tasks << Task::RepairApplication.new(
+        request_id: query.request_id,
+        application: application,
+        channel: channel,
+        installed_version: settings_application.version,
+        target_version: settings_application.version
+      )
+
+      pp @tasks.last
+
+      Response.new(Request::STATUS_PENDING, query.request_id, CyberarmEngine::Result.new(data: true))
     end
 
     def task_move_application(query)
     end
 
     def task_uninstall_application(query)
+    end
+
+    def unlink_application(query)
+      result = CyberarmEngine::Result.new
+
+      application = @settings.application_installed?(query.data["app_id"], query.data["channel_id"])
+
+      if application
+        @settings.remove_application(application)
+
+        query = Request::Query.new(query.type, query.request_id, @settings.to_json)
+        return update_settings(query)
+      end
+
+      deliver_response(result, query)
     end
   end
 end

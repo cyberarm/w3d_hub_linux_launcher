@@ -2,6 +2,7 @@ module W3DHubLauncher
   class Task
     class InstallApplication < Task
       def setup
+        @task_verb = "Installing".freeze
       end
 
       def execute

@@ -80,6 +80,10 @@ module W3DHubLauncher
             extended_data("serverchannel", @id)
           end
 
+          def update_available?(current_version)
+            current_version < @version
+          end
+
           def to_json(context = nil)
             {
               "id": @id,

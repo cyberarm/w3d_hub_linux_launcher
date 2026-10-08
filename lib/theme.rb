@@ -39,6 +39,19 @@ module W3DHubLauncher
     }
   }
 
+  UPDATE_BUTTON_THEME = {
+    color: 0xff_ffffff,
+    background_nine_slice_color: 0xff_e66100,
+    hover: {
+      color: 0xff_ffffff,
+      background_nine_slice_color: 0xff_ff7800
+    },
+    active: {
+      color: 0xff_ffffff,
+      background_nine_slice_color: 0xff_c64600
+    }
+  }
+
   THEME = {
     TextBlock: {
       text_static: true,

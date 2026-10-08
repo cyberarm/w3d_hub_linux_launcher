@@ -67,7 +67,7 @@ module W3DHubLauncher
 
               Worker::Api.update_settings(MemCache[:settings])
 
-              # FIXME: broadcast app installed on CyberarmEngine::EventBus
+              ApplicationHelper.announce_application_changed(app, :installed)
             end
           end
         end

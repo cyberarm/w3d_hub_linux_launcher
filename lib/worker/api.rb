@@ -100,6 +100,11 @@ module W3DHubLauncher
       def self.uninstall_application(app_id, channel_id, &block)
         Worker::Request.new(:task_uninstall_application, { app_id: app_id, channel_id: channel_id }, &block)
       end
+
+      # request unlinking of application
+      def self.unlink_application(app_id, channel_id, &block)
+        Worker::Request.new(:unlink_application, { app_id: app_id, channel_id: channel_id }, &block)
+      end
     end
   end
 end

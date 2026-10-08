@@ -93,7 +93,7 @@ module W3DHubLauncher
                 end
 
                 # battleview/friends container
-                @battleview_container = stack(width: 400, height: 1.0, margin_left: LARGE_PADDING) do
+                @battleview_container = stack(width: 400, height: 1.0, margin_left: LARGE_PADDING, visible: false) do
                   # friend management container
                   flow(width: 1.0, height: 60) do
                     flow(width: 1.0, v_align: :center) do
@@ -358,7 +358,7 @@ module W3DHubLauncher
       def button_up(id)
         super
 
-        @battleview_container.toggle if id == Gosu::KB_F8
+        # @battleview_container.toggle if id == Gosu::KB_F8
       end
     end
   end
