@@ -19,6 +19,8 @@ module W3DHubLauncher
 
       @status = Worker::Request::STATUS_PENDING
 
+      @verification_data = Worker::Api::VerificationData.new("#{CACHE_PATH}/verification_data-#{@application.id}-#{@channel.id}.json")
+
       # caching mechinism for file path normalization
       @file_index = {}
       # manifests!
@@ -31,6 +33,10 @@ module W3DHubLauncher
       @required_manifest_files = []
       # packages to verify and/or download
       @packages = []
+
+      # whether task should perform a per file checksum or just read it from the cache and
+      # check file modification time and size
+      @force_verification = false
 
       setup
     end
@@ -136,7 +142,7 @@ module W3DHubLauncher
 
       # Process manifest game files in NEWEST to OLDEST order so that we don't erroneously flag
       #   valid files as invalid due to an OLDER version of the file being checked FIRST.
-      @manifest_files.reverse.each do |file|
+      @manifest_files.reverse.each_with_index do |file, i|
         break unless File.directory?(@installation_directory)
 
         # skip irrelevant older versions of files
@@ -147,8 +153,15 @@ module W3DHubLauncher
         next unless File.exist?(file_path) # && !File.directory?(file_path)
 
         puts "verifying #{file_path}..."
-        checksum = cached_checksums[file_path] || Digest::SHA256.file(file_path).hexdigest.upcase
-        cached_checksums[file_path] ||= checksum
+        key = @verification_data.key(file.name)
+        pp [key, @force_verification]
+        verification_data = @force_verification ? nil : @verification_data.unchanged?(key, checksum: file.checksum, file_path: file_path)
+
+        # Use cached checksum if the file appears unchanged, otherwise recalculate it
+        checksum = verification_data&.checksum || Digest::SHA256.file(file_path).hexdigest.upcase
+
+        # Set or update cached verification data if files don't match
+        @verification_data.set(key, checksum: checksum, file_path: file_path) unless verification_data
 
         if checksum == file.checksum
           @required_manifest_files.delete(file)
@@ -159,6 +172,8 @@ module W3DHubLauncher
         else
           puts "  failed verification:#{file.version}"
         end
+
+        update_status(label: "Verifying files...", fraction: i.to_f / @manifest_files.size)
       end
     end
 
@@ -249,7 +264,7 @@ module W3DHubLauncher
         if manifest_file.patch?
           apply_patch(manifest_file, package)
         else
-          unzip(package_path)
+          unzip(manifest_file, package_path)
         end
 
         processed_packages[package_path] = manifest_file
@@ -265,6 +280,8 @@ module W3DHubLauncher
         if File.exist?(file_path) && !File.directory?(file_path)
           puts "Removing file: #{file_path}"
           File.delete(file_path)
+          key = @verification_data.key(manifest_file.name)
+          @verification_data.delete(key)
 
           remove_from_file_index(file_path)
         end
@@ -285,7 +302,7 @@ module W3DHubLauncher
       end
     end
 
-    # updated, and moved applications will overwrite existing application data in settings
+    # updated, repaired, and moved applications will overwrite existing application data in settings
     def mark_application_installed
       app = Worker::Api::Settings::Application.create(
         id: @application.id,
@@ -469,7 +486,7 @@ module W3DHubLauncher
         package_path = package_cache_path(package)
 
         puts "unpacking patch..."
-        unzip(package_path, f.path)
+        unzip(false, package_path, output_path: f.path)
 
         puts "reading patch data.."
         patch_mix = W3DHubLauncher::WWMix.new(path: f.path)
@@ -504,12 +521,16 @@ module W3DHubLauncher
           raise temp_mix.error_reason unless temp_mix.save
 
           puts "copying file..."
-          FileUtils.cp(temp.path, normalize_path(manifest_file.name))
+          file_path = normalize_path(manifest_file.name)
+          FileUtils.cp(temp.path, file_path)
+
+          key = @verification_data.key(manifest_file.name)
+          @verification_data.set(key, checksum: manifest_file.checksum, file_path: file_path)
         end
       end
     end
 
-    def unzip(zip_path, output_path = nil)
+    def unzip(manifest_file, zip_path, output_path: nil)
       stream = Zip::InputStream.new(File.open(zip_path))
 
       while(entry = stream.get_next_entry)
@@ -526,6 +547,23 @@ module W3DHubLauncher
 
           while(chunk = entry_stream.read(4_194_304))
             f.write(chunk)
+          end
+        end
+
+
+        # the manifest file we receive MIGHT NOT be for the current zip file entry
+        # so look it up to be safe
+        if manifest_file
+          manifest = @manifests[manifest_file.version]
+          if manifest
+            entry_manifest_file = manifest.files.find do |f|
+              f.name.gsub("\\", "/").downcase == entry.name.gsub("\\", "/").downcase
+            end
+
+            if entry_manifest_file
+              key = @verification_data.key(entry.name)
+              @verification_data.set(key, checksum: entry_manifest_file.checksum, file_path: file_path)
+            end
           end
         end
 

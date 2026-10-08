@@ -19,6 +19,12 @@ module W3DHubLauncher
           @sha256_checksum = hash["checksum"]
           @checksum_chunks = hash["checksum-chunks"]
           @download_url = hash["download_url"]
+
+          # Fix crashing on spaces
+          if @download_url
+            uri_path = @download_url.split("/").last
+            @download_url = @download_url.sub(uri_path, URI.encode_uri_component(uri_path))
+          end
         end
 
         def error?

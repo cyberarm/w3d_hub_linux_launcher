@@ -47,7 +47,7 @@ module W3DHubLauncher
       def blur
         @parent.hide_battleview_panel
 
-        CyberarmEngine::EventBus.unsubscribe("application_changed")
+        CyberarmEngine::EventBus.unsubscribe("application_changed", self)
       end
 
       def populate_game_content_container
