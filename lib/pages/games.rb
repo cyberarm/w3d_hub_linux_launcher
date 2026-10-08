@@ -154,7 +154,7 @@ module W3DHubLauncher
             btn = button(safe_get_image("#{CACHE_PATH}/icon_#{game.id}.png"), tag: :"image_icon_#{game.id}", style_class: [:app_icon_button], enabled: @current_app.id != game.id, tip: game.name) do |btn|
               populate_game(game, game&.channels&.first)
             end
-            remote_image("#{CACHE_PATH}/icon_#{game.id}.ico", url: "https://s3.w3d.cyberarm.dev/games/#{game.id}/#{game.id}.ico", element: btn) do |e, path|
+            remote_image("#{CACHE_PATH}/icon_#{game.id}.ico", required_path: "#{CACHE_PATH}/icon_#{game.id}.png", url: "https://s3.w3d.cyberarm.dev/games/#{game.id}/#{game.id}.ico", element: btn) do |e, path|
               Worker::Api.ico_to_png(ico_path: path, png_path: path.sub(".ico", ".png")) do |result|
                 e&.value = safe_get_image(result.data["path"]) if result.okay?
               end

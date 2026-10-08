@@ -32,10 +32,12 @@ module W3DHubLauncher
     end
 
     # Downloads requested url and on success check if host element is still in the layout and call the block if so.
-    def remote_image(path, url:, element:, &block)
+    def remote_image(path, url:, element:, required_path: nil, &block)
       memcache_key = :"lock_net_download_#{element.style.tag}"
 
-      if !File.exist?(path) && MemCache[memcache_key].nil?
+      path_exists = File.exist?(path)
+
+      if !path_exists && MemCache[memcache_key].nil?
         MemCache[memcache_key] = true
 
         Worker::Api.download_url(url, path) do |result|
@@ -52,6 +54,14 @@ module W3DHubLauncher
             block.call(element, path)
           end
         end
+      end
+
+      if required_path && path_exists && !File.exist?(required_path)
+        e = find_element_by_tag(element.root, element.style.tag)
+
+        return unless e
+
+        block.call(element, path)
       end
     end
 
