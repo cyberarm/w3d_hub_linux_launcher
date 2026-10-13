@@ -23,6 +23,7 @@ require "chunky_png"
 require "sdl3"
 
 require_relative "lib/gosu_ext"
+require_relative "lib/common"
 
 require_relative "lib/version"
 require_relative "lib/constants"
@@ -49,6 +50,7 @@ require_relative "lib/application_helper"
 require_relative "lib/ico"
 require_relative "lib/dds"
 require_relative "lib/ww_mix"
+require_relative "lib/websocket_client"
 
 require_relative "lib/worker"
 require_relative "lib/worker/api"
@@ -77,9 +79,6 @@ module W3DHubLauncher
   Thread.new do
     W3DHubLauncher::Worker.new.listen
   end
-
-  # Prevent race condition where server IPC isn't ready before the client attempts to connect
-  sleep 0.1
 
   # UNIXSocket / client
   WORKER = W3DHubLauncher::Worker.new

@@ -18,6 +18,9 @@ module W3DHubLauncher
 
       @buffer = StringIO.new
       @socket = UNIXSocket.new(IPC_PATH)
+    rescue Errno::ENOENT
+      sleep 1
+      retry
     end
 
     def connected?
@@ -29,7 +32,6 @@ module W3DHubLauncher
     end
 
     def init_server
-      @threads = []
       @requests = []
       @tasks = []
 
@@ -39,34 +41,17 @@ module W3DHubLauncher
       @game_servers = []
       @host_pings = {}
 
-      # connect to and monitor GSH web service
-      @threads << Thread.new { game_server_hub_websocket }
-      # connect to and monitor Backend web service
-      @threads << Thread.new { backend_websocket }
-      # poke game servers to ascertain their ping relative to the local machine
-      @threads << Thread.new { ping_game_servers }
-
       @w3dhub_api = W3DHubLauncher::W3DHubApi.new
 
       Async do |task|
-        task.async do
-          while true
-            @tasks.delete_if { |t| [Request::STATUS_ERROR, Request::STATUS_COMPLETE].include?(t.status) }
-
-            if @tasks.first && @tasks.all? { |t| t.status == Request::STATUS_PENDING }
-              @tasks.first.start(self)
-            end
-
-            sleep 0.25
-          end
-        end
-
         task.async do |subtask|
           UNIXServer.open(IPC_PATH) do |server|
+            puts "IPC running!"
+
             while(socket = server.accept)
               @client = socket
 
-              task.async do
+              subtask.async do
                 while(data = socket.gets)
                   json = JSON.parse(data)
                   query = Request::Query.new(type: json["type"].to_sym, request_id: json["request_id"], data: json["data"])
@@ -88,10 +73,96 @@ module W3DHubLauncher
         ensure # manually delete "socket"
           File.delete(IPC_PATH)
         end
+
+        # Handle getting and updating game server data
+        task.async do
+          game_server_hub_websocket
+        end
+
+        # Handle backend communication
+        task.async do
+          backend_websocket
+        end
+
+        # Handle getting ping times to servers
+        task.async do
+          ping_game_servers
+        end
+
+        # Handle Task requests
+        task.async do
+          while true
+            @tasks.delete_if { |t| [Request::STATUS_ERROR, Request::STATUS_COMPLETE].include?(t.status) }
+
+            if @tasks.first && @tasks.all? { |t| t.status == Request::STATUS_PENDING }
+              @tasks.first.start(self)
+            end
+
+            sleep 0.25
+          end
+        end
       end
     end
 
     def game_server_hub_websocket
+      WebSocketClient.new.connect("ws://localhost:9292/api/websocket") do |websocket|
+        websocket.on(:open) do
+          # puts "CONNECTED"
+
+          websocket.send( { "protocol_version": 1 }.to_json )
+        end
+
+        websocket.on(:message) do |message|
+          # puts "MESSAGE"
+          # pp message
+
+          hash = JSON.parse(message)
+
+          case hash["type"]
+          when "ping"
+            websocket.send({ "type":"pong", "data":"" }.to_json)
+          when "pong"
+          when "server_list"
+            @game_servers = hash["data"].map { |server| Worker::Api::GameServer.new(server) }
+            broadcast(:game_server_list, data: hash["data"])
+
+          when "server_added", "server_updated"
+            existing_game_server = @game_servers.find { |s| s.id == hash["data"]["id"] }
+            game_server = Worker::Api::GameServer.new(hash["data"])
+
+
+            if existing_game_server # replace
+              @game_servers[@game_servers.index(existing_game_server)] = game_server
+            else # add
+              @game_servers << game_server
+            end
+            broadcast(hash["type"].to_sym, data: hash["data"])
+
+          when "server_removed"
+            game_server = @game_servers.find { |s| s.id == hash["data"]["id"] }
+            @game_servers.delete(game_server) if game_server
+            broadcast(hash["type"].to_sym, data: hash["data"]["id"])
+
+          when "server_details"
+            # TODO
+          end
+        end
+
+        websocket.on(:close) do
+          # puts "CLOSED"
+          sleep 5
+          game_server_hub_websocket
+        end
+
+        websocket.on(:error) do |error|
+          puts "ERROR: #{error}"
+
+          puts error.backtrace
+
+          sleep 5
+          game_server_hub_websocket
+        end
+      end
     end
 
     def backend_websocket
@@ -101,8 +172,8 @@ module W3DHubLauncher
       socket = Socket.open(Socket::AF_INET, Socket::SOCK_DGRAM, Socket::IPPROTO_ICMP)
       socket.setsockopt(:SOCKET, :TIMESTAMP, true)
 
-      Async do |task|
-        while true
+      Sync do |task|
+        loop do
           echo_requests = {}
 
           # Send pings to each unique server host
