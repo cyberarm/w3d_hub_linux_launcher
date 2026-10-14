@@ -136,12 +136,12 @@ module W3DHubLauncher
             else # add
               @game_servers << game_server
             end
-            broadcast(hash["type"].to_sym, data: hash["data"])
+            broadcast(:"game_#{hash["type"]}", data: hash["data"])
 
           when "server_removed"
             game_server = @game_servers.find { |s| s.id == hash["data"]["id"] }
             @game_servers.delete(game_server) if game_server
-            broadcast(hash["type"].to_sym, data: hash["data"]["id"])
+            broadcast(:"game_#{hash["type"]}", data: hash["data"])
 
           when "server_details"
             # TODO

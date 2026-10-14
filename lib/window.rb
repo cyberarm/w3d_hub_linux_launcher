@@ -10,6 +10,38 @@ module W3DHubLauncher
         MemCache[:game_server_pings] = payload
       end
 
+      CyberarmEngine::EventBus.subscribe("game_server_list", self) do |payload|
+        MemCache[:servers] = payload.map { |server| Worker::Api::GameServer.new(server) }
+      end
+
+      CyberarmEngine::EventBus.subscribe("game_server_added", self) do |payload|
+        existing_game_server = MemCache[:servers]&.find { |s| s.id == payload["id"] }
+        game_server = Worker::Api::GameServer.new(payload)
+
+        if existing_game_server
+          MemCache[:servers][MemCache[:servers].index(existing_game_server)] = game_server
+        else
+          MemCache[:servers] << game_server
+        end
+      end
+
+      CyberarmEngine::EventBus.subscribe("game_server_updated", self) do |payload|
+        existing_game_server = MemCache[:servers]&.find { |s| s.id == payload["id"] }
+        game_server = Worker::Api::GameServer.new(payload)
+
+        if existing_game_server
+          MemCache[:servers][MemCache[:servers].index(existing_game_server)] = game_server
+        else
+          MemCache[:servers] << game_server
+        end
+      end
+
+      CyberarmEngine::EventBus.subscribe("game_server_removed", self) do |payload|
+        game_server = MemCache[:servers]&.find { |s| s.id == payload["id"] }
+
+        MemCache[:servers].delete(game_server) if game_server
+      end
+
       push_state(States::Boot)
       # push_state(States::Interface)
     end
