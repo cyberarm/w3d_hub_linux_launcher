@@ -11,6 +11,7 @@ module W3DHubLauncher
     attr_reader :w3dhub_api, :settings
 
     def initialize
+      @queue = []
     end
 
     def connect
@@ -18,6 +19,10 @@ module W3DHubLauncher
 
       @buffer = StringIO.new
       @socket = UNIXSocket.new(IPC_PATH)
+
+      while (payload = @queue.shift)
+        @socket.puts(payload)
+      end
     rescue Errno::ENOENT
       sleep 1
       retry
@@ -239,10 +244,12 @@ module W3DHubLauncher
       # pp [:client_request, query]
       payload = { type: query.type, request_id: query.request_id, data: query.data }.to_json
 
-      if respond_to?(query.type)
+      raise "UNKNOWN REQUEST: #{query}" unless respond_to?(query.type)
+
+      if connected?
         @socket.puts(payload)
       else
-        raise "UNKNOWN REQUEST: #{query}"
+        @queue << payload
       end
     end
 
@@ -497,7 +504,7 @@ module W3DHubLauncher
       begin
         @settings = Api::Settings.new(JSON.parse(query.data))
         FileUtils.mkdir_p(W3DHubLauncher::CONFIG_PATH)
-        File.write("#{W3DHubLauncher::CONFIG_PATH}/settings.json", query.data)
+        File.write(W3DHubLauncher::SETTINGS_FILE_PATH, query.data)
 
         result.data = query.data
       rescue => e

@@ -30,6 +30,9 @@ module W3DHubLauncher
             end
           end
 
+          # FIXME: Ask worker to start websocket connections...
+          # WORKER.connect
+
           next_step
         end
 

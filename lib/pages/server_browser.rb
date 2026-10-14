@@ -44,6 +44,10 @@ module W3DHubLauncher
               end
             end
           end
+
+          button(safe_get_image("#{ROOT_PATH}/media/icons/target.png"), image_height: 1.0, tip: "Direct Connect", padding: HALF_PADDING, enabled: false, margin_left: PADDING) do
+            dialog(Dialog::DirectConnect)
+          end
         end
 
         # game content container
@@ -57,6 +61,7 @@ module W3DHubLauncher
       def focus
         CyberarmEngine::EventBus.subscribe("game_server_pings", self, :handle_game_server_pings)
 
+        CyberarmEngine::EventBus.subscribe("game_server_list", self, :handle_game_server_list)
         CyberarmEngine::EventBus.subscribe("game_server_added", self, :handle_game_server_updated) # <- not a typo
         CyberarmEngine::EventBus.subscribe("game_server_updated", self, :handle_game_server_updated)
         CyberarmEngine::EventBus.subscribe("game_server_removed", self, :handle_game_server_removed)
@@ -67,6 +72,7 @@ module W3DHubLauncher
       def blur
         CyberarmEngine::EventBus.unsubscribe("game_server_pings", self)
 
+        CyberarmEngine::EventBus.unsubscribe("game_server_list", self)
         CyberarmEngine::EventBus.unsubscribe("game_server_added", self)
         CyberarmEngine::EventBus.unsubscribe("game_server_updated", self)
         CyberarmEngine::EventBus.unsubscribe("game_server_removed", self)
@@ -77,7 +83,7 @@ module W3DHubLauncher
       def handle_game_server_pings(payload)
         addresses = payload.keys
 
-        MemCache[:servers]&.select { |s| addresses.include?(s.address) }.each do |server|
+        MemCache[:servers]&.select { |s| addresses.include?(s.address) }&.each do |server|
           w = find_element_by_tag(@servers_container, :"server_#{server.id}")
           ping_label = find_element_by_tag(w, :ping_label)
           ping_bar = find_element_by_tag(w, :ping_bar)
@@ -93,6 +99,12 @@ module W3DHubLauncher
         end
 
         # TODO: Sort servers?
+      end
+
+      def handle_game_server_list
+        after(1_000) do
+          populate_server_list
+        end
       end
 
       def handle_game_server_updated(payload)
