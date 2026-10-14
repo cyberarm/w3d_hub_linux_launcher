@@ -34,15 +34,16 @@ module W3DHubLauncher
           while message = connection.read
             @events[:message].call(message)
           end
-        # FIXME: Don't rescue for all ta errors?
-        rescue => error
-          @errored = true
-          @events[:error]&.call(error)
-        ensure
-          @events[:close]&.call unless @errored
-          @connection = nil
-          @errored = false
         end
+
+      # FIXME: Don't rescue for all ta errors?
+      rescue => error
+        @errored = true
+        @events[:error]&.call(error)
+      ensure
+        @events[:close]&.call unless @errored
+        @connection = nil
+        @errored = false
       end
 
       self
