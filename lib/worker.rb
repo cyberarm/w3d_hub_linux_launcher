@@ -110,7 +110,7 @@ module W3DHubLauncher
     end
 
     def game_server_hub_websocket
-      WebSocketClient.new.connect("ws://localhost:9292/api/websocket") do |websocket|
+      WebSocketClient.new.connect("wss://gsh.w3d.cyberarm.dev/api/websocket") do |websocket|
         websocket.on(:open) do
           # puts "CONNECTED"
 
