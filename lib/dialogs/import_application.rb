@@ -7,12 +7,12 @@ module W3DHubLauncher
         @application = @options[:application]
         @channel = @options[:channel]
 
-        stack(width: 1.0, max_width: 600, height: 1.0, max_height: 600, h_align: :center, v_align: :center, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0xee_63452c) do
+        stack(width: 1.0, max_width: 600, height: 1.0, max_height: 600, style_class: [:dialog]) do
           flow(width: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0) do
             banner "Import Application", width: 1.0, text_align: :center
           end
 
-          stack(width: 1.0, fill: true, scroll: true, margin_left: PADDING, margin_right: PADDING, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_BLACK) do
+          stack(style_class: [:dialog_container]) do
             title format("%s (%s)", @application.name, @channel.name)
             caption "Path to application executable:"
             @path_input = edit_line "", width: 1.0

@@ -4,7 +4,7 @@ module W3DHubLauncher
       def setup
         super
 
-        stack(width: 0.75, max_width: 1280, height: 0.75, max_height: 800, h_align: :center, v_align: :center, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0xee_63452c) do
+        stack(width: 0.75, max_width: 1280, height: 0.75, max_height: 800, style_class: [:dialog]) do
           flow(width: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0) do
             banner "Launcher Settings", width: 1.0, text_align: :center
           end

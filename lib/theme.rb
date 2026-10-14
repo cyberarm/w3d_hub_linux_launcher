@@ -195,6 +195,24 @@ module W3DHubLauncher
         background_nine_slice_color: 0x88_5e5c64,
         border_color_bottom: 0xff_3584e4
       }
+    },
+    dialog: {
+      h_align: :center,
+      v_align: :center,
+      background_nine_slice: NINE_SLICE_ROUNDED,
+      background_nine_slice_from_edge: NINE_SLICE_EDGE,
+      background_nine_slice_color: 0xee_63452c
+    },
+    dialog_container: {
+      width: 1.0,
+      fill: true,
+      scroll: true,
+      margin_left: PADDING,
+      margin_right: PADDING,
+      padding: HALF_PADDING,
+      background_nine_slice: NINE_SLICE_ROUNDED,
+      background_nine_slice_from_edge: NINE_SLICE_EDGE,
+      background_nine_slice_color: ALPHA_BLACK
     }
   }
 end
