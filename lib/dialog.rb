@@ -1,5 +1,7 @@
 module W3DHubLauncher
   class Dialog < CyberarmEngine::Dialog
+    include GuiExt
+
     def setup
       theme(THEME)
 

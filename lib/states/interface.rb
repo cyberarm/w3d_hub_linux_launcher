@@ -17,7 +17,9 @@ module W3DHubLauncher
                 # logo + menu button
                 button(safe_get_image("#{ROOT_PATH}/media/logo.png"), image_height: 1.0, background: 0, border_color: 0, hover: { background: 0 }, active: { background: 0, color: 0xff_ffffff }) do |btn|
                   menu(parent: btn) do
-                    menu_item("Settings")
+                    menu_item("Settings") do
+                      dialog(Dialog::Settings)
+                    end
                     menu_item("About") do
                       dialog(Dialog::About)
                     end
