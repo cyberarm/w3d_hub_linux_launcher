@@ -194,28 +194,30 @@ module W3DHubLauncher
 
           flow(width: 1.0, height: 60) do
             if application
-                if @current_channel.update_available?(application.version)
-                  button "Update", tip: "Update application from v#{application.version} to v#{@current_channel.version}", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **UPDATE_BUTTON_THEME do |btn|
-                    btn.enabled = false
+              if @current_channel.update_available?(application.version)
+                button "Update", tip: "Update application from v#{application.version} to v#{@current_channel.version}", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **UPDATE_BUTTON_THEME do |btn|
+                  btn.enabled = false
 
-                    Worker::Api.update_application(@current_app.id, @current_channel.id) do |result, status|
-                      handle_task_update(result, status)
-                    end
-                  end
-                else
-                  button "JOIN", tip: "Join most populated or lowest ping server", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME do |btn|
-                    server = ApplicationHelper.play_now_server(application)
-
-                    if server
-                      ApplicationHelper.join_server(application, server)
-                    else
-                      puts "No server available."
-                    end
+                  Worker::Api.update_application(@current_app.id, @current_channel.id) do |result, status|
+                    handle_task_update(result, status)
                   end
                 end
+              else
+                button "JOIN", tip: "Join most populated or lowest ping server", fill: true, height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_LEFT, **CTA_BUTTON_THEME do |btn|
+                  server = ApplicationHelper.play_now_server(application)
+
+                  if server
+                    dialog(Dialog::Server, application: application, server: server)
+                  else
+                    puts "No server available."
+                  end
+                end
+              end
+
               button safe_get_image("#{ROOT_PATH}/media/icons/singleplayer.png"), tip: "Single player", image_height: 1.0, background_nine_slice: NINE_SLICE_SQUARE, **CTA_BUTTON_THEME do
                 ApplicationHelper.run(application)
               end
+
               button safe_get_image("#{ROOT_PATH}/media/icons/gear.png"), tip: "Options", image_height: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_RIGHT, **CTA_BUTTON_THEME do |btn|
                 menu(parent: btn) do
                   menu_item("v#{application.version}", enabled: false, disabled: { color: 0xdd_ffffff }, tip: "Installed application version")

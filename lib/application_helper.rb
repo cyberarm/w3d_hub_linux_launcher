@@ -57,12 +57,12 @@ module W3DHubLauncher
       channel = MemCache[:applications].find { |appl| appl.id == app.id }&.channels&.find { |c| c.id == app.channel }
       return nil unless channel
 
-      server_options = MemCache[:servers].select do |server|
+      server_options = (MemCache[:servers]&.select do |server|
         server.game == app.id &&
         server.channel == channel.server_channel &&
         !server.password? &&
         server.player_count < server.max_players
-      end.sort_by do |s|
+      end || []).sort_by do |s|
         [s.player_count, -s.ping]
       end.reverse
 

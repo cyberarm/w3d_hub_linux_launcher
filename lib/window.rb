@@ -21,6 +21,7 @@ module W3DHubLauncher
         if existing_game_server
           MemCache[:servers][MemCache[:servers].index(existing_game_server)] = game_server
         else
+          MemCache[:servers] ||= []
           MemCache[:servers] << game_server
         end
       end
@@ -32,6 +33,7 @@ module W3DHubLauncher
         if existing_game_server
           MemCache[:servers][MemCache[:servers].index(existing_game_server)] = game_server
         else
+          MemCache[:servers] ||= []
           MemCache[:servers] << game_server
         end
       end
