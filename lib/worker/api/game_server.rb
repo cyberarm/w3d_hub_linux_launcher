@@ -67,6 +67,7 @@ module W3DHubLauncher
           return "∞" unless @estimated_end_time
 
           remaining_seconds = @estimated_end_time.utc.to_i - Time.now.utc.to_i
+          remaining_seconds = 0 if remaining_seconds.negative?
 
           hours = (remaining_seconds / 60.0 / 60.0).floor % 100
           minutes = (remaining_seconds / 60.0).floor % 60
