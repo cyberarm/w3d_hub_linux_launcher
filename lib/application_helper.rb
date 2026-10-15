@@ -38,8 +38,10 @@ module W3DHubLauncher
     def self.join_server(app, server, password: nil, token: nil, multi: false)
       parameters = []
 
+      playername = MemCache[:settings].preferences.nickname
+
       parameters << format("+connect %s:%s", server.address, server.port)
-      parameters << format("+netplayername \"%s\"", "cyberarm")
+      parameters << format("+netplayername \"%s\"", playername)
       parameters << format("+password \"%s\"", password) if password
       parameters << format("+userkey \"%s\"", token) if token
       parameters << "+multi" if multi

@@ -1,6 +1,6 @@
 module W3DHubLauncher
   class Dialog
-    class Settings < W3DHubLauncher::Dialog
+    class LauncherSettings < W3DHubLauncher::Dialog
       def setup
         super
 
@@ -14,8 +14,8 @@ module W3DHubLauncher
 
           stack(width: 1.0, fill: true, scroll: true, margin_left: PADDING, margin_right: PADDING, padding: HALF_PADDING, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: ALPHA_BLACK) do
             flow(width: 1.0, height: item_height, margin_top: PADDING) do
-            tagline "Nickname", height: 1.0, text_v_align: :center
-            @nickname = edit_line settings&.preferences&.nickname || Etc.getlogin, fill: true
+              tagline "Nickname", height: 1.0, text_v_align: :center
+              @nickname = edit_line settings&.preferences&.nickname || Etc.getlogin, fill: true
             end
             inscription "Nickname to use when joining servers.", margin_left: PADDING
 

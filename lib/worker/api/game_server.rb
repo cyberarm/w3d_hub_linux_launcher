@@ -27,8 +27,8 @@ module W3DHubLauncher
           @player_count = data["status"]["numplayers"] || 0
           @max_players = data["status"]["maxplayers"]
 
-          @match_start_time = data["status"]["started"]
-          @estimated_end_time = data["status"]["estimatedEndTime"]
+          @match_start_time = Time.parse(data["status"]["started"])
+          @estimated_end_time = data["status"]["estimatedEndTime"] ? Time.parse(data["status"]["estimatedEndTime"]) : nil
           @match_remaining_time = data["status"]["remaining"]
 
           # status teams data
@@ -54,7 +54,25 @@ module W3DHubLauncher
 
         # TODO: implement :)
         def time_elapsed
-          "00:00"
+          elapsed_seconds = Time.now.utc.to_i - @match_start_time.utc.to_i
+
+          hours = (elapsed_seconds / 60.0 / 60.0).floor % 100
+          minutes = (elapsed_seconds / 60.0).floor % 60
+          seconds = (elapsed_seconds).floor % 60
+
+          format("%02d:%02d:%02d", hours, minutes, seconds)
+        end
+
+        def time_remaining
+          return "∞" unless @estimated_end_time
+
+          remaining_seconds = @estimated_end_time.utc.to_i - Time.now.utc.to_i
+
+          hours = (remaining_seconds / 60.0 / 60.0).floor % 100
+          minutes = (remaining_seconds / 60.0).floor % 60
+          seconds = (remaining_seconds).floor % 60
+
+          format("%02d:%02d:%02d", hours, minutes, seconds)
         end
 
         def password?

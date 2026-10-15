@@ -120,7 +120,7 @@ module W3DHubLauncher
 
           name_label&.value = game_server.name
           name_label&.tip = game_server.name
-          info_label&.value = "#{game_server.channel} • #{game_server.region} • #{game_server.time_elapsed} / #{game_server.match_remaining_time}"
+          info_label&.value = "#{game_server.channel} • #{game_server.region} • #{game_server.time_elapsed} / #{game_server.time_remaining}"
           map_label&.value = game_server.current_map
           map_label&.tip = game_server.current_map
           players_label&.value = format("%d / %d", game_server.player_count, game_server.max_players)
@@ -161,7 +161,7 @@ module W3DHubLauncher
               # server name
               caption server.name, tag: :name_label, text_wrap: :none, tip: server.name
               # server info
-              inscription "#{server.channel} • #{server.region} • #{server.time_elapsed} / #{server.match_remaining_time}", tag: :info_label, text_wrap: :none, margin_top: -HALF_PADDING
+              inscription "#{server.channel} • #{server.region} • #{server.time_elapsed} / #{server.time_remaining}", tag: :info_label, text_wrap: :none, margin_top: -HALF_PADDING
             end
           end
 

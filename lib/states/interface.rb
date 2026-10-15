@@ -18,7 +18,7 @@ module W3DHubLauncher
                 button(safe_get_image("#{ROOT_PATH}/media/logo.png"), image_height: 1.0, background: 0, border_color: 0, hover: { background: 0 }, active: { background: 0, color: 0xff_ffffff }) do |btn|
                   menu(parent: btn) do
                     menu_item("Settings") do
-                      dialog(Dialog::Settings)
+                      dialog(Dialog::LauncherSettings)
                     end
                     menu_item("About") do
                       dialog(Dialog::About)
@@ -225,11 +225,11 @@ module W3DHubLauncher
                 end
                 stack(width: 1.0 / 3, margin_left: HALF_PADDING) do
                   caption "Time", text_wrap: :none, tip: "Time", width: 1.0
-                  inscription "00:00:00", text_wrap: :none, width: 1.0, tip: "00:00:00"
+                  inscription server.time_elapsed, text_wrap: :none, width: 1.0, tip: server.time_elapsed
                 end
                 stack(width: 1.0 / 3, margin_left: HALF_PADDING) do
                   caption "Time Left", text_wrap: :none, tip: "Time Left", width: 1.0
-                  inscription server.match_remaining_time, text_wrap: :none, width: 1.0, tip: server.match_remaining_time
+                  inscription server.time_remaining, text_wrap: :none, width: 1.0, tip: server.time_remaining
                 end
               end
 

@@ -220,10 +220,14 @@ module W3DHubLauncher
                 menu(parent: btn) do
                   menu_item("v#{application.version}", enabled: false, disabled: { color: 0xdd_ffffff }, tip: "Installed application version")
                   stack(width: 1.0, height: 2, background: 0xff_bbbbbb)
-                  menu_item("Installation Folder", tip: "Open application installation folder:\n#{application.installation_path}")
+                  menu_item("Installation Folder", tip: "Open application installation folder:\n#{application.installation_path}") do
+                    SDL.OpenURL("file://#{application.installation_path}")
+                  end
                   menu_item("Screenshots Folder", tip: "Open application installation folder:\n#{Dir.home}/Documents/W3D Hub/#{application.id}-#{application.channel}/Screenshots")
                   stack(width: 1.0, height: 2, background: 0xff_bbbbbb)
-                  menu_item("Application Settings", tip: "Edit application launch options")
+                  menu_item("Application Settings", tip: "Edit application launch options") do
+                    dialog(Dialog::ApplicationSettings, application: application, app: @current_app)
+                  end
                   if @current_app.servicable?
                     menu_item("Repair Installation", tip: "Attempt to fix and repair installation") do
                       Worker::Api.repair_application(@current_app.id, @current_channel.id) do |result, status|
