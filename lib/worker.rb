@@ -81,11 +81,21 @@ module W3DHubLauncher
 
         # Handle getting and updating game server data
         task.async do
+          # Wait for "activation"
+          while (@settings.nil?)
+            sleep 0.25
+          end
+
           game_server_hub_websocket
         end
 
         # Handle backend communication
         task.async do
+          # Wait for "activation"
+          while (@settings.nil?)
+            sleep 0.25
+          end
+
           backend_websocket
         end
 
