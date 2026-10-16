@@ -5,8 +5,7 @@ module W3DHubLauncher
 
     IndexedFile = Data.define(:type, :path)
 
-    attr_reader :request_id, :application, :channel, :installed_version, :target_version
-    attr_reader :status
+    attr_reader :request_id, :application, :channel, :installed_version, :target_version, :status
 
     def initialize(request_id:, application:, channel:, installed_version:, target_version:)
       @request_id = request_id
@@ -467,11 +466,11 @@ module W3DHubLauncher
       create_directory(File.dirname(file_path))
 
       result = if manifest_package.download_url
-        @worker.w3dhub_api.download(manifest_package.download_url, path: file_path)
-      else
-        # TODO xD
-        @worker.w3dhub_api.fetch_package("TODO")
-      end
+                 @worker.w3dhub_api.download(manifest_package.download_url, path: file_path)
+               else
+                 # TODO xD
+                 @worker.w3dhub_api.fetch_package("TODO")
+               end
 
       if result.okay?
         return Worker::Api::LegacyManifest.new(package_cache_path(manifest_package))
