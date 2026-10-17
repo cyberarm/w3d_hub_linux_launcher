@@ -57,7 +57,7 @@ GEM
     io-stream (0.14.0)
       openssl (>= 3.3)
     ircparser (1.0.0)
-    json (3.0.2)
+    json (3.1.0)
     logger (1.7.0)
     openssl (4.0.2)
     protocol-hpack (1.5.1)
@@ -140,7 +140,7 @@ CHECKSUMS
   io-event (1.22.1) sha256=0dd054cefe4a29f1b8286604f332c14f3208d75f54902961e91e94d45e5e1600
   io-stream (0.14.0) sha256=07d9b13ea2066ccbbc761fff8d69ad5a31e47561d31e02cc271f3ed9c1a8f1cd
   ircparser (1.0.0) sha256=0d4598f691172e2ad078207c50ba62c0d3428ae841836b0a682e6cd01d62878d
-  json (3.0.2) sha256=8e6d7e7b11384c21230430cef90b71f14849a34a1f4452796670f7c981bd19df
+  json (3.1.0) sha256=3ce7ccf8fde58960177a3a756c31f292a4c1e1dedee884547096a5b0604e3bd8
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
   openssl (4.0.2) sha256=1037ad2868ae58df9ad917891c0c0f9815a1172f6846d4bcdd508e4c2ee747c2
   protocol-hpack (1.5.1) sha256=6feca238b8078da1cd295677d6f306c6001af92d75fe0643d33e6956cbc3ad91

@@ -3,6 +3,12 @@ module W3DHubLauncher
     # ignore *.meta and paths.ini files
     IGNORED_FILES = [/\A.+\.meta\z/i, /\A.+\/paths\.ini\z/i].freeze
 
+    STAGE_FETCH_MANIFEST = 1
+    STAGE_VERIFY_FILES = 2
+    STAGE_DOWNLOAD_FILES = 3
+    STAGE_INSTALL_FILES = 4
+    STAGE_MAX = STAGE_INSTALL_FILES
+
     IndexedFile = Data.define(:type, :path)
 
     attr_reader :request_id, :application, :channel, :installed_version, :target_version, :status
@@ -36,6 +42,10 @@ module W3DHubLauncher
       # whether task should perform a per file checksum or just read it from the cache and
       # check file modification time and size
       @force_verification = false
+
+      # Status progress reporting stage
+      @stage = 0
+      @stage_count = STAGE_MAX # manifests and package list building, verifying, downloading, installing
 
       setup
     end
@@ -81,7 +91,7 @@ module W3DHubLauncher
     end
 
     def fetch_manifests(version = @target_version)
-      update_status(label: "Fetching manifests...", fraction: 0.0)
+      update_stage_progress(label: "Fetching manifests...", fraction: 0.0)
 
       while (manifest = fetch_manifest(version))
         @manifests[version] = manifest
@@ -93,7 +103,7 @@ module W3DHubLauncher
     end
 
     def build_package_list
-      update_status(label: "Building package list...", fraction: 0.0)
+      update_stage_progress(label: "Building package list...", fraction: 0.0)
 
       channel_manifests = []
       version = @target_version
@@ -108,7 +118,9 @@ module W3DHubLauncher
 
       files = []
       deleted_files = []
-      channel_manifests.reverse.each do |manifest|
+      channel_manifests.reverse.each_with_index do |manifest, i|
+        update_stage_progress(label: "Building package list...", fraction: (i.to_f + 1) / channel_manifests.size)
+
         manifest.files.each do |file|
           if file.removed?
             files.delete_if { |f| f.name.casecmp?(file.name) }
@@ -130,10 +142,13 @@ module W3DHubLauncher
 
       @manifest_files = files
       @deleted_manifest_files = deleted_files
+
+      update_stage_progress(label: "Building package list...", fraction: 1.0)
+      @stage += 1
     end
 
     def verify_files
-      update_status(label: "Verifying files...", fraction: 0.0)
+      update_stage_progress(label: "Verifying files...", fraction: 0.0)
 
       @required_manifest_files = @manifest_files.clone
 
@@ -153,14 +168,22 @@ module W3DHubLauncher
 
         puts "verifying #{file_path}..."
         key = @verification_data.key(file.name)
-        pp [key, @force_verification]
         verification_data = @force_verification ? nil : @verification_data.unchanged?(key, checksum: file.checksum, file_path: file_path)
 
-        # Use cached checksum if the file appears unchanged, otherwise recalculate it
-        checksum = verification_data&.checksum || Digest::SHA256.file(file_path).hexdigest.upcase
+        # pp [key, @force_verification, verification_data, cached_checksums[file_path], file.checksum]
+        # pp @verification_data.data(key)
 
-        # Set or update cached verification data if files don't match
-        @verification_data.set(key, checksum: checksum, file_path: file_path) unless verification_data
+        checksum = verification_data&.checksum || cached_checksums[file_path]
+
+        # File exists, verification data for an older version exists, skip generationing file checksum
+        if @force_verification || @verification_data.data(key).nil?
+          # Use cached checksum if the file appears unchanged, otherwise recalculate it
+          checksum = verification_data&.checksum || cached_checksums[file_path] || Digest::SHA256.file(file_path).hexdigest.upcase
+
+          # Set or update cached verification data if files don't match
+          @verification_data.set(key, checksum: checksum, file_path: file_path) unless verification_data
+          cached_checksums[file_path] = checksum
+        end
 
         if checksum == file.checksum
           @required_manifest_files.delete(file)
@@ -172,12 +195,16 @@ module W3DHubLauncher
           puts "  failed verification:#{file.version}"
         end
 
-        update_status(label: "Verifying files...", fraction: i.to_f / @manifest_files.size)
+        update_stage_progress(label: "Verifying files (#{i + 1} / #{@manifest_files.size})", fraction: (i.to_f + 1) / @manifest_files.size)
       end
+
+      update_stage_progress(label: "Verified files.", fraction: 1.0)
+
+      @stage += 1
     end
 
     def fetch_packages
-      update_status(label: "Downloading packages...", fraction: 0.0)
+      update_stage_progress(label: "Downloading packages...", fraction: 0.0)
 
       required_packages = {}
       @required_manifest_files.each do |file|
@@ -215,7 +242,12 @@ module W3DHubLauncher
 
       @packages = manifest_packages
 
-      manifest_packages.each do |pkg|
+      # FIXME: We should include packages in verification step so once we reach the downloading stage
+      #        we don't halt everything to verify package files and have a stable download size report
+      total_data_to_download_bytes = manifest_packages.sum { |pkg| pkg.file_size }
+      total_data_downloaded_bytes = 0
+
+      manifest_packages.each_with_index do |pkg, i|
         file_path = package_cache_path(pkg)
         unless File.directory?(File.dirname(file_path))
           puts "creating directory: #{File.dirname(file_path)}"
@@ -227,16 +259,34 @@ module W3DHubLauncher
         if state.is_a?(Integer)
           puts "partially valid at: #{state} bytes (#{file_path})" # 20971520
           partially_valid_at = state
+          total_data_to_download_bytes -= partially_valid_at
         else
           if state == true # completely verified, skip download!
             puts "skipping #{file_path}"
+            total_data_to_download_bytes -= pkg.file_size
+            update_stage_progress(label: "Downloading packages...", fraction: (i.to_f + 1) / manifest_packages.size)
             next
           end
         end
 
+        last_sample_time_ms = -10_000
+        sample_downloaded_bytes = 0
+
         result = if pkg.download_url
           puts "downloading #{pkg.download_url} to #{file_path}"
-          @worker.w3dhub_api.download(pkg.download_url, path: file_path, headers: @worker.w3dhub_api.headers(range: partially_valid_at))
+          @worker.w3dhub_api.download(pkg.download_url, path: file_path, headers: @worker.w3dhub_api.headers(range: partially_valid_at)) do |downloaded_bytes, total_downloaded_bytes, content_length|
+            sample_downloaded_bytes += downloaded_bytes
+            total_data_downloaded_bytes += downloaded_bytes
+
+            if Gosu.milliseconds - last_sample_time_ms >= 1_000
+              last_sample_time_ms = Gosu.milliseconds
+
+              fraction = (total_downloaded_bytes + partially_valid_at) / pkg.file_size.to_f
+
+              update_stage_progress(label: "Downloading #{W3DHubLauncher.format_size(total_data_downloaded_bytes)} / #{W3DHubLauncher.format_size(total_data_to_download_bytes)} [#{W3DHubLauncher.format_size(sample_downloaded_bytes)}/s]", fraction: (i.to_f + fraction) / manifest_packages.size)
+              sample_downloaded_bytes = 0
+            end
+          end
         else
           # TODO xD
           @worker.w3dhub_api.fetch_package("TODO")
@@ -244,15 +294,19 @@ module W3DHubLauncher
 
         abort_task!("Failed to download required package: #{pkg.name}:#{pkg.version} (#{result.error})") unless result.okay?
       end
+
+      update_stage_progress(label: "Downloaded packages.", fraction: 1.0)
+
+      @stage += 1
     end
 
     def install_packages
-      update_status(label: "Installing...", fraction: 0.0)
+      update_stage_progress(label: "Installing...", fraction: 0.0)
 
       create_directory(@installation_directory)
 
       processed_packages = {}
-      @required_manifest_files.each do |manifest_file|
+      @required_manifest_files.each_with_index do |manifest_file, i|
         package = @packages.find do |pkg|
           pkg.name.casecmp?("#{manifest_file.package}.zip") && manifest_file.version == pkg.version
         end
@@ -267,11 +321,13 @@ module W3DHubLauncher
         end
 
         processed_packages[package_path] = manifest_file
+
+        update_stage_progress(label: "Installing (#{i + 1} / #{@required_manifest_files.size})", fraction: (i.to_f + 1)/ @required_manifest_files.size)
       end
     end
 
     def remove_deleted_files
-      update_status(label: "Removing files...", fraction: 0.0)
+      update_stage_progress(label: "Removing files...", fraction: 1.0)
 
       @deleted_manifest_files.each do |manifest_file|
         file_path = normalize_path(manifest_file.name)
@@ -331,6 +387,12 @@ module W3DHubLauncher
     end
 
     def update_status(label:, fraction:)
+      message_requester(data: { status: { title: "#{@task_verb} #{@application.name} (#{@channel.name})", label: label, fraction: fraction } } )
+    end
+
+    def update_stage_progress(label:, fraction:)
+      fraction = (@stage / @stage_count.to_f) + ((1.0 / @stage_count) * fraction)
+
       message_requester(data: { status: { title: "#{@task_verb} #{@application.name} (#{@channel.name})", label: label, fraction: fraction } } )
     end
 

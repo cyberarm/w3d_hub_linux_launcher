@@ -38,7 +38,6 @@ module W3DHubLauncher
       Sync do |task|
         task.with_timeout(API_TIMEOUT) do
           Async::HTTP::Internet.send(method, url, headers, body) do |response|
-            pp [method, url, headers, body, response]
             if response.success?
               result.data = response.read
             else
