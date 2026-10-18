@@ -191,7 +191,9 @@ module W3DHubLauncher
           end
 
           w.subscribe(:clicked_left_mouse_button) do
-            @parent.populate_server_information(server)
+            current_server = (MemCache[:servers] || []).find { |s| s.id == server.id }
+
+            @parent.populate_server_information(current_server)
           end
         end
       end
