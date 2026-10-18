@@ -516,6 +516,10 @@ module W3DHubLauncher
         FileUtils.mkdir_p(W3DHubLauncher::CONFIG_PATH)
         File.write(W3DHubLauncher::SETTINGS_FILE_PATH, query.data)
 
+        if @settings&.account&.signed_in?
+          @w3dhub_api.access_token = @settings.account.access_token
+        end
+
         result.data = query.data
       rescue => e
         result.error = e

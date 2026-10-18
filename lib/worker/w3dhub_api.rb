@@ -8,6 +8,8 @@ module W3DHubLauncher
 
     attr_reader :applications
 
+    attr_writer :access_token
+
     def initialize
       @access_token = nil
 
@@ -91,8 +93,13 @@ module W3DHubLauncher
       result
     end
 
-    def user_login()
+    def user_login(username, password, &block)
       result = CyberarmEngine::Result.new
+
+      body = URI.encode_www_form("data": JSON.dump({username: username, password: password}))
+      response = fetch("#{PRIMARY_W3DHUB_API_ENDPOINT}/apis/launcher/1/user-login", method: :post, body: body, headers: headers(form_encoded: true))
+
+      pp response
     end
 
     def refresh_user_login()

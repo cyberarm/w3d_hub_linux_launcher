@@ -30,6 +30,14 @@ module W3DHubLauncher
       def self.account
       end
 
+      def self.user_login(username, password, &block)
+        W3DHubLauncher::Worker::Request.new(:w3dhub_api_call, { call: :user_login, arguments: [username, password] }, &block)
+      end
+
+      def self.refresh_user_login(refresh_token, &block)
+        W3DHubLauncher::Worker::Request.new(:w3dhub_api_call, { call: :refresh_user_login, arguments: [refresh_token] }, &block)
+      end
+
       # returns launcher settings
       def self.settings
       end

@@ -56,32 +56,8 @@ module W3DHubLauncher
 
                 # self account container
                 @account_container = flow(width: 400, height: 80, margin_left: LARGE_PADDING) do
-                  # self avatar container
-                  stack(width: 80, height: 1.0, background_image: rounded_avatar(safe_get_image("#{ROOT_PATH}/media/default.png")), tag: :account_avatar) do |i|
-                    i.subscribe(:clicked_left_mouse_button) do
-                      dialog(Dialog::Account)
-                    end
-                    # self online state container
-                    stack(width: 20, height: 20, v_align: :bottom, h_align: :right, background_image: safe_get_image("#{ROOT_PATH}/media/ui/circle_small.png"), background_image_color: 0xff_26a269, tag: :account_online_state)
-                  end
-
-                  stack(fill: true, height: 1.0, margin_left: HALF_PADDING) do
-                    flow(fill: true)
-                    # self name
-                    caption "cyberarm", font: FONT_BLACK, text_wrap: :none, width: 1.0, tag: :account_name
-                    # self set online state
-                    link "Online ▼", text_size: 18 do |l|
-                      menu(parent: l) do
-                        menu_item("Online")
-                        menu_item("Do Not Disturb")
-                        menu_item("Away")
-                        menu_item("Invisible")
-                        menu_item("Sign Out")
-                      end.show
-                    end
-                    flow(fill: true)
-                  end
                 end
+                populate_account_information
               end
 
               # layout container
@@ -355,6 +331,52 @@ module W3DHubLauncher
         end
 
         composite.save(path)
+      end
+
+      def populate_account_information
+        account = MemCache[:settings].account
+
+        @account_container.clear do
+          # self avatar container
+          stack(width: 80, height: 1.0, background_image: rounded_avatar(safe_get_image("#{ROOT_PATH}/media/default.png")), tag: :account_avatar) do
+            # self online state container
+            stack(
+              width: 20,
+              height: 20,
+              v_align: :bottom,
+              h_align: :right,
+              background_image: safe_get_image("#{ROOT_PATH}/media/ui/circle_small.png"),
+              background_image_color: account.signed_in? ? 0xff_26a269 : 0xff_77767b,
+              tag: :account_online_state
+            )
+          end
+
+          stack(fill: true, height: 1.0, margin_left: HALF_PADDING) do
+            flow(fill: true)
+            # self name
+            caption account.signed_in? ? account.displayname : MemCache[:settings].preferences.nickname, font: FONT_BLACK, text_wrap: :none, width: 1.0, tag: :account_name
+
+            if account.signed_in?
+              # self set online state
+              link "Online ▼", text_size: 18 do |l|
+                menu(parent: l) do
+                  menu_item("Online")
+                  menu_item("Do Not Disturb")
+                  menu_item("Away")
+                  menu_item("Invisible")
+                  menu_item("Sign Out") do
+                    # sign out
+                  end
+                end.show
+              end
+            else
+              button "Sign In", text_size: 18 do
+                dialog(Dialog::Account)
+              end
+            end
+            flow(fill: true)
+          end
+        end
       end
 
       def button_up(id)
