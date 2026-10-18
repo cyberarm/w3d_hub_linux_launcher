@@ -45,8 +45,8 @@ module W3DHubLauncher
             end
           end
 
-          button(safe_get_image("#{ROOT_PATH}/media/icons/target.png"), image_height: 1.0, tip: "Direct Connect", padding: HALF_PADDING, enabled: false, margin_left: PADDING) do
-            dialog(Dialog::DirectConnect)
+          button(safe_get_image("#{ROOT_PATH}/media/icons/target.png"), image_height: 1.0, tip: "Direct Connect", padding: HALF_PADDING, margin_left: PADDING) do
+            dialog(Dialog::Asterisk)
           end
         end
 
