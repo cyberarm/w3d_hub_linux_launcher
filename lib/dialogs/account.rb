@@ -10,13 +10,27 @@ module W3DHubLauncher
           end
 
           stack(style_class: [:dialog_container]) do
-            caption "Sign in with your W3D Hub forum account", margin_bottom: PADDING
+            title "Sign in with your W3D Hub forum account", margin_bottom: PADDING
 
             tagline "Username"
             @username = edit_line "", width: 1.0
 
             tagline "Password"
             @password = edit_line "", type: :password, width: 1.0
+
+            flow(width: 1.0, margin_top: LARGE_PADDING, margin_bottom: LARGE_PADDING) do
+              flow(fill: true, height: 2, v_align: :center, background: 0xff_000000)
+
+              tagline "OR", margin_left: HALF_PADDING, margin_right: HALF_PADDING
+
+              flow(fill: true, height: 2, v_align: :center, background: 0xff_000000)
+            end
+
+            tagline "Sign in with access token"
+            flow(width: 1.0) do
+              edit_line "", fill: true, enabled: false
+              button "Get token", tip: "https://sso.w3d.cyberarm.dev/account/token", enabled: false
+            end
           end
 
           flow(width: 1.0, padding: PADDING, background_nine_slice: NINE_SLICE_ROUNDED_BOTTOM, background_nine_slice_from_edge: NINE_SLICE_EDGE, background_nine_slice_color: 0) do
