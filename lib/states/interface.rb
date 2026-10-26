@@ -336,10 +336,11 @@ module W3DHubLauncher
 
       def populate_account_information
         account = MemCache[:settings].account
+        avatar_path = account ? "#{CACHE_PATH}/avatar_#{account&.user_id}#{File.extname(account&.avatar_uri)}" : nil
 
         @account_container.clear do
           # self avatar container
-          stack(width: 80, height: 1.0, background_image: rounded_avatar(safe_get_image("#{ROOT_PATH}/media/default.png")), tag: :account_avatar) do
+          stack(width: 80, height: 1.0, background_image: rounded_avatar(safe_get_image(avatar_path || "#{ROOT_PATH}/media/default.png")), tag: :account_avatar) do
             # self online state container
             stack(
               width: 20,
@@ -376,6 +377,14 @@ module W3DHubLauncher
               end
             end
             flow(fill: true)
+          end
+        end
+
+        if account && !account.avatar_uri.empty?
+          img = find_element_by_tag(@account_container, :account_avatar)
+
+          remote_image(avatar_path, url: account.avatar_uri, element: img) do |e, path|
+            e&.background_image = rounded_avatar(safe_get_image(path))
           end
         end
       end

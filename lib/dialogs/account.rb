@@ -55,15 +55,7 @@ module W3DHubLauncher
                 if result.okay?
                   hash = JSON.parse(result.data)
 
-                  MemCache[:settings].account = W3DHubLauncher::Worker::Api::Settings::Account.create(
-                    user_id: hash["userid"],
-                    username: hash["username"],
-                    displayname: hash["displayname"],
-                    avatar_uri: "",
-                    access_token: hash["accessToken"],
-                    refresh_token: hash["refreshToken"],
-                    access_token_expiration_time: hash["accessTokenExpiry"]
-                  )
+                  MemCache[:settings].account = W3DHubLauncher::Worker::Api::Settings::Account.new(hash)
 
                   Worker::Api.update_settings(MemCache[:settings]) do |settings_result|
                     if settings_result.okay?
