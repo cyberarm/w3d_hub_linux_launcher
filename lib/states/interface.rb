@@ -348,9 +348,13 @@ module W3DHubLauncher
               v_align: :bottom,
               h_align: :right,
               background_image: safe_get_image("#{ROOT_PATH}/media/ui/circle_small.png"),
-              background_image_color: account.signed_in? ? 0xff_26a269 : 0xff_77767b,
+              background_image_color: 0xff_77767b,
               tag: :account_online_state
-            )
+            ) do
+              if account.signed_in?
+                image safe_get_image("#{ROOT_PATH}/media/ui/circle_small.png"), width: 1.0, height: 1.0, color: 0xff_26a269, padding: 1
+              end
+            end
           end
 
           stack(fill: true, height: 1.0, margin_left: HALF_PADDING) do
