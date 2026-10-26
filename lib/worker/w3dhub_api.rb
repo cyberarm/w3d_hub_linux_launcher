@@ -93,21 +93,71 @@ module W3DHubLauncher
       result
     end
 
-    def user_login(username, password, &block)
+    def user_login(username, password)
       result = CyberarmEngine::Result.new
 
       body = URI.encode_www_form("data": JSON.dump({username: username, password: password}))
       response = fetch("#{PRIMARY_W3DHUB_API_ENDPOINT}/apis/launcher/1/user-login", method: :post, body: body, headers: headers(form_encoded: true))
 
-      pp response
+      if response.okay?
+        hash = JSON.parse(response.data)
+
+        user_details_result = fetch_user_details(Integer(hash["userid"]))
+        user_details_hash = user_details_result.okay? ? JSON.parse(user_details_result.data) : {}
+
+        account = W3DHubLauncher::Worker::Api::Settings::Account.create(
+          user_id: hash["userid"],
+          username: hash["username"],
+          displayname: hash["displayname"],
+          avatar_uri: user_details_hash["avatar-uri"] || "",
+          access_token: hash["accessToken"],
+          refresh_token: hash["refreshToken"],
+          access_token_expiration_time: hash["accessTokenExpiry"]
+        )
+
+        result.data = account.to_json
+      end
+
+      result
     end
 
-    def refresh_user_login()
+    def refresh_user_login(refresh_token)
       result = CyberarmEngine::Result.new
+
+      body = URI.encode_www_form("data": JSON.dump({refreshToken: refresh_token}))
+      response = fetch("#{PRIMARY_W3DHUB_API_ENDPOINT}/apis/launcher/1/user-login", method: :post, body: body, headers: headers(form_encoded: true))
+
+      if response.okay?
+        hash = JSON.parse(response.data)
+
+        user_details_result = fetch_user_details(Integer(hash["userid"]))
+        user_details_hash = user_details_result.okay? ? JSON.parse(user_details_result.data) : {}
+
+        account = W3DHubLauncher::Worker::Api::Settings::Account.create(
+          user_id: hash["userid"],
+          username: hash["username"],
+          displayname: hash["displayname"],
+          avatar_uri: user_details_hash["avatar-uri"] || "",
+          access_token: hash["accessToken"],
+          refresh_token: hash["refreshToken"],
+          access_token_expiration_time: hash["accessTokenExpiry"]
+        )
+
+        result.data = account.to_json
+      end
+
+      result
     end
 
-    def fetch_user_details()
+    def fetch_user_details(user_id)
       result = CyberarmEngine::Result.new
+
+      body = URI.encode_www_form("data": JSON.dump({id: user_id}))
+      response = fetch("#{PRIMARY_W3DHUB_API_ENDPOINT}/apis/w3dhub/1/get-user-details", method: :post, body: body, headers: headers(form_encoded: true))
+
+      result.data = response.data if response.okay?
+
+      result
     end
 
     def fetch_applications
@@ -152,7 +202,7 @@ module W3DHubLauncher
       fetch("#{PRIMARY_W3DHUB_API_ENDPOINT}/apis/w3dhub/1/get-server-events", method: :post, body: "data={\"serverPath\":\"#{category}\"}", headers: headers(form_encoded: true))
     end
 
-    def fetch_test_events(category)
+    def fetch_test_events
       fetch("#{PRIMARY_W3DHUB_API_ENDPOINT}/apis/w3dhub/1/get-testing-times")
     end
 
