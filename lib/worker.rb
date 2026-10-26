@@ -372,7 +372,7 @@ module W3DHubLauncher
                     content_length: content_length
                   })
 
-                  message_requester(query.request_id, Request::STATUS_IN_PROGRESS, progress_result.data, progress_result.error)
+                  message_requester(request_id: query.request_id, status: Request::STATUS_IN_PROGRESS, data: progress_result.data, error: progress_result.error)
                 end
               end
 
