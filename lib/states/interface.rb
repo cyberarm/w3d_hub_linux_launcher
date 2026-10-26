@@ -38,10 +38,11 @@ module W3DHubLauncher
                     link("GAMES",height: 1.0, text_v_align: :center, font: FONT_BLACK, margin_left: PADDING) { page(Page::Games) }
                     link("SERVERS",height: 1.0, text_v_align: :center, font: FONT_BLACK, margin_left: PADDING) { page(Page::ServerBrowser) }
                     stack(fill: true)
-                    image safe_get_image("#{ROOT_PATH}/media/icons/import.png"), height: 40, color: 0xff_bbbbbb, tip: "Downloads" do |img|
-                      dialog(Dialog::Downloads)
+                    stack(v_align: :center) do
+                      button safe_get_image("#{ROOT_PATH}/media/icons/import.png"), image_height: 40, color: 0xff_bbbbbb, padding_left: QUARTER_PADDING, padding_right: QUARTER_PADDING, tip: "Downloads" do |img|
+                        dialog(Dialog::Downloads)
+                      end
                     end
-                    image safe_get_image("#{ROOT_PATH}/media/icons/information.png"), height: 40, color: 0xff_bbbbbb, tip: "Notifications"
                   end
                   # application task status bar container
                   @application_task_status_bar_container = stack(width: 1.0, fill: true, margin_left: PADDING, visible: false) do
