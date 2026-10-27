@@ -101,7 +101,7 @@ module W3DHubLauncher
         # TODO: Sort servers?
       end
 
-      def handle_game_server_list
+      def handle_game_server_list(payload)
         after(1_000) do
           populate_server_list
         end
