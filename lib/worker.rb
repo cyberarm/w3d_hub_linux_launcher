@@ -200,6 +200,9 @@ module W3DHubLauncher
             msg = [8, 0, 0, 0, sequence_id].flatten.pack("C2n2A64")
             echo_requests[sequence_id] = { send_time: Time.now, address: server_address, replied: false }
             socket.send(msg, 0, address)
+          rescue Errno::ENETUNREACH
+            # network was unreachable, cleanup
+            echo_requests.delete(sequence_id)
           end
 
           # Receive replies until timeout
