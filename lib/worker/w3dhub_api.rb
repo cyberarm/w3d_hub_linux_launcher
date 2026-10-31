@@ -10,7 +10,9 @@ module W3DHubLauncher
 
     attr_writer :access_token
 
-    def initialize
+    def initialize(worker)
+      @worker = worker
+
       @access_token = nil
 
       @applications = []

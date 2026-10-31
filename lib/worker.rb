@@ -46,7 +46,7 @@ module W3DHubLauncher
       @game_servers = []
       @host_pings = {}
 
-      @w3dhub_api = W3DHubLauncher::W3DHubApi.new
+      @w3dhub_api = W3DHubLauncher::W3DHubApi.new(self)
 
       Async do |task|
         task.async do |subtask|
