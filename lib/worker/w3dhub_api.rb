@@ -181,17 +181,67 @@ module W3DHubLauncher
         single_source = true
       end
 
-      unless single_source
-        puts "FIXME: merge applications source"
-        # We've gotten data back from both backends, merge them.
-        # pp [primary_result, alternate_result]
+      if single_source
+        @applications = JSON.parse(result.data)["applications"]&.map { |app| W3DHubLauncher::Worker::Api::Application.new(app) } || []
 
-        # FIXME: Merge primary and alternate results
+        result
+      else # We've gotten data back from both backends, merge them.
+        primary = JSON.parse(primary_result.data)["applications"]&.map { |app| W3DHubLauncher::Worker::Api::Application.new(app) } || []
+        alternate = JSON.parse(alternate_result.data)["applications"]&.map { |app| W3DHubLauncher::Worker::Api::Application.new(app) } || []
+
+        primary.each do |app|
+          application = alternate.find { |a| a.id == app.id }
+          unless application
+            alternate << app
+
+            # App doesn't exist in alternate list
+            # comparing channels isn't useful
+            next
+          end
+
+          app.channels.each do |chan|
+            channel = application.channels.find { |c| c.id == chan.id }
+
+            unless channel
+              application.channels << chan
+
+              # App doesn't have channel in alternate list
+              # comparing channels isn't useful
+              next
+            end
+
+            # If channel versions and access levels match then all is well
+            if chan.version == channel.version &&
+              chan.user_level == channel.user_level
+
+              # All is well!
+              next
+            end
+
+            # If the access levels don't match then overwrite alternate's channel with primary's channel
+            if chan.user_level != channel.user_level
+              # Replace alternate's channel with primary's channel
+              application.channels[application.channels.index(channel)] = chan
+
+              # Replaced, continue.
+              next
+            end
+
+            # If versions don't match then pick whichever one is higher
+            if Gem::Version.new(chan.current_version) > Gem::Version.new(channel.current_version)
+              # Replace alternate's channel with primary's channel
+              application.channels[application.channels.index(channel)] = chan
+            else
+              # Do nothing, alternate backend version is greater.
+            end
+          end
+        end
+
+        @applications = alternate # alternate is merged with primary
+        result.data = { applications: alternate }.to_json
+
+        result
       end
-
-      @applications = JSON.parse(result.data)["applications"]&.map { |app| W3DHubLauncher::Worker::Api::Application.new(app) } || []
-
-      result
     end
 
     def fetch_news(category)

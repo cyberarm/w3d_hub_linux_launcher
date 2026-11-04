@@ -4,7 +4,8 @@ module W3DHubLauncher
   class Worker
     class Api
       # downloads requested resource, returns raw string
-      def self.fetch_url
+      def self.fetch_url(url, method = :get, headers = nil, body = nil, &block)
+        Worker::Request.new(:fetch_url, { url: url, method: method, headers: headers, body: body }, &block)
       end
 
       # downloads requested resource, periodically reporting progress until completion, returning path for file on disk

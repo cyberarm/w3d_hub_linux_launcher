@@ -75,10 +75,25 @@ module W3DHubLauncher
         def step_launcher_update
           @initialization_container.append do
             tagline "Checking for updates..."
-            caption "Launcher version <c=0f0>OK</c>", margin_left: LARGE_PADDING
           end
 
-          after(1000) do
+          Worker::Api.fetch_url("https://api.github.com/repos/cyberarm/w3d_hub_linux_launcher/releases/latest") do |result|
+            if result.okay?
+              hash = JSON.parse(result.data)
+
+              @initialization_container.append do
+                if hash["name"] && Gem::Version.new(hash["name"].sub("v", "")) > Gem::Version.new(W3DHubLauncher::VERSION)
+                  caption "Launcher update available <c=0f0>#{hash["version"]}</c> (#{W3DHubLauncher::VERSION} running)", margin_left: LARGE_PADDING
+                else
+                  caption "Launcher version <c=0f0>OK</c>", margin_left: LARGE_PADDING
+                end
+              end
+            else
+              @initialization_container.append do
+                caption "Fetch latest launcher version <c=f80>FAILED</c>", margin_left: LARGE_PADDING
+              end
+            end
+
             next_step
           end
         end
@@ -89,7 +104,7 @@ module W3DHubLauncher
           end
 
           counter = 0
-          every(1000) do
+          every(1000) do |timer|
             if !MemCache[:servers].nil? || counter >= 5
               @initialization_container.append do
                 if MemCache[:servers]
@@ -98,6 +113,7 @@ module W3DHubLauncher
                   caption "Failed to retrieve server listing.", color: 0xff_ff8800, margin_left: LARGE_PADDING
                 end
 
+                timer.cancel
                 next_step
               end
             end
@@ -107,13 +123,53 @@ module W3DHubLauncher
         end
 
         def step_refresh_account_data
-          @initialization_container.append do
-            tagline "Updating account information..."
-            caption "Refresh session <c=0f0>OK</c>", margin_left: LARGE_PADDING
-            caption "Profile data <c=0f0>OK</c>", margin_left: LARGE_PADDING
+          account = MemCache[:settings]&.account
+
+          # user isn't signed in, skip step
+          if account&.refresh_token.empty?
+            next_step
+
+            return
           end
 
-          after(1000) do
+          # Expired or expiring session refresh immediately
+          if account.access_token_expiration_time < Time.now || (account.access_token_expiration_time - Time.now) < 60 * 60 * 6 # expiring in 6 hours
+            @initialization_container.append do
+              tagline "Updating account information..."
+            end
+
+            Worker::Api.refresh_user_login(account.refresh_token) do |result|
+              if result.okay?
+                hash = JSON.parse(result.data)
+
+                MemCache[:settings].account = W3DHubLauncher::Worker::Api::Settings::Account.new(hash)
+
+                Worker::Api.update_settings(MemCache[:settings]) do |settings_result|
+                  if settings_result.okay?
+                    @initialization_container.append do
+                      caption "Refresh session <c=0f0>OK</c>", margin_left: LARGE_PADDING
+                    end
+
+                    next_step
+                  else
+                    @initialization_container.append do
+                      caption "Refresh session <c=f80>FAILED</c>", margin_left: LARGE_PADDING
+                    end
+                    MemCache[:account_session_expired] = true
+
+                    next_step
+                  end
+                end
+              else
+                @initialization_container.append do
+                  caption "Refresh session <c=f80>FAILED</c>", margin_left: LARGE_PADDING
+                end
+                MemCache[:account_session_expired] = true
+
+                next_step
+              end
+            end
+          else
             next_step
           end
         end
