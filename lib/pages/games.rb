@@ -3,6 +3,8 @@ module W3DHubLauncher
     class Games < CyberarmEngine::Page
       include GuiExt
 
+      GAME_COVER_ASPECT_RATIO = 3 / 4.0
+
       def setup
         @games = MemCache[:applications]&.select { |app| app.type.include?("game") } || []
 
@@ -78,15 +80,46 @@ module W3DHubLauncher
       def populate_all_games
         @display_mode = :all_games
 
+        img = safe_get_image("#{ROOT_PATH}/media/default_game_cover.png")
+
         @game_content_container.clear do
           flow(fill: true, height: 1.0, scroll: true, tag: :hi_mom) do |e|
+
+            width = img.height * (GAME_COVER_ASPECT_RATIO * (1.0 / game_cover_width_ratio(e)))
+            height = img.width / (GAME_COVER_ASPECT_RATIO)
+
             @games.each do |app|
-              image safe_get_image("#{ROOT_PATH}/media/default_game_cover.png"), aspect_ratio: 3 / 4.0, width: 1.0 / game_cover_width_ratio(e), margin_left: HALF_PADDING, margin_right: HALF_PADDING, margin_bottom: PADDING, tip: app.name
+              w = widget(
+                background_image: img,
+                aspect_ratio: 3 / 4.0,
+                width: width.round,
+                height: height.round,
+                margin_left: HALF_PADDING,
+                margin_right: HALF_PADDING,
+                margin_bottom: PADDING,
+                tip: app.name
+              ) do
+                image safe_get_image("#{CACHE_PATH}/logo_#{app.id}.png"), width: 1.0, padding: LARGE_PADDING
+              end
+
+              w.subscribe(:clicked_left_mouse_button) do
+                channel = app.channels.find { |c| c.name.downcase == "release" } ||
+                          app.channels.find { |c| c.name.downcase == "testing" } ||
+                          app.channels.first
+
+                populate_game(app, channel)
+              end
             end
 
             e.subscribe(:size_changed) do |e|
               e.children.each do |child|
-                child.style.width = 1.0 / game_cover_width_ratio(e)
+                img = child.background_image_canvas.image
+
+                width = e.width * (1.0 / game_cover_width_ratio(e))
+                height = (width / GAME_COVER_ASPECT_RATIO)
+
+                child.style.width = width
+                child.style.height = height
               end
             end
           end
@@ -322,7 +355,9 @@ module W3DHubLauncher
       end
 
       def game_cover_width_ratio(e)
-        (e.width / 300.0).round.clamp(1..10)
+        return 1.0 if e.width.zero?
+
+        (e.width / 380.0).round.clamp(1..10)
       end
 
       def news_item_width_ratio
