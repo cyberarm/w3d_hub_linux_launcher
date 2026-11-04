@@ -11,7 +11,7 @@ module W3DHubLauncher
         TERMS
 
         def setup
-          flow(width: 1.0, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: 8, background_nine_slice_color: 0x11_ffffff, padding: HALF_PADDING) do
+          flow(width: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: 8, background_nine_slice_color: 0x11_ffffff, padding: HALF_PADDING) do
             banner "Terms and Conditions", width: 1.0, text_align: :center
           end
 

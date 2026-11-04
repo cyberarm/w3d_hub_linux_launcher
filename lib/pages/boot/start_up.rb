@@ -16,7 +16,7 @@ module W3DHubLauncher
           @initialization_acceptable = false
           @step_count = @steps.size
 
-          stack(width: 1.0, background_nine_slice: NINE_SLICE_ROUNDED, background_nine_slice_from_edge: 8, background_nine_slice_color: 0x11_ffffff, padding: HALF_PADDING) do
+          stack(width: 1.0, background_nine_slice: NINE_SLICE_ROUNDED_TOP, background_nine_slice_from_edge: 8, background_nine_slice_color: 0x11_ffffff, padding: HALF_PADDING) do
             banner "Establishing Battlefield Control", width: 1.0, text_align: :center
             tagline "Please stand by...", width: 1.0, text_align: :center
           end
