@@ -106,6 +106,11 @@ module W3DHubLauncher
       if response.okay?
         hash = JSON.parse(response.data)
 
+        if hash["error"]
+          result.error = hash["error"]
+          return result
+        end
+
         user_details_result = fetch_user_details(Integer(hash["userid"]))
         user_details_hash = user_details_result.okay? ? JSON.parse(user_details_result.data) : {}
 
@@ -133,6 +138,11 @@ module W3DHubLauncher
 
       if response.okay?
         hash = JSON.parse(response.data)
+
+        if hash["error"]
+          result.error = hash["error"]
+          return result
+        end
 
         user_details_result = fetch_user_details(Integer(hash["userid"]))
         user_details_hash = user_details_result.okay? ? JSON.parse(user_details_result.data) : {}

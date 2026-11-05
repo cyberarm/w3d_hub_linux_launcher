@@ -44,6 +44,12 @@ module W3DHubLauncher
         MemCache[:servers].delete(game_server) if game_server
       end
 
+      CyberarmEngine::EventBus.subscribe("application_changed") do |payload|
+        # pp payload
+        # SDL 3.6 required
+        # SDL.ShowNotification(NAME, "Application Changed Event", nil, nil, 0) #(payload["application"]["name"], payload["state"])
+      end
+
       push_state(States::Boot)
       # push_state(States::Interface)
     end

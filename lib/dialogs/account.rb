@@ -68,10 +68,14 @@ module W3DHubLauncher
                     # FIXME: Retry? Show error? ???
                     pp settings_result
                   end
+                else
+                  dialog(
+                    Dialog::Alert,
+                    title: "Failed to sign in",
+                    message: "If you have failed 3 or more times in a row, wait about 15 minutes and try again."
+                  )
+                  btn.enabled = true
                 end
-
-                # FIXME: Show error message!
-                pp result
               end
             end
           end
