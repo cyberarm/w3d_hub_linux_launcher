@@ -82,6 +82,8 @@ module W3DHubLauncher
             end
 
             result.data = true
+          else
+            result.error = response.read
           end
         rescue StandardError => e
           result.error = e
@@ -265,8 +267,23 @@ module W3DHubLauncher
       fetch("#{@access_token ? PRIMARY_W3DHUB_API_ENDPOINT : ALTERNATIVE_W3DHUB_API_ENDPOINT}/apis/launcher/1/get-package-details", method: :post, body: body, headers: headers(form_encoded: true))
     end
 
-    def download_package()
-      download()
+    def fetch_package(manifest_package, path:, range: 0)
+      body = URI.encode_www_form(
+        "data": JSON.dump({
+                            category: manifest_package.category,
+                            subcategory: manifest_package.subcategory,
+                            name: manifest_package.name,
+                            version: manifest_package.version
+                          })
+      )
+
+     download(
+       "#{W3DHubApi::PRIMARY_W3DHUB_API_ENDPOINT}/apis/launcher/1/get-package",
+       path: path,
+       method: :post,
+       body: body,
+       headers: headers(form_encoded: true, range: range <= 0 ? nil : range)
+     )
     end
   end
 end

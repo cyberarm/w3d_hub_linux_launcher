@@ -288,8 +288,19 @@ module W3DHubLauncher
             end
           end
         else
-          # TODO xD
-          @worker.w3dhub_api.fetch_package("TODO")
+          @worker.w3dhub_api.fetch_package(pkg, path: file_path, range: partially_valid_at) do |downloaded_bytes, total_downloaded_bytes, content_length|
+            sample_downloaded_bytes += downloaded_bytes
+            total_data_downloaded_bytes += downloaded_bytes
+
+            if Gosu.milliseconds - last_sample_time_ms >= 1_000
+              last_sample_time_ms = Gosu.milliseconds
+
+              fraction = (total_downloaded_bytes + partially_valid_at) / pkg.file_size.to_f
+
+              update_stage_progress(label: "Downloading #{W3DHubLauncher.format_size(total_data_downloaded_bytes)} / #{W3DHubLauncher.format_size(total_data_to_download_bytes)} [#{W3DHubLauncher.format_size(sample_downloaded_bytes)}/s]", fraction: (i.to_f + fraction) / manifest_packages.size)
+              sample_downloaded_bytes = 0
+            end
+          end
         end
 
         abort_task!("Failed to download required package: #{pkg.name}:#{pkg.version} (#{result.error})") unless result.okay?
@@ -530,8 +541,7 @@ module W3DHubLauncher
       result = if manifest_package.download_url
                  @worker.w3dhub_api.download(manifest_package.download_url, path: file_path)
                else
-                 # TODO xD
-                 @worker.w3dhub_api.fetch_package("TODO")
+                 @worker.w3dhub_api.fetch_package(manifest_package, path: file_path)
                end
 
       if result.okay?
