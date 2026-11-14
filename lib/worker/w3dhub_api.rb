@@ -242,7 +242,7 @@ module W3DHubLauncher
             end
 
             # If versions don't match then pick whichever one is higher
-            if Gem::Version.new(chan.current_version) > Gem::Version.new(channel.current_version)
+            if Gem::Version.new(chan.version) > Gem::Version.new(channel.version)
               # Replace alternate's channel with primary's channel
               application.channels[application.channels.index(channel)] = chan
             else
