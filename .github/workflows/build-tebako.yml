@@ -12,7 +12,7 @@ jobs:
       matrix:
         architecture: [x64]
     container:
-      image: ghcr.io/tamatebako/tebako-ubuntu-20.04:latest
+      image: ghcr.io/tamatebako/tebako-ubuntu-20.04:0.14
     defaults:
       run:
         shell: bash
