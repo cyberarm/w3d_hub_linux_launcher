@@ -32,14 +32,14 @@ GEM
       rake (>= 12.0.0, < 14.0.0)
     ffi (1.17.4-x64-mingw-ucrt)
     ffi (1.17.4-x86_64-linux-gnu)
+    ffi-win32-extensions (1.0.4)
+      ffi
     fiber-annotation (0.2.0)
     fiber-local (1.1.0)
       fiber-storage
     fiber-storage (1.0.1)
-    gosu (1.5.0)
-      ffi (~> 1.12)
-    gosu (1.5.0-x86_64-linux)
-      ffi (~> 1.12)
+    fiddle (1.1.8)
+    gosu (1.4.6)
     io-endpoint (0.19.0)
       openssl (>= 3.3.0)
     io-event (1.22.3)
@@ -47,6 +47,8 @@ GEM
       openssl (>= 3.3)
     ircparser (1.0.0)
     json (3.1.0)
+    libui (0.2.5-x64-mingw-ucrt)
+      fiddle
     logger (1.7.0)
     openssl (4.0.2)
     protocol-hpack (1.5.1)
@@ -70,6 +72,11 @@ GEM
     rubyzip (3.7.0)
     sdl2-bindings (0.2.3)
       ffi (~> 1.15)
+    win32-process (0.10.0)
+      ffi (>= 1.0.0)
+    win32-security (0.5.0)
+      ffi
+      ffi-win32-extensions
 
 PLATFORMS
   x64-mingw-ucrt
@@ -81,6 +88,7 @@ DEPENDENCIES
   base64
   cyberarm_engine
   digest-crc
+  gosu (= 1.4.6)
   ircparser
   libui
   logger
