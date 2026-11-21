@@ -767,9 +767,8 @@ class W3DHub
         patch_info[:updatedFiles].each do |file|
           logger.debug(LOG_TAG) { "        #{file}" }
 
-          patch_mix.entries.each do |entry|
-            target_mix.add_entry(entry: entry, replace: true)
-          end
+          entry = patch_mix.entries.find { |e| e.name.casecmp?(file) }
+          target_mix.add_entry(entry: entry, replace: true)
         end
 
         logger.info(LOG_TAG) { "      Writing updated #{file_path}..." } if patch_info[:updatedFiles].size.positive?
