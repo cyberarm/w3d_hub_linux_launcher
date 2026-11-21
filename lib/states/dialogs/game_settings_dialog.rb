@@ -20,7 +20,7 @@ class W3DHub
         background 0xaa_525252
 
         stack(width: 1.0, max_width: 760, height: 1.0, max_height: 720, v_align: :center, h_align: :center, background: 0xee_222222, border_thickness: 2, border_color: 0xee_222222, padding: 10) do
-          flow(width: 1.0, height: 36, padding: 8) do
+          flow(width: 1.0, padding: 8) do
             background Store.application_manager.color(@app_id)
 
             title @options[:title] || Store.application_manager.name(@app_id) || "Game Settings", fill: true, text_align: :center, font: BOLD_FONT
@@ -245,7 +245,7 @@ class W3DHub
             end
           end
 
-          flow(width: 1.0, height: 46, padding: 8) do
+          flow(width: 1.0, padding: 8) do
             button "Cancel", width: 0.25 do
               pop_state
               @options[:cancel_callback]&.call

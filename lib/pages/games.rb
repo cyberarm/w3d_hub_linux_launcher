@@ -154,7 +154,7 @@ class W3DHub
                     hash[I18n.t(:"games.user_data_folder")] = { icon: nil, block: proc { Store.application_manager.show_folder(game.id, channel.id, :user_data) } }
                     hash[I18n.t(:"games.view_screenshots")] = { icon: nil, block: proc { Store.application_manager.show_folder(game.id, channel.id, :screenshots) } }
                   }.each do |key, hash|
-                    flow(width: 1.0, height: 22, margin_bottom: 8) do
+                    flow(width: 1.0) do
                       image "#{GAME_ROOT_PATH}/media/ui_icons/#{hash[:icon]}.png", width: 24 if hash[:icon]
                       image EMPTY_IMAGE, width: 24 unless hash[:icon]
                       link key, text_size: 22, enabled: hash.key?(:enabled) ? hash[:enabled] : true do
@@ -165,7 +165,7 @@ class W3DHub
                 end
 
                 game.web_links.each do |item|
-                  flow(width: 1.0, height: 22, margin_bottom: 8) do
+                  flow(width: 1.0) do
                     image "#{GAME_ROOT_PATH}/media/ui_icons/share1.png", width: 24
                     link item.name, text_size: 22 do
                       W3DHub.url(item.uri)
@@ -193,12 +193,12 @@ class W3DHub
 
                 if Store.application_manager.installed?(game.id, channel.id)
                   if Store.application_manager.updateable?(game.id, channel.id)
-                    button "<b>#{I18n.t(:"interface.install_update")}</b>", fill: true, text_size: 30, **UPDATE_BUTTON do
+                    button "<b>#{I18n.t(:"interface.install_update")}</b>", fill: true, height: 1.0, text_size: 30, **UPDATE_BUTTON do
                       Store.application_manager.update(game.id, channel.id)
                     end
                   else
                     play_now_server = Store.application_manager.play_now_server(game.id, channel.id)
-                    play_now_button = button "<b>#{I18n.t(:"interface.play")}</b>", fill: true, text_size: 30, enabled: !play_now_server.nil? do
+                    play_now_button = button "<b>#{I18n.t(:"interface.play")}</b>", fill: true, height: 1.0, text_size: 30, enabled: !play_now_server.nil? do
                       Store.application_manager.play_now(game.id, channel.id)
                     end
 
@@ -209,11 +209,11 @@ class W3DHub
                     end
                   end
 
-                  button get_image("#{GAME_ROOT_PATH}/media/ui_icons/singleplayer.png"), tip: I18n.t(:"interface.single_player"), image_height: 32, margin_left: 0 do
+                  button get_image("#{GAME_ROOT_PATH}/media/ui_icons/singleplayer.png"), tip: I18n.t(:"interface.single_player"), image_height: 1.0, margin_left: 0 do
                     Store.application_manager.run(game.id, channel.id)
                   end
 
-                  button get_image("#{GAME_ROOT_PATH}/media/ui_icons/gear.png"), tip: I18n.t(:"games.game_options"), image_height: 32, margin_left: 0 do |btn|
+                  button get_image("#{GAME_ROOT_PATH}/media/ui_icons/gear.png"), tip: I18n.t(:"games.game_options"), image_height: 1.0, margin_left: 0 do |btn|
                     menu(parent: btn) do
                       menu_item(I18n.t(:"games.game_settings")) do
                         if game.uses_engine_cfg?
@@ -252,14 +252,14 @@ class W3DHub
                   installing = Store.application_manager.task?(:installer, game.id, channel.id)
 
                   unless game.id == "ren"
-                    button "<b>#{I18n.t(:"interface.install")}</b>", fill: true, margin_right: 8, text_size: 30, enabled: !installing do |button|
+                    button "<b>#{I18n.t(:"interface.install")}</b>", fill: true, height: 1.0, margin_right: 8, text_size: 30, enabled: !installing do |button|
                       button.enabled = false
                       @import_button.enabled = false
                       Store.application_manager.install(game.id, channel.id)
                     end
                   end
 
-                  @import_button = button "<b>#{I18n.t(:"interface.import")}</b>", fill: true, margin_left: 8, text_size: 30, enabled: !installing do
+                  @import_button = button "<b>#{I18n.t(:"interface.import")}</b>", fill: true, height: 1.0, margin_left: 8, text_size: 30, enabled: !installing do
                     Store.application_manager.import(game.id, channel.id)
                   end
                 end
@@ -365,9 +365,9 @@ class W3DHub
               flow(width: 1.0, fill: true, scroll: true) do
                 Store.applications.games.each do |game|
                   stack(width: 166, height: 224, margin: 8, background: 0x88_151515, border_color: game.color, border_thickness: 1) do
-                    flow(width: 1.0, height: 28, padding: 8) do
+                    flow(width: 1.0, height: 28 + 8, padding: 8) do
                       para "Favorite", fill: true
-                      toggle_button checked: Store.application_manager.favorite?(game.id), height: 18, padding_top: 3, padding_right: 3, padding_bottom: 3, padding_left: 3 do |btn|
+                      toggle_button checked: Store.application_manager.favorite?(game.id), height: 1.0, padding_top: 3, padding_right: 3, padding_bottom: 3, padding_left: 3 do |btn|
                         Store.application_manager.favorite(game.id, btn.value)
                         Store.settings.save_settings
 
@@ -470,13 +470,10 @@ class W3DHub
                   tagline "<b>#{item.title}</b>", width: 1.0
                   para item.blurb.gsub(/\n+/, "\n").strip[0..1024], fill: true
 
-                  flow(width: 1.0, height: 36, margin_top: 8) do
-                    stack(fill: true, height: 1.0) do
-                      flow(fill: true)
-                      para "#{item.author} • #{item.timestamp.strftime("%Y-%m-%d")}"
-                    end
+                  flow(width: 1.0, margin_top: 8) do
+                    para "#{item.author} • #{item.timestamp.strftime("%Y-%m-%d")}", margin_top: 4, fill: true
 
-                    button I18n.t(:"games.read_more"), width: 1.0, max_width: 128, padding_top: 4, padding_bottom: 4, margin_left: 0, margin_top: 0, margin_bottom: 0, margin_right: 0 do
+                    button I18n.t(:"games.read_more"), padding_top: 4, padding_bottom: 4, margin_left: 0, margin_top: 0, margin_bottom: 0, margin_right: 0 do
                       W3DHub.url(item.uri)
                     end
                   end
@@ -504,7 +501,7 @@ class W3DHub
       def populate_game_events(game)
         return unless @focused_game == game
 
-        if (events = @game_events[game.id])
+        if (events = @game_events[game.id]&.sort_by! { |e| e.start_time })
           events = events.select { |e| e.end_time > Time.now.utc }
 
           @game_events_container.show unless events.empty?

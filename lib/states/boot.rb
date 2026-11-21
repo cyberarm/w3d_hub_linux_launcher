@@ -31,7 +31,7 @@ class W3DHub
           end
 
           stack(width: 1.0, height: 60) do
-            flow(width: 1.0, height: 26, margin_left: 16, margin_right: 16, margin_bottom: 8, margin_top: 8) do
+            flow(width: 1.0, height: 26 + 16, margin_left: 16, margin_right: 16, margin_bottom: 8, margin_top: 8) do
               @status_label = caption "Starting #{I18n.t(:app_name_simple)}...", fill: true
               para "#{I18n.t(:app_name)} #{W3DHub::VERSION}", text_align: :right
             end

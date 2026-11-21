@@ -11,7 +11,7 @@ class W3DHub
 
           stack(width: 1.0, max_width: 760, height: 1.0, max_height: 272, v_align: :center, h_align: :center, background: 0xee_222222) do
             # Title bar
-            flow(width: 1.0, height: 36, padding: 8) do
+            flow(width: 1.0, height: 36 + 16, padding: 8) do
               background 0x88_000000
 
               # image "#{GAME_ROOT_PATH}/media/ui_icons/export.png", width: 32, align: :center, color: 0xaa_ffffff
@@ -31,7 +31,7 @@ class W3DHub
 
               flow(fill: true)
 
-              flow(width: 1.0, height: 46, padding_bottom: 8) do
+              flow(width: 1.0, height: 46 + 8, padding_bottom: 8) do
                 button "Cancel", fill: true, margin_right: 4 do
                   pop_state
                 end

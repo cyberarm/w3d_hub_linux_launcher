@@ -15,7 +15,7 @@ class W3DHub
         background 0xaa_525252
 
         stack(width: 1.0, max_width: 760, height: 1.0, max_height: 640, v_align: :center, h_align: :center, background: 0xee_222222, border_thickness: 2, border_color: 0xee_222222, padding: 16) do
-          flow(width: 1.0, height: 36, padding: 8) do
+          flow(width: 1.0, padding: 8) do
             background 0xff_0052c0
 
             title @options[:title] || "Launcher Update Available", fill: true, text_align: :center, font: BOLD_FONT
@@ -30,7 +30,7 @@ class W3DHub
             # end
 
             pp @options[:release_data]
-            
+
             stack(width: 1.0, fill: true, scroll: true, padding: 8, border_thickness: 1, border_color: 0x44_ffffff) do
               # para @options[:release_data][:body], width: 1.0
               # FIXME: Finish this bit

@@ -66,7 +66,7 @@ class W3DHub
               task.status.operations.each do |key, operation|
                 i += 1
 
-                stack(width: 1.0, height: 26, padding: 8) do
+                stack(width: 1.0, height: 26 + 16, padding: 8) do
                   background 0xaa_333333 if i.odd?
 
                   flow(width: 1.0, height: 22) do
@@ -74,7 +74,7 @@ class W3DHub
                     @operation_info["#{key}_status"] = para operation.value, width: 0.3, text_align: :right, text_wrap: :none, tag: "#{key}_status"
                   end
 
-                  @operation_info["#{key}_progress"] = progress fraction: operation.progress, height: 2, width: 1.0, margin_top: 2, tag: "#{key}_progress"
+                  @operation_info["#{key}_progress"] = progress fraction: operation.progress, height: 4, width: 1.0, margin_top: 2, tag: "#{key}_progress"
                 end
               end
             end

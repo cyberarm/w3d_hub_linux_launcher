@@ -9,10 +9,10 @@ class W3DHub
         background 0xaa_525252
 
         stack(width: 1.0, max_width: 720, height: 1.0, max_height: 256, v_align: :center, h_align: :center, background: 0xee_222222) do
-          flow(width: 1.0, height: 36, padding: 8) do
+          flow(width: 1.0, padding: 8) do
             background 0x88_000000
 
-            image "#{GAME_ROOT_PATH}/media/ui_icons/question.png", height: 1.0, align: :center, color: 0xff_ff8800
+            image "#{GAME_ROOT_PATH}/media/ui_icons/question.png", height: 36, align: :center, color: 0xff_ff8800
 
             title "<b>#{@options[:title]}</b>", fill: true, text_align: :center, font: BOLD_FONT
           end
@@ -22,7 +22,7 @@ class W3DHub
             @prompt_entry = edit_line @options[:prefill].to_s, margin_top: 24, width: 1.0, autofocus: true, focus: true, type: @options[:input_type] == :password ? :password : :text
           end
 
-          flow(width: 1.0, height: 46, padding: 8) do
+          flow(width: 1.0, padding: 8) do
             button "Cancel", width: 0.25 do
               pop_state
               @options[:cancel_callback]&.call(@prompt_entry.value)

@@ -51,11 +51,11 @@ class W3DHub
           title "Import Command & Conquer: Renegade"
           caption "You can import your installed copy of Renegade if it wasn't automatically imported from the Games tab.\n"\
                   "If you need to procure a copy of Renegade, Both Steam and the EA App have the Command & Conquer The Ultimate Collection available for purchase. "\
-                  "We cannot provide Renegade for installation.", width: 1.0, margin_left: 32
+                  "We cannot provide Renegade for installation.", width: 1.0, margin_left: 32, margin_bottom: 16
 
-          stack(width: 1.0, height: 2, background: 0xff_0074e0, margin_top: 16, margin_bottom: 16)
+          stack(width: 1.0, height: 2, background: 0xff_0074e0)
 
-          title "Install one of our standalone games"
+          title "Install one of our standalone games", margin_top: 16
           stack(width: 1.0, fill: true, margin_left: 32) do
             tagline "Interim Apex"
             caption "An expanded boots on the ground conflict set after the advent of Tiberian Dawn and the inter-war period between Tiberian Dawn and Tiberian Sun.", margin_left: 16

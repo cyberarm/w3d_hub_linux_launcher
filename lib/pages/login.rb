@@ -14,7 +14,7 @@ class W3DHub
               para "Login using your W3D Hub forum account", width: 1.0, text_align: :center
 
               flow(width: 1.0) do
-                tagline "Username", width: 0.25, text_align: :right
+                tagline "Email Address", width: 0.25, text_align: :right
                 @username = edit_line "", width: 0.75, autofocus: true, focus: true
               end
 

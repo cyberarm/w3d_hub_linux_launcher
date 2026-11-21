@@ -11,7 +11,7 @@ class W3DHub
 
           stack(width: 1.0, max_width: 760, height: 1.0, max_height: 610, v_align: :center, h_align: :center, background: 0xee_222222) do
             # Title bar
-            flow(width: 1.0, height: 36, padding: 8) do
+            flow(width: 1.0, height: 36 + 16, padding: 8) do
               background 0x88_000000
 
               # tagline "<b>#{I18n.t(:"server_browser.direct_connect")}</b>", fill: true, text_align: :center
@@ -38,7 +38,7 @@ class W3DHub
                 end
               end
 
-              stack(width: 1.0, height: 72, margin_top: 32) do
+              stack(width: 1.0, height: 72 + 32, margin_top: 32) do
                 flow(width: 1.0, height: 1.0) do
                   stack(width: 0.75, height: 1.0) do
                     para "IRC Server IP or Hostname:"
@@ -54,12 +54,12 @@ class W3DHub
 
               flow(width: 1.0, height: 72, margin_top: 8) do
                 flow(width: 0.5, height: 1.0) do
-                  @server_ssl = toggle_button checked: @profile&.server_ssl, text_size: 18, height: 18
+                  @server_ssl = toggle_button checked: @profile&.server_ssl, width: 28, image_width: 28
                   para "IRC Server Use SSL", fill: true, text_wrap: :none, margin_left: 8
                 end
 
                 flow(width: 0.5, height: 1.0) do
-                  @server_verify_ssl = toggle_button checked: @profile ? @profile.server_verify_ssl : true, text_size: 18, height: 18
+                  @server_verify_ssl = toggle_button checked: @profile ? @profile.server_verify_ssl : true, width: 28, image_width: 28
                   para "IRC Verify Server SSL Certificate", fill: true, text_wrap: :none, margin_left: 8
                 end
               end
@@ -83,7 +83,7 @@ class W3DHub
 
               flow(fill: true)
 
-              flow(width: 1.0, margin_top: 8, height: 46, padding_bottom: 8) do
+              flow(width: 1.0, margin_top: 8, height: 46 + 16, padding_bottom: 8) do
                 button "Cancel", fill: true, margin_right: 4 do
                   pop_state
                 end

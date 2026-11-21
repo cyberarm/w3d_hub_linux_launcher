@@ -364,15 +364,11 @@ class W3DHub
           stack(width: 1.0, height: 1.0, padding: 8) do
             stack(width: 1.0, height: 208) do
               flow(width: 1.0, height: 34) do
-                flow(fill: true)
-
                 image game_icon(server), height: 1.0
-                title server.status.name[0..30], text_wrap: :none
-
-                flow(fill: true)
+                title server.status.name, text_wrap: :none, fill: true
               end
 
-              flow(width: 1.0, height: 46, margin_top: 16, margin_bottom: 16) do
+              flow(width: 1.0, height: 46 + 32, margin_top: 16, margin_bottom: 16) do
                 game_installed = Store.application_manager.installed?(server.game, server.channel)
                 game_updatable = Store.application_manager.updateable?(server.game, server.channel)
                 matching_version = (game_installed && game_installed[:installed_version] == server.version) || server.version == Api::ServerListServer::NO_OR_DEFAULT_VERSION

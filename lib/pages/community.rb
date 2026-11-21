@@ -173,13 +173,10 @@ class W3DHub
                   tagline "<b>#{item.title}</b>", width: 1.0
                   para item.blurb.gsub(/\n+/, "\n").strip[0..1024], fill: true
 
-                  flow(width: 1.0, height: 36, margin_top: 8) do
-                    stack(fill: true, height: 1.0) do
-                      flow(fill: true)
-                      para "#{item.author} • #{item.timestamp.strftime("%Y-%m-%d")}"
-                    end
+                  flow(width: 1.0, margin_top: 8) do
+                    para "#{item.author} • #{item.timestamp.strftime("%Y-%m-%d")}", margin_top: 4, fill: true
 
-                    button I18n.t(:"games.read_more"), width: 1.0, max_width: 128, padding_top: 4, padding_bottom: 4 do
+                    button I18n.t(:"games.read_more"), padding_top: 4, padding_bottom: 4, margin_left: 0, margin_top: 0, margin_bottom: 0, margin_right: 0 do
                       W3DHub.url(item.uri)
                     end
                   end
