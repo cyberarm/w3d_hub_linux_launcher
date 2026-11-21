@@ -31,7 +31,7 @@ jobs:
 
       - name: Build Tebako binary
         run: |
-          tebako press -P -R 3.4.1 -m bundle -o w3d_hub_linux_launcher -r $PWD -e w3d_hub_linux_launcher.rb
+          tebako press -P -R 3.4.2 -m bundle -o w3d_hub_linux_launcher -r $PWD -e w3d_hub_linux_launcher.rb
 
       - name: Prepare artifact directory
         run: |
