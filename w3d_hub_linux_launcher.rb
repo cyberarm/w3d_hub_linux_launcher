@@ -4,6 +4,7 @@ rescue LoadError
   require "cyberarm_engine"
 end
 
+require "time"
 require "socket"
 require "rexml"
 require "base64"

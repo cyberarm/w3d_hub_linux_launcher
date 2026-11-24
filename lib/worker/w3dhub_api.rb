@@ -45,7 +45,7 @@ module W3DHubLauncher
             if response.success?
               result.data = response.read
             else
-              result.error = true
+              result.error = response
             end
           end
         rescue StandardError => e
