@@ -27,7 +27,7 @@ GEM
       fiber-annotation
       fiber-local (~> 1.1)
       json
-    cyberarm_engine (0.30.0)
+    cyberarm_engine (0.31.0)
       gosu (~> 1.1)
     digest-crc (0.7.0)
       rake (>= 12.0.0, < 14.0.0)
@@ -119,7 +119,7 @@ CHECKSUMS
   bundler (4.1.0.beta1) sha256=8a2dac8ca276ff4eff5efc2c6457b0044080fc1e431534ad7c5cc6187232b800
   chunky_png (1.4.0) sha256=89d5b31b55c0cf4da3cf89a2b4ebc3178d8abe8cbaf116a1dba95668502fdcfe
   console (1.38.0) sha256=35b82f59130e95e9be6b832d9e539c8b3988fc192e4a8e9a86ab4922f44ad5de
-  cyberarm_engine (0.30.0) sha256=f67d7410c78ad69c865400f9ea23abae74fdf5f9dadae19006cc4fd706064b0f
+  cyberarm_engine (0.31.0) sha256=bb04a988e5461ae6aa2b965db0dd9b3225567619208b29c311a21faeaa6c9ed5
   digest-crc (0.7.0) sha256=64adc23a26a241044cbe6732477ca1b3c281d79e2240bcff275a37a5a0d78c07
   ffi (1.17.4) sha256=bcd1642e06f0d16fc9e09ac6d49c3a7298b9789bcb58127302f934e437d60acf
   ffi (1.17.4-aarch64-linux-gnu) sha256=b208f06f91ffd8f5e1193da3cae3d2ccfc27fc36fba577baf698d26d91c080df
