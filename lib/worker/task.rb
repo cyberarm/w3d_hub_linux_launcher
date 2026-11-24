@@ -576,14 +576,13 @@ module W3DHubLauncher
 
         patch_info["removedFiles"].each do |file|
           puts "removing file from target: #{file}"
-          target_mix.entries.delete_if  { |e| e.name.casecmp?(file) }
+          target_mix.entries.delete_if { |e| e.name.casecmp?(file) }
         end
 
         patch_info["updatedFiles"].each do |file|
           puts "adding/updating file from target: #{file}"
-          patch_mix.entries.each do |entry|
-            target_mix.add_entry(entry: entry, replace: true)
-          end
+          entry = patch_mix.entries.find { |e| e.name.casecmp?(file) }
+          target_mix.add_entry(entry: entry, replace: true)
         end
 
         Tempfile.create do |temp|
