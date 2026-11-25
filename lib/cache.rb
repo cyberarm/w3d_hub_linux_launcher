@@ -90,7 +90,7 @@ class W3DHub
           result = true
         end
 
-        binding.irb unless response
+        # binding.irb unless response
 
         if response&.status == 200 || response&.status == 206
           result = true
