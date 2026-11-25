@@ -28,9 +28,9 @@ class W3DHub
 
       if Gem::win_platform?
         lib_dir = File.dirname($LOADED_FEATURES.find { |file| file.include?("gosu.so") })
-        SDL.load_lib("#{lib_dir}64/SDL2.dll")
+        SDL.load_lib("#{lib_dir}64/SDL3.dll")
       else
-        SDL.load_lib("libSDL2")
+        SDL.load_lib("libSDL3")
       end
 
       query_displays

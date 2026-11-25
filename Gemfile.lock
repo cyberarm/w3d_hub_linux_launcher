@@ -73,8 +73,8 @@ GEM
     rake (13.4.2)
     rexml (3.4.4)
     rubyzip (3.7.0)
-    sdl2-bindings (0.2.3)
-      ffi (~> 1.15)
+    sdl3-bindings (1.0.4)
+      ffi (~> 1.16)
     win32-process (0.10.0)
       ffi (>= 1.0.0)
     win32-security (0.5.0)
@@ -97,7 +97,7 @@ DEPENDENCIES
   logger
   rexml
   rubyzip
-  sdl2-bindings
+  sdl3-bindings
   win32-process
   win32-security
 

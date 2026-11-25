@@ -94,7 +94,7 @@ class W3DHub
 end
 
 require "English"
-require "sdl2"
+require "sdl3"
 
 require_relative "lib/i18n"
 I18n.load_path << Dir["#{W3DHub::GAME_ROOT_PATH}/locales/*.yml"]

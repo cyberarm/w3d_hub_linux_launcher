@@ -12,7 +12,7 @@ gem "async-websocket"
 # "game" library gem
 gem "gosu", "~>1.5"
 gem "cyberarm_engine"
-gem "sdl2-bindings"
+gem "sdl3-bindings"
 
 # misc. libs
 gem "digest-crc"
