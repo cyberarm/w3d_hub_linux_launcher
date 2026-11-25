@@ -26,7 +26,7 @@ GEM
       fiber-annotation
       fiber-local (~> 1.1)
       json
-    cyberarm_engine (0.30.0)
+    cyberarm_engine (0.31.0)
       gosu (~> 1.1)
     digest-crc (0.7.0)
       rake (>= 12.0.0, < 14.0.0)
@@ -39,14 +39,17 @@ GEM
       fiber-storage
     fiber-storage (1.0.1)
     fiddle (1.1.8)
-    gosu (1.4.6)
+    gosu (1.5.0)
+      ffi (~> 1.12)
+    gosu (1.5.0-x86_64-linux)
+      ffi (~> 1.12)
     io-endpoint (0.19.0)
       openssl (>= 3.3.0)
     io-event (1.22.3)
     io-stream (0.14.0)
       openssl (>= 3.3)
     ircparser (1.0.0)
-    json (3.1.0)
+    json (3.2.0)
     libui (0.2.5-x64-mingw-ucrt)
       fiddle
     logger (1.7.0)
@@ -88,7 +91,7 @@ DEPENDENCIES
   base64
   cyberarm_engine
   digest-crc
-  gosu (= 1.4.6)
+  gosu (~> 1.5)
   ircparser
   libui
   logger

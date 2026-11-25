@@ -10,7 +10,7 @@ gem "async-http"
 gem "async-websocket"
 
 # "game" library gem
-gem "gosu", "1.4.6"
+gem "gosu", "~>1.5"
 gem "cyberarm_engine"
 gem "sdl2-bindings"
 
