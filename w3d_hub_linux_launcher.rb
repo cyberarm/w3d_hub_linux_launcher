@@ -23,13 +23,17 @@ class W3DHub
   W3DHUB_DEBUG = ARGV.join.include?("--debug")
   W3DHUB_DEVELOPER = ARGV.join.include?("--developer")
 
+  FLATPAK_CONTAINER = ENV["container"] =~ /\Aflatpak\z/i
+
   # Use the real working directory as the root for runtime data/logs
   GAME_ROOT_PATH = Dir.pwd
 
-  CACHE_PATH = "#{GAME_ROOT_PATH}/data/cache"
-  LOGS_PATH = "#{GAME_ROOT_PATH}/data/logs"
-  SETTINGS_FILE_PATH = "#{GAME_ROOT_PATH}/data/settings.json"
-  APPLICATIONS_CACHE_FILE_PATH = "#{GAME_ROOT_PATH}/data/applications_cache.json"
+  DATA_PATH = FLATPAK_CONTAINER ? "#{Dir.home}/.config/#{DIR_NAME}" : GAME_ROOT_PATH
+
+  CACHE_PATH = "#{DATA_PATH}/data/cache"
+  LOGS_PATH = "#{DATA_PATH}/data/logs"
+  SETTINGS_FILE_PATH = "#{DATA_PATH}/data/settings.json"
+  APPLICATIONS_CACHE_FILE_PATH = "#{DATA_PATH}/data/applications_cache.json"
 
   # Ensure data/cache and data/logs exist
   FileUtils.mkdir_p(CACHE_PATH) unless Dir.exist?(CACHE_PATH)

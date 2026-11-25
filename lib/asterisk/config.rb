@@ -1,7 +1,7 @@
 class W3DHub
   class Asterisk
     class Config
-      CONFIG_PATH = "#{GAME_ROOT_PATH}/data/asterisk.json"
+      CONFIG_PATH = "#{DATA_PATH}/data/asterisk.json"
 
       attr_reader :settings, :server_profiles, :games, :irc_profiles
 
