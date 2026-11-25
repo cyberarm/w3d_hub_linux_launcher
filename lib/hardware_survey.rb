@@ -46,16 +46,22 @@ class W3DHub
     end
 
     def query_displays
-      SDL.GetNumVideoDisplays.times do |d|
+      display_count_pointer = FFI::MemoryPointer.new(:uint32, 1)
+      result = SDL.GetDisplays(display_count_pointer)
+      display_list = result.read_array_of_uint32(display_count_pointer.read_uint32)
+      SDL.free(result)
+
+      display_list.each do |d|
         modes = []
         refresh_rates = []
 
-        SDL.GetNumDisplayModes(d).times do |m|
-          mode = SDL::DisplayMode.new
-          SDL.GetDisplayMode(d, m, mode)
+        display_mode_pointer = FFI::MemoryPointer.new(:uint32, 1)
+        mode_result = SDL.GetFullscreenDisplayModes(d, display_mode_pointer)
+        display_modes = mode_result.read_array_of_pointer(display_mode_pointer.read_uint32)
+        display_modes.each do |m|
+          mode = SDL::DisplayMode.new(m)
 
           refresh_rates << mode[:refresh_rate]
-
           modes << [mode[:w], mode[:h]]
         end
 
@@ -148,14 +154,14 @@ class W3DHub
         end
       end
 
-      instruction_sets = %w[ HasRDTSC HasAltiVec HasMMX Has3DNow HasSSE HasSSE2 HasSSE3 HasSSE41 HasSSE42 HasAVX HasAVX2 HasAVX512F HasARMSIMD HasNEON ] # HasLSX HasLASX # These cause a crash atm
+      instruction_sets = %w[ HasAltiVec HasMMX HasSSE HasSSE2 HasSSE3 HasSSE41 HasSSE42 HasAVX HasAVX2 HasAVX512F HasARMSIMD HasNEON HasLSX HasLASX ]
       list = []
       instruction_sets.each do |i|
-        if SDL.send(i).positive?
+        if SDL.send(i)
           list << i.sub("Has", "")
         end
 
-        @data[:system][:cpu_instruction_sets][:"#{i.sub("Has", "").downcase}"] = SDL.send(i).positive?
+        @data[:system][:cpu_instruction_sets][:"#{i.sub("Has", "").downcase}"] = SDL.send(i)
       end
     end
 
