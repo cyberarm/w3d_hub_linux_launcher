@@ -19,6 +19,8 @@ require "async/http/endpoint"
 require "async/websocket/client"
 require "async/http/internet/instance"
 
+require_relative "lib/version"
+
 class W3DHub
   W3DHUB_DEBUG = ARGV.join.include?("--debug")
   W3DHUB_DEVELOPER = ARGV.join.include?("--developer")
@@ -101,7 +103,6 @@ I18n.default_locale = :en
 # GUI_DEBUG = true
 require_relative "lib/win32_stub" unless Gem.win_platform?
 
-require_relative "lib/version"
 require_relative "lib/theme"
 require_relative "lib/common"
 require_relative "lib/store"
