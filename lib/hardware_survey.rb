@@ -307,6 +307,8 @@ class W3DHub
 
     def query_glx_info
       gpus = []
+      return gpus if FLATPAK_CONTAINER # FIXME: Use SDL3 to query hardware when containered
+
       glxinfo = `glxinfo`
 
       return gpus if glxinfo.empty?
