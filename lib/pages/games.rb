@@ -367,7 +367,7 @@ class W3DHub
                   stack(width: 166, height: 224, margin: 8, background: 0x88_151515, border_color: game.color, border_thickness: 1) do
                     flow(width: 1.0, height: 28 + 8, padding: 8) do
                       para "Favorite", fill: true
-                      toggle_button checked: Store.application_manager.favorite?(game.id), height: 1.0, padding_top: 3, padding_right: 3, padding_bottom: 3, padding_left: 3 do |btn|
+                      toggle_button checked: Store.application_manager.favorite?(game.id), height: 1.0, image_width: 20, padding_top: 3, padding_right: 3, padding_bottom: 3, padding_left: 3 do |btn|
                         Store.application_manager.favorite(game.id, btn.value)
                         Store.settings.save_settings
 
