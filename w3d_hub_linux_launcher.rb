@@ -79,6 +79,7 @@ require_relative "lib/worker/tasks/update_application"
 require_relative "lib/worker/tasks/move_application"
 
 module W3DHubLauncher
+  FLATPAK_CONTAINER = ENV["container"] =~ /\Aflatpak\z/i
   MemCache = {}
 
   # UNIXServer

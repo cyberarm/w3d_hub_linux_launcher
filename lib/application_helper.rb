@@ -1,14 +1,17 @@
 module W3DHubLauncher
   class ApplicationHelper
-    def self.wine_command(app)
-      # FIXME: account for the cursed whitespace and wrap in quotes
-      format("%s ", MemCache[:settings]&.preferences&.wine_command || "wine")
-    end
-    def self.wine_prefix(app)
-      # TODO: fallback from app specific prefix to launcher prefix to global prefix
-      # format("%s ", app&.wine_prefix_path || MemCache[:settings]&.preferences&.wine_prefix_path || "")
+    def self.flatpak_spawn_command(env)
+      return "" unless FLATPAK_CONTAINER
 
-      ""
+      format('flatpak-spawn --directory="%s" --host%s ', Dir.home, env.map { |k, v| "--env=#{k}=#{v}" }.join(" "))
+    end
+
+    def self.wine_command(app)
+      format('"%s" ', MemCache[:settings]&.preferences&.wine_command || "wine")
+    end
+
+    def self.wine_prefix(app)
+      [app&.wine_prefix_path, MemCache[:settings]&.preferences&.wine_prefix_path].find { |prefix| !prefix.empty? } || ""
     end
 
     def self.run(app, *args)
@@ -22,14 +25,15 @@ module W3DHubLauncher
                  end
 
       env = {}
-      unless wine_prefix(app).to_s.empty?
-        env["WINEPREFIX"] = wine_prefix(app).to_s
+      prefix = wine_prefix(app)
+      unless prefix.to_s.empty?
+        env["WINEPREFIX"] = format('"%s"', prefix)
       end
       # env["DXVK_HUD"] = "full"
 
       pid = Process.spawn(
         env,
-        "#{wine_command(app)}\"#{exe_path}\" -launcher #{args.join(' ')}"
+        "#{flatpak_spawn_command(env)}#{wine_command(app)}\"#{exe_path}\" -launcher #{args.join(' ')}"
       )
 
       Process.detach(pid)
