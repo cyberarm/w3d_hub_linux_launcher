@@ -51,7 +51,7 @@ class W3DHub
 
           W3DHub::BackgroundWorker.foreground_parallel_job(
             lambda do
-              W3DHub.command("ping #{@address} #{W3DHub.windows? ? '-n 3' : '-c 3'}") do |line|
+              W3DHub.command("#{FLATPAK_CONTAINER ? '/run/host/bin/' : ''}ping #{@address} #{W3DHub.windows? ? '-n 3' : '-c 3'}") do |line|
                 if W3DHub.windows? && line =~ /Minimum|Maximum|Maximum/i
                   @ping = line.strip.split(",").last.split("=").last.sub("ms", "").to_i
                 elsif W3DHub.unix? && line.start_with?("rtt min/avg/max/mdev")
