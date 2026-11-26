@@ -181,11 +181,11 @@ class W3DHub
 
         # TODO: Is missing wine/proton really a failure condition?
         # Wine present?
-        if W3DHub.unix?
-          wine_present = W3DHub.command("which #{Store.settings[:wine_command]}")
-          fail!("FAIL FAST: `which #{Store.settings[:wine_command]}` command failed, wine is not installed.\n\n"\
-                "Will be unable to launch game.\n\nCheck wine options in launcher's settings.") unless wine_present
-        end
+        # if W3DHub.unix?
+        #   wine_present = W3DHub.command("which #{Store.settings[:wine_command]}")
+        #   fail!("FAIL FAST: `which #{Store.settings[:wine_command]}` command failed, wine is not installed.\n\n"\
+        #         "Will be unable to launch game.\n\nCheck wine options in launcher's settings.") unless wine_present
+        # end
       end
 
       def run_on_main_thread(block)

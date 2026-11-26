@@ -72,7 +72,7 @@ class W3DHub
               end
 
         if File.exist?(exe)
-          pid = Process.spawn("#{wine_command(app_id, channel)}\"#{exe}\"")
+          pid = Process.spawn("#{flatpak_spawn_command({})}#{wine_command(app_id, channel)}\"#{exe}\"")
           Process.detach(pid)
         end
       end
@@ -163,6 +163,12 @@ class W3DHub
       system("#{cmd} \"#{path}\"")
     end
 
+    def flatpak_spawn_command(env)
+      return "" unless FLATPAK_CONTAINER
+
+      format('flatpak-spawn --directory="%s" --host%s ', Dir.home, env.map { |k, v| "--env=#{k}=#{v}" }.join(" "))
+    end
+
     def wine_command(app_id, channel)
       return "" if W3DHub.windows?
 
@@ -248,6 +254,7 @@ class W3DHub
         begin
           pid = Process.spawn(
             env,
+            "#{flatpak_spawn_command(env)}"\
             "#{dxvk_command(app_id, channel)}"\
             "#{mangohud_command(app_id, channel)}"\
             "#{wine_command(app_id, channel)}"\
