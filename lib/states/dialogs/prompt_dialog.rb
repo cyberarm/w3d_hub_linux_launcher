@@ -45,21 +45,21 @@ class W3DHub
               c = W3DHub::THEME[:Button][:border_color]
 
               @prompt_entry.style.border_color = c
-              @prompt_entry.style.hover[:border_color]   = c
-              @prompt_entry.style.active[:border_color]  = c
+              @prompt_entry.style.hover.border_color   = c
+              @prompt_entry.style.active.border_color  = c
 
               @accept_button.enabled = true
             else
               c = 0xff_ff0000
 
               @prompt_entry.style.border_color = c
-              @prompt_entry.style.hover[:border_color]   = c
-              @prompt_entry.style.active[:border_color]  = c
+              @prompt_entry.style.hover.border_color   = c
+              @prompt_entry.style.active.border_color  = c
 
               @accept_button.enabled = false
             end
 
-            @prompt_entry.set_border_color
+            @prompt_entry.stylize
           end
         end
       end
